@@ -1,0 +1,13 @@
+﻿{
+  "name": "_Project.UI.Screens.MapHUD",
+  "rootNamespace": "SevenCrowns.UI.Screens.MapHUD",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

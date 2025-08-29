@@ -1,0 +1,13 @@
+﻿{
+  "name": "_Project.Systems.SaveSystem.Tests",
+  "rootNamespace": "SevenCrowns.Systems.SaveSystem.Tests",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

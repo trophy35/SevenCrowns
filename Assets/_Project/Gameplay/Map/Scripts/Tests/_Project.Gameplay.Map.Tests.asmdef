@@ -1,0 +1,13 @@
+﻿{
+  "name": "_Project.Gameplay.Map.Tests",
+  "rootNamespace": "SevenCrowns.Gameplay.Map.Tests",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

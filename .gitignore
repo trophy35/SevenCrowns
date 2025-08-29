@@ -21,6 +21,7 @@ Packages/Moq.4.20.72/
 
 # Never ignore Asset meta data
 !/[Aa]ssets/**/*.meta
+!/[Ww]iki/**
 
 # Visual Studio / MonoDevelop generated
 .vs/

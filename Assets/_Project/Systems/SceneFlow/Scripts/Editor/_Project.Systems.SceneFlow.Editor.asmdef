@@ -1,0 +1,13 @@
+﻿{
+  "name": "_Project.Systems.SceneFlow.Editor",
+  "rootNamespace": "SevenCrowns.Systems.SceneFlow.Editor",
+  "references": [],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

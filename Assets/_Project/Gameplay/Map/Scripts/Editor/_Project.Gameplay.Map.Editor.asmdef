@@ -1,0 +1,13 @@
+﻿{
+  "name": "_Project.Gameplay.Map.Editor",
+  "rootNamespace": "SevenCrowns.Gameplay.Map.Editor",
+  "references": [],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

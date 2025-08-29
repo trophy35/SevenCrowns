@@ -1,0 +1,13 @@
+﻿{
+  "name": "_Project.Systems.SceneFlow.Runtime",
+  "rootNamespace": "SevenCrowns.Systems.SceneFlow",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

@@ -1,0 +1,13 @@
+﻿{
+  "name": "_Project.Shared.Utilities.Tests",
+  "rootNamespace": "SevenCrowns.Shared.Utilities.Tests",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

@@ -1,0 +1,13 @@
+﻿{
+  "name": "_Project.Systems.AudioSystem.Editor",
+  "rootNamespace": "SevenCrowns.Systems.AudioSystem.Editor",
+  "references": [],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

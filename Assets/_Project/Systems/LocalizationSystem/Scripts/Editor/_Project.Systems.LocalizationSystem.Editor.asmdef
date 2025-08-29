@@ -1,0 +1,13 @@
+﻿{
+  "name": "_Project.Systems.LocalizationSystem.Editor",
+  "rootNamespace": "SevenCrowns.Systems.LocalizationSystem.Editor",
+  "references": [],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

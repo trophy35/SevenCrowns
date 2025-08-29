@@ -1,0 +1,13 @@
+﻿{
+  "name": "_Project.Gameplay.Battle.Editor",
+  "rootNamespace": "SevenCrowns.Gameplay.Battle.Editor",
+  "references": [],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}
