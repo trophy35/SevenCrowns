@@ -1,0 +1,40 @@
+﻿{
+    "name":  "SevenCrowns.Boot",
+    "rootNamespace":  "SevenCrowns.Boot",
+    "references":  [
+                       "SevenCrowns.Core",
+                       "SevenCrowns.Systems",
+                       "SevenCrowns.UI",
+                       "SevenCrowns.Config",
+                       "Unity.Addressables",
+                       "Unity.ResourceManager",
+					   "Unity.TextMeshPro",
+                       "Unity.InputSystem"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "noEngineReferences":  false,
+    "versionDefines":  [
+                           {
+                               "define":  "ADDRESSABLES",
+                               "name":  "Addressables",
+                               "expression":  "com.unity.addressables"
+                           }
+                       ],
+    "optionalUnityReferences":  [
+
+                                ]
+}

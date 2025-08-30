@@ -1,0 +1,33 @@
+﻿{
+    "name":  "SevenCrowns.Systems",
+    "rootNamespace":  "SevenCrowns.Systems",
+    "references":  [
+                       "SevenCrowns.Core"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "noEngineReferences":  false,
+    "versionDefines":  [
+                           {
+                               "define":  "ADDRESSABLES",
+                               "name":  "Addressables",
+                               "expression":  "com.unity.addressables"
+                           }
+                       ],
+    "optionalUnityReferences":  [
+
+                                ]
+}

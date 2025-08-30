@@ -1,0 +1,33 @@
+﻿{
+    "name":  "SevenCrowns.Editor",
+    "rootNamespace":  "SevenCrowns.Editor",
+    "references":  [
+                       "SevenCrowns.Core",
+                       "SevenCrowns.Systems",
+                       "SevenCrowns.UI",
+                       "SevenCrowns.Config",
+                       "SevenCrowns.Gameplay"
+                   ],
+    "includePlatforms":  [
+                             "Editor"
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "noEngineReferences":  false,
+    "versionDefines":  [
+
+                       ],
+    "optionalUnityReferences":  [
+
+                                ]
+}

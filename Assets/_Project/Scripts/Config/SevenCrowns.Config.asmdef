@@ -1,0 +1,29 @@
+﻿{
+    "name":  "SevenCrowns.Config",
+    "rootNamespace":  "SevenCrowns.Config",
+    "references":  [
+                       "SevenCrowns.Core"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "noEngineReferences":  false,
+    "versionDefines":  [
+
+                       ],
+    "optionalUnityReferences":  [
+
+                                ]
+}

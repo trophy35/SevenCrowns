@@ -1,0 +1,31 @@
+﻿{
+    "name":  "SevenCrowns.Gameplay",
+    "rootNamespace":  "SevenCrowns.Gameplay",
+    "references":  [
+                       "SevenCrowns.Core",
+                       "SevenCrowns.Systems",
+                       "SevenCrowns.Config"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "noEngineReferences":  false,
+    "versionDefines":  [
+
+                       ],
+    "optionalUnityReferences":  [
+
+                                ]
+}
