@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+using SevenCrowns.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -19,7 +19,7 @@ namespace SevenCrowns.Systems
     public class BootLoaderController : MonoBehaviour
     {
         [Header("UI References")]
-        [SerializeField] private Image _progressFill; // Image with Fill Method set to Horizontal
+        [SerializeField] private UiProgressBar _progressBar; // Reusable progress bar component
         [SerializeField] private TextMeshProUGUI _statusText;
         [SerializeField] private GameObject _pressAnyKeyRoot;
 
@@ -37,23 +37,37 @@ namespace SevenCrowns.Systems
         private float _elapsed;
         private AudioSource _audio;
 
+        /// <summary>
+        /// Initializes the component, setting up UI elements and ensuring an AudioSource exists.
+        /// </summary>
         private void Awake()
         {
+            // Initially hide the "press any key" prompt
             if (_pressAnyKeyRoot != null) _pressAnyKeyRoot.SetActive(false);
-            SetProgressImmediate(0f);
+            // Set the progress bar to 0 immediately
+            if (_progressBar != null) _progressBar.SetImmediate(0f);
+            // Set the initial status text
             if (_statusText != null) _statusText.text = "Loading...";
 
             // Ensure we have an AudioSource to play UI SFX
             _audio = GetComponent<AudioSource>();
             if (_audio == null) _audio = gameObject.AddComponent<AudioSource>();
-            _audio.playOnAwake = false;
+            _audio.playOnAwake = false; // Disable Play On Awake to control playback manually
         }
 
+        /// <summary>
+        /// Starts the boot sequence coroutine.
+        /// </summary>
         private void Start()
         {
             StartCoroutine(RunBootSequence());
         }
 
+        /// <summary>
+        /// Executes the boot sequence, running preload tasks, updating the progress bar,
+        /// and loading the next scene after user input.
+        /// </summary>
+        /// <returns>An IEnumerator for the coroutine.</returns>
         private IEnumerator RunBootSequence()
         {
             _elapsed = 0f;
@@ -85,7 +99,7 @@ namespace SevenCrowns.Systems
                 {
                     local = Mathf.Clamp01(p);
                     float current = (accumulated + local * taskWeight) / totalWeight;
-                    SetProgressImmediate(current);
+                    if (_progressBar != null) _progressBar.SetSmooth(current);
                 });
 
                 while (routine.MoveNext())
@@ -96,11 +110,13 @@ namespace SevenCrowns.Systems
 
                 // Task finished: add its full weight
                 accumulated += taskWeight;
-                SetProgressImmediate(accumulated / totalWeight);
+                if (_progressBar != null) _progressBar.SetSmooth(accumulated / totalWeight);
                 yield return null;
             }
 
-            SetProgressImmediate(1f);
+            // Ensure the progress bar is at 100%
+            if (_progressBar != null) _progressBar.SetImmediate(1f);
+            // Hide the status text
             if (_statusText != null) _statusText.gameObject.SetActive(false);
 
             // Enforce minimal display duration to avoid flash
@@ -110,25 +126,23 @@ namespace SevenCrowns.Systems
                 yield return null;
             }
 
+            // Show the "press any key" prompt
             if (_pressAnyKeyRoot != null) _pressAnyKeyRoot.SetActive(true);
 
             // Wait for user input and play preloaded SFX if available
             yield return WaitForAnyKeyOrClickAndPlaySfx();
 
+            // Load the next scene
             if (!string.IsNullOrEmpty(_nextSceneName))
             {
                 SceneManager.LoadScene(_nextSceneName);
             }
         }
 
-        private void SetProgressImmediate(float value01)
-        {
-            if (_progressFill != null)
-            {
-                _progressFill.fillAmount = Mathf.Clamp01(value01);
-            }
-        }
-
+        /// <summary>
+        /// Waits for any key press or mouse click, and plays the "press any key" SFX if available.
+        /// </summary>
+        /// <returns>An IEnumerator for the coroutine.</returns>
         private IEnumerator WaitForAnyKeyOrClickAndPlaySfx()
         {
             while (true)
@@ -158,6 +172,9 @@ namespace SevenCrowns.Systems
             }
         }
 
+        /// <summary>
+        /// Tries to play the "press any key" SFX, if a key is specified and the AudioSource is available.
+        /// </summary>
         private void TryPlayPressAnyKeySfx()
         {
             if (string.IsNullOrEmpty(_pressAnyKeySfxKey) || _audio == null) return;
@@ -168,4 +185,3 @@ namespace SevenCrowns.Systems
         }
     }
 }
-

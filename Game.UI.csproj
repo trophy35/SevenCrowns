@@ -10,10 +10,10 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace>SevenCrowns</RootNamespace>
-    <ProjectGuid>{65217C3B-6966-C93D-9971-A8716020FF7F}</ProjectGuid>
+    <ProjectGuid>{9B567079-6673-7E94-D2E2-18E9B213FA56}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <AssemblyName>Game.Core</AssemblyName>
+    <AssemblyName>Game.UI</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <BaseDirectory>.</BaseDirectory>
@@ -61,15 +61,10 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.39f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Game\Scripts\Systems\PreloadRegistry.cs" />
-    <Compile Include="Assets\Game\Scripts\Systems\LifetimeContentService.cs" />
-    <Compile Include="Assets\Game\Scripts\Systems\IRuntimeWeightedTask.cs" />
-    <Compile Include="Assets\Game\Scripts\Systems\BootLoaderController.cs" />
-    <Compile Include="Assets\Game\Scripts\Systems\AddressablesLoadKeysTask.cs" />
-    <Compile Include="Assets\Game\Scripts\Systems\BasePreloadTask.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\UiProgressBar.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Game\Scripts\Systems\Game.Core.asmdef" />
+    <None Include="Assets\Game\Scripts\UI\Game.UI.asmdef" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -1094,22 +1089,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Unity.Addressables.csproj">
-      <Project>{E6E79FF3-D5CC-08CA-3691-1A2A26C81485}</Project>
-      <Name>Unity.Addressables</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.ResourceManager.csproj">
-      <Project>{14973E7D-610C-1E18-92D8-5FE64EB51B1F}</Project>
-      <Name>Unity.ResourceManager</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.InputSystem.csproj">
-      <Project>{3820DFFE-3BB3-BD2F-6959-428DAECE19C2}</Project>
-      <Name>Unity.InputSystem</Name>
-    </ProjectReference>
-    <ProjectReference Include="Game.UI.csproj">
-      <Project>{9B567079-6673-7E94-D2E2-18E9B213FA56}</Project>
-      <Name>Game.UI</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

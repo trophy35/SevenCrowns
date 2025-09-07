@@ -1,7 +1,9 @@
 {
   "name": "Game.UI",
-  "rootNamespace": "SevenCrowns.UI",
-  "references": [],
+  "rootNamespace": "SevenCrowns",
+  "references": [
+    "Unity.TextMeshPro"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
@@ -12,3 +14,4 @@
   "versionDefines": [],
   "noEngineReferences": false
 }
+
