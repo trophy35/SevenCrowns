@@ -3,7 +3,9 @@
   "rootNamespace": "SevenCrowns",
   "references": [
 	"Unity.Addressables",
-    "Unity.ResourceManager"
+    "Unity.ResourceManager",
+    "Unity.TextMeshPro",
+    "Unity.InputSystem"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
