@@ -33,6 +33,8 @@ namespace SevenCrowns.Systems
         [Header("SFX")]
         [SerializeField, Tooltip("Addressables key for the SFX played on any key press (optional)")]
         private string _pressAnyKeySfxKey = "SFX/click";
+        [SerializeField, Range(0f,1f), Tooltip("Volume scale for the SFX (0..1)")]
+        private float _pressAnyKeyVolume = 1f;
 
         private float _elapsed;
         private AudioSource _audio;
@@ -153,7 +155,25 @@ namespace SevenCrowns.Systems
                     (Mouse.current != null && (
                         Mouse.current.leftButton.wasPressedThisFrame ||
                         Mouse.current.rightButton.wasPressedThisFrame ||
-                        Mouse.current.middleButton.wasPressedThisFrame));
+                        Mouse.current.middleButton.wasPressedThisFrame)) ||
+                    (Gamepad.current != null && (
+                        Gamepad.current.buttonSouth.wasPressedThisFrame ||
+                        Gamepad.current.buttonNorth.wasPressedThisFrame ||
+                        Gamepad.current.buttonEast.wasPressedThisFrame ||
+                        Gamepad.current.buttonWest.wasPressedThisFrame ||
+                        Gamepad.current.startButton.wasPressedThisFrame ||
+                        Gamepad.current.selectButton.wasPressedThisFrame ||
+                        Gamepad.current.leftShoulder.wasPressedThisFrame ||
+                        Gamepad.current.rightShoulder.wasPressedThisFrame ||
+                        Gamepad.current.leftTrigger.wasPressedThisFrame ||
+                        Gamepad.current.rightTrigger.wasPressedThisFrame ||
+                        Gamepad.current.leftStickButton.wasPressedThisFrame ||
+                        Gamepad.current.rightStickButton.wasPressedThisFrame ||
+                        Gamepad.current.dpad.up.wasPressedThisFrame ||
+                        Gamepad.current.dpad.down.wasPressedThisFrame ||
+                        Gamepad.current.dpad.left.wasPressedThisFrame ||
+                        Gamepad.current.dpad.right.wasPressedThisFrame)) ||
+                    (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame);
                 if (pressed)
                 {
                     TryPlayPressAnyKeySfx();
@@ -180,7 +200,7 @@ namespace SevenCrowns.Systems
             if (string.IsNullOrEmpty(_pressAnyKeySfxKey) || _audio == null) return;
             if (PreloadRegistry.TryGet<AudioClip>(_pressAnyKeySfxKey, out var clip) && clip != null)
             {
-                _audio.PlayOneShot(clip);
+                _audio.PlayOneShot(clip, Mathf.Clamp01(_pressAnyKeyVolume));
             }
         }
     }
