@@ -7,6 +7,12 @@ using SevenCrowns.Systems; // PreloadRegistry lives here
 
 namespace SevenCrowns.Boot
 {
+    /// <summary>
+    /// A preload task that loads specific Addressables assets by their keys.
+    /// This task allows you to specify a list of Addressables keys, which will be loaded
+    /// during the preload phase. The loaded assets are then registered with the PreloadRegistry
+    /// to keep them alive and retrievable throughout the application's lifecycle.
+    /// </summary>
     [CreateAssetMenu(
         fileName = "AddressablesLoadKeysTask",
         menuName = "SevenCrowns/Boot/Addressables Load Keys Task")]
@@ -18,6 +24,11 @@ namespace SevenCrowns.Boot
         /// <summary>Runtime weight = number of keys (1 per asset).</summary>
         public float GetRuntimeWeight() => Mathf.Max(1, _keys?.Count ?? 0);
 
+        /// <summary>
+        /// Executes the preload task, loading the specified Addressables assets.
+        /// </summary>
+        /// <param name="reportProgress">An Action delegate that can be called to report progress.</param>
+        /// <returns>An IEnumerator for the coroutine.</returns>
         public override IEnumerator Run(Action<float> reportProgress)
         {
 #if ADDRESSABLES
@@ -48,12 +59,16 @@ namespace SevenCrowns.Boot
 
             reportProgress?.Invoke(1f);
 #else
+            // If Addressables is not enabled, report completion immediately.
             reportProgress?.Invoke(1f);
             yield return null;
 #endif
         }
 
 #if UNITY_EDITOR
+        /// <summary>
+        /// Called during editor validation to update the weight based on the number of keys.
+        /// </summary>
         public override void OnValidate()
         {
             try
