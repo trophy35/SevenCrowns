@@ -64,10 +64,13 @@
     <Compile Include="Assets\Game\Scripts\Systems\LocalizationPreloadTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\PreloadRegistry.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\LifetimeContentService.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\SceneFlowConfig.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\IRuntimeWeightedTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\BootLoaderController.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\SceneTransitionFader.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\AddressablesLoadKeysTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\BasePreloadTask.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\SceneFlowController.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Game\Scripts\Systems\Game.Core.asmdef" />

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using SevenCrowns.SceneFlow;
 using SevenCrowns.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -153,7 +154,7 @@ namespace SevenCrowns.Systems
             // Load the next scene
             if (!string.IsNullOrEmpty(_nextSceneName))
             {
-                SceneManager.LoadScene(_nextSceneName);
+                SceneFlowController.GoToBySceneName(_nextSceneName);
             }
         }
 
