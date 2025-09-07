@@ -1,0 +1,461 @@
+
+
+Batch #1 - Project Initialization & Boot Flow
+
+List of tasks (Order,Title,Description,Priority,Effort):
+#1,Create Unity project,"Initialize Unity 6 LTS empty project with URP template. #tech #setup",P0,1
+#2,Setup Git repo,"Create git repo with .gitignore (Unity), enable LFS for binaries, push to remote. #tech #setup",P0,1
+#3,Asmdef Core,"Create SevenCrowns.Core asmdef in Assets/Game/Script/Systems. #tech #architecture",P0,1
+#4,Addressables init,"Enable Addressables package, create Addressables groups (UI, Audio, Boot). #tech #setup",P0,2
+#5,Preload base class,"Implement BasePreloadTask ScriptableObject with DisplayName+Weight. Deliverable: compiles. #tech",P0,1
+#6,Preload weighted interface,"Implement IRuntimeWeightedTask with GetRuntimeWeight(). Deliverable: compiles. #tech",P0,1
+#7,Preload registry,"Implement PreloadRegistry static class with Register, TryGet, Release, ReleaseAll. #tech #memory",P0,2
+#8,Preload keys task,"Implement AddressablesLoadKeysTask with list of keys, runs loads in parallel, reports progress. #tech",P0,2
+#9,Boot loader UI prefab,"Create Boot scene canvas with ProgressBar (fill), Status text (TMP), 'Press any key' root. #uiux",P0,2
+#10,Progress bar script,"Implement UiProgressBar with SetImmediate and SetSmooth methods. Deliverable: prefab updates correctly. #uiux #tech",P0,2
+#11,Boot loader controller,"Implement BootLoaderController with coroutine to run tasks, update progress, enforce min screen time. #tech",P0,3
+#12,Boot any-key input,"Implement WaitForAnyKeyOrClickAndPlaySfx (InputSystem + legacy). Deliverable: triggers SFX. #tech #uiux #audio",P0,2
+#13,Localization preload,"Create preload task to init Localization, set locale, preload Boot+UI tables. #tech #localization",P0,2
+#14,String tables,"Create EN+FR string tables Boot+UI.Common with keys 'Loading','PressAnyKey'. #content #localization",P0,2
+#15,Boot SFX,"Import simple click SFX, mark as Addressable with key SFX/click, assign to preload task. #content #audio",P0,1
+#16,SceneFlow config,"Create SceneFlowConfig asset, SceneTransitionFader prefab, and SceneFlowController in Boot. #tech #architecture",P0,3
+#17,Transition fader prefab,"Canvas overlay prefab with black Image + CanvasGroup; assign in SceneFlowController. #uiux",P0,1
+#18,Boot to MainMenu,"Configure BootLoaderController nextScene=MainMenu, ensure flow transitions with fade. #tech",P0,1
+
+Batch #1 Goal:
+By the end, we have a Boot scene that:
+- Preloads a click SFX + string tables,
+- Shows a progress bar and localized status text,
+- Waits for any key press,
+- Plays the click SFX,
+- Transitions with fade to MainMenu.
+
+--------------------------------------------------
+
+Batch #2: World Map Foundation
+
+List of tasks (Title,Description,Priority,Effort):
+Create WorldMap scene,"Create empty WorldMap scene with root GameObject 'WorldMap' and folders (_Code,_Art,_Prefabs,_Data). #tech #setup",P0,1
+GridCoord struct,"Implement immutable GridCoord(x,y) with equals/hash/toString. Unit tests included. #tech #architecture",P0,2
+GridBounds,"Implement GridBounds(width,height,Contains/Clamp). Unit tests. #tech #architecture",P0,2
+TileData ScriptableObject,"Create TileData SO with terrainType, moveCostCardinal, moveCostDiagonal, enterMask, flags. #tech #content",P0,2
+Terrain SO authoring,"Author SOs for Grass,Road,Forest,Mountain,Water,CliffRamp with placeholder values. #content",P0,2
+Tile Palette (URP),"Create Tilemap + Palette with placeholder sprites (solid colors); commit as assets. #content #uiux",P0,2
+World tilemap prefab,"Prefab with Grid + Tilemap (ground) + Tilemap (overlay). Deliverable: placeable in scene. #tech",P0,2
+Pathfinding core (A*),"Implement AStarPathfinder with weighted costs from TileData; API GetPath(start,end,mask). #tech #gameplay",P0,5
+Pathfinding unit tests,"Add tests for straight/diagonal/blocked paths and tie-breaking. #qa #tech",P0,2
+MovementPoints service,"Create MapMovementService: daily pool=240, Spend/Refund, events for UI. #tech #gameplay",P0,3
+Hero map agent,"HeroMapAgent reads path, consumes MP per step, stops when insufficient MP; exposes RemainingMP. #tech #gameplay",P0,3
+Click-to-move command,"Raycast grid on click, compute path, feed to HeroMapAgent; cancel on right-click. #tech #uiux",P0,3
+Path preview line,"Draw preview (LineRenderer or overlay tiles) from hero to target; clears on cancel. #uiux",P1,2
+Diagonal rule toggle,"Config to allow/forbid diagonal per terrain; verify costs from TileData; unit test. #tech #design",P1,2
+EnterMask cliffs,"Implement directional EnterMask (N/E/S/W) for cliff ramps; block illegal entries. #tech #gameplay",P0,3
+Movement halt feedback,"On MP exhaustion, flash last reachable tile and play UI blip SFX (placeholder). #uiux #sfx",P2,1
+Turn rollover (day),"Implement NextDay() resets MP to full; integrates with MovementPoints events. #tech",P0,2
+Camera pan/zoom,"Edge pan + WASD + wheel zoom clamped to bounds; inspector params; QA checklist. #uiux #tech",P0,3
+Cursor states,"Change cursor on walkable/blocked/unknown; Scriptable cursor assets. #uiux",P2,1
+FoW: data layer,"Create FogOfWarGrid (enum: Unknown, Explored, Visible); serializable array sized by GridBounds. #tech",P0,3
+FoW: radius algorithm,"Compute visible cells by BFS/diamond radius from hero; plug vision range var; unit tests. #tech #gameplay",P0,3
+FoW: blockers pass,"Add simple LoS blocking by terrain flag (e.g., mountain blocks). Test corridors. #tech #gameplay",P1,3
+FoW: runtime update,"Hook hero move event → recompute Visible; merge into Explored; raise changed rect event. #tech",P0,2
+FoW: overlay tiles,"Create 3 overlay sprites: unknown (black), explored (dim), visible (clear). Imported as Sprite2D. #content",P0,2
+FoW: renderer,"Tilemap overlay painter that maps FoW state to overlay tiles; diff-paints changed cells only. #tech #uiux",P0,3
+FoW: performance budget,"Add micro-profiler markers; ensure ≤1ms per 100×100 grid at 60fps with diff-updates. #tech #qa",P1,2
+FoW: toggles/dev tools,"Editor hotkey to reveal all; debug gizmos to show vision radius. #tech #qa",P2,1
+Terrain tooltip,"On hover, show terrain name + costs (cardinal/diagonal) via unified tooltip system. #uiux",P1,2
+Hero MP HUD,"Small widget near hero or topbar: current MP/240 with color gradation; listens to MovementPoints. #uiux #tech",P0,2
+Input blocker states,"Block click-to-move during UI modal (menus); central InputGate service. #tech",P1,2
+Hero idle anim hook,"Swap placeholder sprite/anim when hero stops; animator state machine with Idle/Walk. #content #uiux",P2,2
+SFX: step on tile,"Play soft footstep every N tiles; random clip picker; volume scaled by speed. #audio",P2,2
+VFX: path pulse,"Subtle pulsing highlight on preview path tiles; material + shader graph setup. #vfx #uiux",P2,3
+Road speed modifier,"Implement road tag that reduces effective cost (e.g., 8/11); verify via tests. #tech #gameplay",P0,2
+Forest slow modifier,"Implement forest cost 15/21; ensure artifacts/skills can hook later. #tech #gameplay",P0,2
+Mountain impassable,"Block mountains unless special flag; enter attempts show blocked tooltip. #tech #gameplay #uiux",P0,1
+Water impassable (MVP),"Mark water unwalkable; pathfinder treats as wall; blocked feedback. #tech #gameplay",P0,1
+Cliff ramp visuals,"Create ramp sprite variants (N/E/S/W) and place on overlay tilemap; art placeholder ok. #content #uiux",P1,2
+World clock service,"Central Day counter; raises OnNewDay; future Week handling; unit test. #tech #architecture",P0,2
+Hook MP reset to clock,"Subscribe MovementPoints to WorldClock.OnNewDay; verify MP=240 at dawn. #tech",P0,1
+Mini batch test map,"Author 32×32 sandbox with all terrains, a few cliffs/ramps; commit as asset. #content #qa",P0,2
+QA checklist: map move,"Test cases: diagonal on/off, MP exhaust stop, blocked tiles, FoW transitions, perf at 100×100. #qa",P0,2
+
+Batch #2 Goal:
+Have a playable World Map where the hero can click-to-move over grid tiles with correct terrain costs, 
+MP reset per day, and a Fog of War that updates visually (unknown/explored/visible) with performant diff-painting.
+
+--------------------------------------------------
+
+Batch #3: Resources, Mines & Farms
+
+List of tasks (Title,Description,Priority,Effort):
+Resource ScriptableObjects,"Create 7 SO assets (Gold, Wood, Iron, Coal, Diamonds, Ether, Sulfur) with ID/icon. #tech #content #batch3",P0,2
+Resource wallet service,"Implement ResourceWallet (Add, Spend, Has, Changed events). Unit tests for add/spend logic. #tech #batch3",P0,3
+Top bar UI,"Bind 7 resources + population to top bar UI; reactive updates; TMP text placeholders. #uiux #batch3",P0,3
+Tooltip: resource,"Show tooltip with resource name + amount on hover over top bar icons. #uiux #batch3",P1,2
+On-map resource prefab,"Prefab for pickup pile (icon+collider); Addressable; placeholder sprite. #content #batch3",P0,2
+On-map resource pickup logic,"When hero enters pile tile → add to wallet, play SFX/VFX, destroy prefab. #tech #gameplay #batch3",P0,3
+SFX: resource pickup,"Import placeholder coin/wood pickup SFX, mark Addressable, play on pickup. #audio #batch3",P2,1
+VFX: resource pickup,"Simple particle burst prefab (colored by resource type) triggered on pickup. #vfx #batch3",P2,2
+Mine prefab,"Prefab with sprite/flag slot; collider; Addressable; variants per resource. #content #batch3",P0,3
+Mine capture logic,"Hero enters neutral mine tile → change owner color; add to owned mines list. #tech #gameplay #batch3",P0,3
+Mine production service,"At new day tick, add 1 resource/day for each owned mine; integrated with ResourceWallet. #tech #batch3",P0,3
+Mine UI flag,"Change mine prefab flag color based on owner faction; update on capture. #uiux #batch3",P1,2
+Farm prefab,"Prefab with field sprite + fence; Addressable; collider; capture point. #content #batch3",P0,2
+Farm capture logic,"Hero enters neutral farm tile → change owner color; add to owned farms list. #tech #gameplay #batch3",P0,3
+Farm production service,"At new week tick, compute population = 20 × farmsOwned; resets weekly. #tech #batch3",P0,3
+Farm UI flag,"Change farm prefab flag color based on owner faction; update on capture. #uiux #batch3",P1,2
+Weekly reset integration,"Hook WorldClock.OnNewWeek to recalc farms → availablePopulation; UI updates. #tech #batch3",P0,2
+Tooltip: mine/farm,"On hover show type, production rate, current owner. #uiux #batch3",P1,2
+Hero recruitment check,"Update recruitment validation: require enough gold/resources AND population. #tech #gameplay #batch3",P0,3
+QA checklist: resources,"Test: pickup pile adds correctly, mine ticks daily, farm ticks weekly, tooltips accurate. #qa #batch3",P0,2
+
+Batch #3 Goal:
+- Resources are defined, collected, and displayed.
+- Mines and farms can be captured, produce resources/population on ticks, and update UI/tooltips.
+- Pickup piles give immediate feedback (SFX/VFX).
+- Recruitment respects population limits.
+
+--------------------------------------------------
+
+Batch #4: City Core
+
+List of tasks (Title,Description,Priority,Effort):
+City data model,"Implement City class with Stage (Village/City/Fortress/Capital), buildings list, owner faction. #tech #batch4",P0,3
+City stage upgrade rules,"Implement rules: cost+prereqs for Village→City→Fortress→Capital; unit tests. #tech #gameplay #batch4",P0,3
+City income service,"At new day tick, add gold income by stage: +100/+250/+500/+1000. #tech #batch4",P0,2
+City prefab,"Prefab with base sprite, flag, clickable collider; Addressable; placeholder art. #content #batch4",P0,2
+City ownership logic,"When captured, change owner faction, reset garrison, update flag color. #tech #gameplay #batch4",P0,3
+City capture feedback,"On capture → play fanfare SFX + confetti VFX; placeholder assets. #audio #vfx #batch4",P1,2
+City screen UI scaffold,"Create canvas panel with city name, stage icon, resources, tabs for Build/Recruit/Hero. #uiux #batch4",P0,3
+Building system core,"Implement Building class with ID, Level, Cost, Effects; upgrade rules; events. #tech #batch4",P0,3
+Building catalog SOs,"ScriptableObjects for Farms I/II/III, Market, Forge, Barracks, Archery, Monastery, etc. #content #batch4",P0,3
+Building UI cards,"Prefab for building card (icon, name, cost, build button); grayed out if locked. #uiux #batch4",P0,2
+Building construction flow,"Click build button → validate cost, deduct resources, apply effect, update city. #tech #uiux #batch4",P0,3
+Recruitment panel UI,"Create recruit tab with unit cards, cost (gold+res+population), quantity slider. #uiux #batch4",P0,3
+Recruitment logic,"Deduct cost+population, add unit stack to hero garrison; validation errors. #tech #gameplay #batch4",P0,3
+Unit expertise levels,"Enable unit recruits at Level I/II/III based on building upgrade; link SOs. #tech #batch4",P0,3
+Tavern prefab,"Building card for Tavern; allows hero recruitment (hook later). #content #batch4",P1,2
+Hero recruitment UI,"Tavern tab: list candidate heroes with cost; hire button; add to hero pool. #uiux #batch4",P1,3
+Hero recruitment logic,"On hire → deduct gold, spawn hero in city, assign basic army. #tech #gameplay #batch4",P1,3
+City defense building SOs,"ScriptableObjects for Walls, Towers, Moat; stats for HP, attack dmg, slow effect. #content #batch4",P1,3
+City defense build flow,"Allow purchase of defenses via build tab; update City data + siege battlefield prefab. #tech #batch4",P1,3
+Tooltip: city buildings,"On hover show building name, cost, effect, prereqs; reuse tooltip system. #uiux #batch4",P1,2
+QA checklist: city core,"Test stage upgrades, building costs, income tick, recruitment validation, defense purchase. #qa #batch4",P0,2
+
+Batch #4 Goal:
+- City system is functional: stages, income, construction, unit recruitment, and defenses.
+- UI panels let player see and build.
+- Units can be recruited with correct costs (Gold + resources + population).
+- Capture/ownership changes work with feedback.
+
+--------------------------------------------------
+
+Batch #5: Hero Progression
+
+List of tasks (Title,Description,Priority,Effort):
+Hero data model,"Implement Hero class with Stats (ATK, DEF, MAG, KNW), XP, Level, TalentPoints. #tech #batch5",P0,3
+Hero prefab,"Prefab with portrait sprite, selection collider, flag color; Addressable; placeholder art. #content #batch5",P0,2
+Hero XP curve,"Define XP table L1→L30; +1 talent point per level; unit tests for progression. #design #tech #batch5",P0,2
+Hero level-up flow,"On XP gain check threshold → increment Level, award point, play SFX/VFX. #tech #uiux #audio #batch5",P0,3
+Talent tree data,"ScriptableObjects for 3 branches × 5 nodes (Combat, Magic, Strategist) with effects. #content #batch5",P0,3
+Talent tree UI,"Panel with branch tabs, node icons, tooltips; supports unlock/locked states. #uiux #batch5",P0,3
+Talent application logic,"Apply node effects to Hero stats/economy/combat; tested with sample builds. #tech #gameplay #batch5",P0,3
+Secondary skill system,"Implement 6 skills (Pathfinding, Logistics, Command, Elemental, Diplomacy, Economy) with Basic/Adv/Exp levels. #tech #batch5",P0,3
+Secondary skill UI,"Panel listing acquired skills; hover tooltip shows bonuses and current tier. #uiux #batch5",P1,2
+Hero inventory model,"7 slots: Head, Body, Weapon, Boots, 2 Rings, Amulet; recalc stats on equip. #tech #batch5",P0,3
+Artifact SOs,"ScriptableObjects for 11 MVP artifacts (stat/move buffs); icons + descriptions. #content #batch5",P0,3
+Inventory UI,"Grid with 7 slots; drag/drop artifacts; tooltips show stat boosts. #uiux #batch5",P0,3
+Artifact drop logic,"On pickup from map → add to inventory; on hero death → artifacts dropped. #tech #gameplay #batch5",P0,3
+Artifact equip feedback,"Play equip SFX + glow VFX on slot; reversible unequip. #audio #vfx #batch5",P2,2
+Spellbook model,"Hero stores known spells list; each entry has mana cost + Ether unlock flag. #tech #batch5",P0,3
+Spellbook UI,"Tabs by magic school; show known spells; locked spells grayed with Ether cost. #uiux #batch5",P0,3
+Spell unlock logic,"Spend Ether at city building to unlock spell globally; add to hero spellbook. #tech #batch5",P0,3
+Mana pool system,"Hero KNW stat × 10 = max Mana; casting reduces pool; insufficient disables buttons. #tech #batch5",P0,2
+Tooltip: hero panel,"On hover show ATK/DEF/MAG/KNW effects; consistent with stat descriptions. #uiux #batch5",P1,2
+QA checklist: hero prog,"Test XP gain, level-up, talent unlocks, secondary skills, artifact equips, spell unlocks. #qa #batch5",P0,2
+
+Batch #5 Goal:
+- Heroes gain XP, level up, spend points in talents and secondary skills.
+- Heroes can equip artifacts (7 slots) with visual/audio feedback.
+- Spellbook UI shows known/locked spells with Ether unlocks.
+- Mana pool works and ties into spellcasting.
+
+--------------------------------------------------
+
+Batch #6: Magic & Spells
+
+List of tasks (Title,Description,Priority,Effort):
+Title,Description,Priority,Effort
+Magic school ScriptableObjects,"Create 7 ScriptableObjects (Black, White, Fire, Earth, Water, Air, Universal) with ID/icon/description. #content #batch6",P0,2
+Spell ScriptableObject template,"Define base Spell ScriptableObject with fields: name, school, manaCost, etherCost, effectType, basePower. #tech #batch6",P0,3
+Spell assets (MVP 14),"Author 14 Spell ScriptableObjects (2 per school) with placeholder values. #content #batch6",P0,3
+Spellbook integration,"Hook hero Spellbook UI to show spells from ScriptableObjects, grayed if locked. #uiux #batch6",P0,3
+Mana pool system,"Implement mana pool logic (max=KNW×10, current, spend, regen per day). #tech #batch6",P0,2
+Mana bar UI,"Add mana bar to hero panel + combat UI; updates when casting or resting. #uiux #batch6",P0,2
+Ether unlock logic,"At city magic buildings, allow spending Ether to unlock spell globally; update Spellbook. #tech #batch6",P0,3
+Unlock feedback,"On spell unlock → play sparkle VFX + chime SFX; update UI instantly. #vfx #audio #batch6",P1,2
+Spell targeting framework,"Implement target types (Single, Area, Global, Map); selection cursor + highlight. #tech #gameplay #batch6",P0,5
+Spell effect framework,"Resolve effects: damage, heal, buff, debuff; scaling by MAG and mastery bonus. #tech #gameplay #batch6",P0,5
+Magic mastery model,"Each school 0–10; gain XP when casting spells; +5% power per level; unlock thresholds (1/3/10). #tech #batch6",P0,3
+Magic mastery UI,"Progress bars per school in Spellbook; tooltip: bonus power and next unlock. #uiux #batch6",P0,3
+Combat spellcasting flow,"Hero appears in initiative bar; on turn → choose spell; preview effect; cast animation; apply effect. #tech #uiux #batch6",P0,5
+Combat cast SFX,"Import placeholder cast sounds per school (fire whoosh, lightning crack, heal chime, etc.). #audio #batch6",P1,2
+Combat cast VFX,"Basic particle prefabs for fireball, lightning bolt, heal glow, etc.; linked to Spell assets. #vfx #batch6",P1,3
+Universal map spells,"Implement Teleportation (move hero instantly) + Remote Resource Harvest; consume mana + Ether. #tech #gameplay #batch6",P0,5
+Map spell feedback,"On map spell cast → flash VFX (teleport blink, resource sparkle) + UI log entry. #vfx #uiux #batch6",P1,2
+Tooltip: spell,"Hover shows school, mana cost, effect, mastery scaling, unlock status. #uiux #batch6",P1,2
+QA checklist: magic,"Test: casting costs mana, Ether unlock works, mastery XP increments, combat spells resolve, map spells trigger. #qa #batch6",P0,2
+
+Batch #6 Goal:
+- Magic system is fully functional:
+- 7 schools, 14 spells, usage-based mastery.
+- Hero can cast in combat with correct targeting, SFX/VFX.
+- Ether unlock works via city buildings.
+- Universal spells affect the strategic map.
+- UI shows mana bar, spellbook, and mastery progress.
+
+--------------------------------------------------
+
+Batch #7: Combat Core
+
+List of tasks (Title,Description,Priority,Effort):
+Unit ScriptableObject template,"Define base Unit ScriptableObject with stats (HP, ATK, DEF, DMG min/max, Speed, Initiative, Pop cost) and prefab refs. #tech #batch7",P0,3
+Knight faction units (7),"Create 7 Knight unit ScriptableObjects (Peasant→Angel) with placeholder stats. #content #batch7",P0,3
+Unit expertise levels,"Add Level I/II/III variants for each Knight unit; link to building requirements. #tech #batch7",P0,3
+Battlefield scene prefab,"Create Combat scene with 10×12 tile grid, deploy zones (attacker left, defender right). #tech #content #batch7",P0,3
+Grid renderer,"Visualize combat grid tiles with basic highlight states (normal, reachable, blocked). #uiux #batch7",P0,3
+Initiative scheduler,"Implement queue system: unit initiative → determines frequency of turns; hero fixed value. #tech #gameplay #batch7",P0,5
+Initiative bar UI,"Horizontal bar showing upcoming turns with unit portraits/hero icon; updates dynamically. #uiux #batch7",P0,3
+Unit stack controller,"Script controlling movement, attack, defend, wait, retaliation; bound to ScriptableObject stats. #tech #gameplay #batch7",P0,5
+Ranged attack rules,"Implement LoS check, range penalties, elevation bonuses; unit tests for Peasant vs Archer. #tech #batch7",P0,3
+Melee attack resolution,"Compute damage = (ATK vs DEF) × stack size ± RNG; apply HP loss, casualties. #tech #batch7",P0,5
+Defend & wait actions,"Implement Defend (+DEF until next turn) and Wait (delayed reinsert into initiative queue). #tech #gameplay #batch7",P0,2
+Unit abilities framework,"Add 1 ability per unit (active/passive); cooldowns/usage limits; tied to expertise level. #tech #gameplay #batch7",P0,5
+Unit ability VFX/SFX,"Add simple effects (glow, sound cue) when ability used; placeholder assets ok. #vfx #audio #batch7",P1,2
+Hero turn integration,"Hero acts on initiative bar; can cast spell (hook Batch 6); no direct attacks. #tech #batch7",P0,3
+Hero presence UI,"Show hero portrait + mana bar in combat UI; cast button opens spellbook. #uiux #batch7",P0,2
+Combat tooltip system,"Hover unit → show HP, stack size, ability, damage preview when targeting. #uiux #batch7",P0,3
+Victory detection,"Check when all enemy stacks dead → Victory; assign rewards (XP/resources). #tech #batch7",P0,2
+Defeat detection,"Check when all allied stacks dead → Defeat; trigger results screen. #tech #batch7",P0,2
+Results screen,"Summary UI: surviving units, losses, XP gained, rewards; Continue/Quit buttons. #uiux #batch7",P0,3
+Combat SFX pack,"Placeholder sounds: attack hit, sword swing, bow shot, unit death, victory/defeat stingers. #audio #batch7",P2,3
+Combat VFX pack,"Placeholder VFX: melee hit flash, arrow trail, heal sparkle, death puff; reusable prefabs. #vfx #batch7",P2,3
+QA checklist: combat core,"Test turns, initiative updates, damage resolution, hero casting, unit abilities, victory/defeat flow. #qa #batch7",P0,3
+
+Batch #7 Goal:
+A working combat system with:
+Knights faction units (T1–T7, with expertise levels).
+Battlefield grid + initiative bar.
+Movement, melee/ranged combat, defend/wait.
+One special ability per unit.
+Hero spellcasting integrated (Batch 6).
+Victory/defeat detection with results screen.
+
+--------------------------------------------------
+
+Batch #8: City Defenses & Siege Combat
+
+List of tasks (Title,Description,Priority,Effort):
+Defense building ScriptableObjects,"Create ScriptableObjects for Walls, Reinforced Walls, Elite Walls, Towers, Moat, Magic Gate with HP/attack values. #content #batch8",P0,3
+City defense model,"Extend City data model to include built defenses (walls, towers, moat). #tech #batch8",P0,2
+Siege battlefield prefab,"Duplicate combat grid prefab; add wall row, gate, tower slots, moat tiles. #content #batch8",P0,3
+Wall tile renderer,"Render walls/gate as blocking tiles; assign HP and breakable status. #tech #batch8",P0,3
+Tower entity controller,"Script for tower auto-attack each round; damage scaling by City stage. #tech #batch8",P0,3
+Tower attack VFX/SFX,"Add projectile prefab + impact SFX for tower attacks. #vfx #audio #batch8",P1,2
+Moat tile effect,"Mark moat tiles → slow movement, apply % damage when crossed; unit tests. #tech #batch8",P0,3
+Moat visuals,"Simple water trench sprite for moat row; tilemap overlay. #content #batch8",P1,2
+Magic gate effect,"Gate reduces physical dmg by 50%; flag as magical barrier; tested in combat. #tech #batch8",P1,3
+Defense construction UI,"Extend city build tab with cards for Walls, Towers, Moat, Gate; grayed if stage locked. #uiux #batch8",P0,3
+Defense build logic,"On click build → validate cost, deduct resources, update City model; rebuild siege battlefield prefab. #tech #batch8",P0,3
+Siege combat rules,"If attacker fights city with defenses → load siege battlefield prefab with correct structures. #tech #gameplay #batch8",P0,3
+Siege capture flow,"On victory, attacker takes city; on defeat, defender retains; handle wall/gate state reset. #tech #batch8",P0,2
+Defense tooltip,"On hover in city screen, show HP/damage of defenses + costs. #uiux #batch8",P1,2
+Siege VFX pack,"Placeholder VFX for wall cracks, gate destruction, moat splash. #vfx #batch8",P2,3
+Siege SFX pack,"Placeholder SFX for wall hit, gate break, tower crumble. #audio #batch8",P2,2
+QA checklist: siege,"Test: wall blocks movement, gate destructible, towers auto-fire, moat slows/damages, capture flow correct. #qa #batch8",P0,3
+
+Batch #8 Goal:
+Cities can build defenses (walls, towers, moat, gate).
+Siege battles load a special battlefield variant with these defenses.
+Defenses function: walls block, towers fire, moats slow/damage, gates reduce dmg.
+Capture flow integrated with city ownership.
+
+--------------------------------------------------
+
+Batch #9: Quests & Special Map Objects
+
+List of tasks (Title,Description,Priority,Effort):
+Quest data model,"Implement Quest class (ID, description, type, objectives, rewards, state). #tech #batch9",P0,3
+Quest ScriptableObjects,"Create ScriptableObjects for MVP quests (Primary: Capture Capital, Secondary: Mine, Artifact). #content #batch9",P0,3
+Quest manager service,"Central manager tracks active quests, updates state, grants rewards. #tech #batch9",P0,3
+Quest log UI,"Panel listing primary and secondary quests with progress + rewards; toggle via hotkey. #uiux #batch9",P0,3
+Quest tooltip,"Hover over quest log entry shows full description, requirements, rewards. #uiux #batch9",P1,2
+POI: Tree of Wisdom,"Interactable: pay 2000 gold + 1 diamond → +1 hero level; once per hero. #content #gameplay #batch9",P0,2
+POI: XP Menhir,"Interactable: grants +500 hero XP; once per hero. #content #gameplay #batch9",P0,2
+POI: Fountain of Vitality,"Weekly use: restores hero MP and heals army; adds UI feedback. #content #gameplay #batch9",P0,2
+POI: Obelisk,"Once per hero: reveals fog in radius or gives clue to hidden artifact. #content #gameplay #batch9",P0,2
+POI: Fortune Altar,"Weekly use: grants +1 Luck for next combat; adds buff icon. #content #gameplay #batch9",P1,2
+POI: Chapelle oubliée,"Weekly use: blessing +1 Morale for 3 combats; small SFX/VFX. #content #gameplay #batch9",P1,2
+Ruins prefab,"Prefab with ruin sprite + collider; triggers event when entered. #content #batch9",P0,2
+Grottos prefab,"Prefab with cave sprite + collider; triggers event when entered. #content #batch9",P0,2
+Ruins interaction,"Hero enters → trigger combat or reward (artifact/resources); tracked by QuestManager. #tech #gameplay #batch9",P0,3
+Grottos interaction,"Hero enters → trigger combat or reward; randomization allowed. #tech #gameplay #batch9",P0,3
+POI capture feedback,"On use → play VFX (glow) + SFX (chime); once or cooldown applied. #audio #vfx #batch9",P1,2
+QA checklist: POIs & quests,"Test: Tree of Wisdom costs, Menhir XP, Fountain weekly reset, Obelisk reveal, Ruins combat, Quest rewards. #qa #batch9",P0,3
+
+Batch #9 Goal:
+- Quest system MVP working with log UI and tooltip details.
+- Special map objects functional: Tree of Wisdom, Menhir, Fountain, Obelisk, Ruins, Grottos.
+- Rewards integrated: XP, level-up, resources, artifacts.
+- Player sees quests and progress clearly in log.
+
+--------------------------------------------------
+
+Batch #10: Meta-progression
+
+List of tasks (Title,Description,Priority,Effort):
+Ether resource model,"Implement Ether as special resource (persistent across runs); store in MetaProfile. #tech #batch10",P0,3
+MetaProfile save system,"Create MetaProfile save file storing unlocked spells/artifacts/factions + Ether. #tech #batch10",P0,3
+End-of-run summary,"On game end (victory/defeat), compute Ether earned + discovered artifacts; push to MetaProfile. #tech #batch10",P0,3
+Unlockable ScriptableObject,"Define Unlockable ScriptableObject (type=Artifact/Spell/Faction, cost Ether, effect). #tech #batch10",P0,3
+Unlock catalog assets,"Create Unlockable ScriptableObjects for MVP: 5 artifacts, 6 spells, 1 faction. #content #batch10",P0,3
+Unlock manager,"Service to query unlockables, check if purchased, deduct Ether, mark permanent. #tech #batch10",P0,3
+Unlock UI screen,"Panel listing available unlocks with icons, Ether cost, purchase button; lock overlay if unaffordable. #uiux #batch10",P0,3
+Unlock tooltip,"Hover shows description, effects, and permanent availability across runs. #uiux #batch10",P1,2
+Unlock purchase flow,"On purchase click → validate Ether, deduct, mark as unlocked, play success VFX/SFX. #tech #uiux #audio #batch10",P0,3
+Unlock feedback,"Success → sparkle VFX + chime SFX; failure (not enough Ether) → error SFX + shake animation. #vfx #audio #uiux #batch10",P1,2
+Campaign gating logic,"Certain campaign chapters check for unlock prerequisites (artifact/spell/faction) before playable. #tech #batch10",P0,3
+QA checklist: meta,"Test: Ether accrual, end-of-run summary, purchase unlocks, save/load MetaProfile, campaign gating. #qa #batch10",P0,3
+
+Batch #10 Goal:
+- Ether introduced as persistent meta-currency.
+- Unlocks (artifacts, spells, 1 new faction) purchasable with Ether.
+- End-of-run summary grants Ether + discovered items.
+- Unlocks are saved permanently and visible in UI.
+- Campaign chapters gated by required unlocks.
+
+--------------------------------------------------
+
+Batch #11: AI Improvements
+
+List of tasks (Title,Description,Priority,Effort):
+AI service core,"Implement AIStrategicController to manage enemy hero actions per day. #tech #batch11",P0,3
+AI exploration logic,"AI explores nearest unexplored tiles with priority for resources/mines within radius. #ai #batch11",P0,3
+AI resource capture,"On entering neutral mine/farm, capture and mark as owned; update economy. #ai #batch11",P0,2
+AI recruitment logic,"Each new week, AI recruits as many units as affordable given Gold + population. #ai #batch11",P0,3
+AI city defense,"If threatened (enemy hero within X tiles) → retreat hero to city and garrison. #ai #batch11",P0,2
+AI attack decision,"If AI army power ≥120% of enemy hero army → pursue and attack; else avoid. #ai #batch11",P0,3
+AI retreat decision,"If losing in combat, chance to flee and preserve hero; drop some resources. #ai #batch11",P1,2
+Combat AI target selection,"Choose target: prioritize ranged > lowest HP > nearest; tie-break random. #ai #batch11",P0,3
+Combat AI movement,"Move toward reachable target, avoid wasting turns on blocked paths. #ai #batch11",P0,2
+Combat AI ability use,"Trigger unit special ability when condition met (CD ready, target valid). #ai #batch11",P0,3
+Combat AI hero casting,"Enemy hero casts random useful spell weighted by type (damage>buff>debuff). #ai #batch11",P0,3
+Neutral guardian presets,"Define weak/medium/strong neutral stacks per resource/POI; link via ScriptableObjects. #content #ai #batch11",P0,3
+Neutral guardian tooltip,"Tooltip shows difficulty rating (Easy/Moderate/Hard/Impossible) using power ratio calc. #uiux #batch11",P0,2
+QA checklist: AI,"Test: AI explores, captures, recruits, attacks/defends logically; combat AI targets + casts correctly. #qa #batch11",P0,3
+
+Batch #11 Goal:
+- AI behaves coherently: explores, captures mines/farms, recruits, defends cities, attacks when stronger.
+- Combat AI chooses targets, moves, uses abilities, and casts spells.
+- Neutral guardians scale properly and show difficulty tooltips
+
+--------------------------------------------------
+
+Batch #12: UI & UX Polish
+
+List of tasks (Title,Description,Priority,Effort):
+Unified tooltip system,"Centralize tooltip rendering (prefab + service); support dynamic text/icons. #uiux #batch12",P0,3
+Tooltip: terrain,"Show terrain name + MP cost when hovering a tile. #uiux #batch12",P0,2
+Tooltip: unit stack,"Show HP, attack/defense, special ability summary when hovering a unit. #uiux #batch12",P0,2
+Tooltip: artifact,"Show artifact name, stats, and slot when hovering in inventory/map. #uiux #batch12",P0,2
+Tooltip: spell,"Show school, mana cost, mastery scaling, Ether unlock status when hovering in spellbook. #uiux #batch12",P0,2
+Tooltip: quest,"Expand quest log hover to show description, progress, rewards. #uiux #batch12",P1,2
+Resource top bar icons,"Polish top bar with consistent icons for 7 resources + weekly population; responsive layout. #uiux #batch12",P0,2
+Resource change feedback,"Animate green +X or red -X text when resources update. #uiux #batch12",P1,2
+Population weekly reset UI,"Show weekly reset animation (population pool refresh) on top bar. #uiux #batch12",P1,2
+Hero MP HUD,"Add MP gauge (current/240) next to hero portrait; updates each day. #uiux #batch12",P0,2
+Mana bar HUD,"Show hero mana in both overworld and combat; dynamic updates on cast. #uiux #batch12",P0,2
+Mini-map polish,"Improve minimap rendering (color-coded factions, POIs, fog states). #uiux #batch12",P0,3
+Mini-map click navigation,"Allow clicking minimap to center camera; snap smoothly. #uiux #batch12",P1,2
+Quest log UI polish,"Add icons for quest type (main/secondary), sorting, collapse/expand. #uiux #batch12",P1,2
+Combat HUD clarity,"Add stack number display, buff/debuff icons, hero portrait highlight when active. #uiux #batch12",P0,3
+Combat damage preview,"On attack hover, preview expected dmg range + casualties in tooltip. #uiux #batch12",P0,2
+City screen visuals,"Add placeholder background art for Village/City/Fortress/Capital; building icons aligned. #uiux #batch12",P0,3
+City build feedback,"Highlight new buildings when constructed; play build hammer SFX + dust VFX. #uiux #audio #vfx #batch12",P1,2
+UI error states,"Actions unavailable → gray out + tooltip reason (insufficient gold/population). #uiux #batch12",P0,2
+QA checklist: UI polish,"Test tooltips on all entities, minimap click, resource feedback, quest log, combat HUD. #qa #batch12",P0,3
+
+Batch #12 Goal:
+-Unified tooltip system applied across terrain, units, artifacts, spells, quests.
+- Resource UI clear with feedback animations.
+- Mini-map more useful (faction colors, click-to-center).
+- Combat HUD polished with previews and icons.
+- City & Quest UI more readable and informative.
+
+--------------------------------------------------
+
+Batch #13: Audio & VFX Pass
+
+List of tasks (Title,Description,Priority,Effort):
+Ambient world SFX,"Loop ambient track in world map (wind, birds). Replaceable by biome later. #audio #batch13",P1,2
+Ambient city SFX,"Loop subtle crowd/forge/bells when city screen open. #audio #batch13",P1,2
+Ambient combat SFX,"Loop tense background (drums/war horns) in combat. #audio #batch13",P1,2
+World music tracks,"Import 1 ambient track for world map, 1 for city, 1 for combat; loop cleanly. #audio #batch13",P0,3
+Music crossfade,"Crossfade system: fade between world, city, combat themes. #audio #tech #batch13",P0,2
+UI click SFX,"Assign click/confirm SFX to all buttons. #audio #batch13",P0,1
+UI error SFX,"Play error buzz when insufficient resources or blocked action. #audio #batch13",P0,1
+UI hover SFX,"Soft tick when hovering menu buttons. #audio #batch13",P2,1
+Resource pickup SFX,"Play coin/wood/stone pickup sound; already in Batch 3 but polish volume/mix. #audio #batch13",P1,1
+Resource pickup VFX,"Particle sparkle burst when collecting pile; color-coded by resource. #vfx #batch13",P1,2
+Building construction VFX,"Dust cloud prefab + hammer sound on build complete. #vfx #audio #batch13",P1,2
+Level-up VFX,"Glow + sparkle prefab around hero portrait; level-up chime. #vfx #audio #batch13",P0,2
+Talent unlock VFX,"Node glows + flash when unlocked; play unlock chime. #vfx #audio #batch13",P0,2
+Spellcast VFX basic,"Particles for Fireball, Lightning, Heal, Ice Shards; attach to spells. #vfx #batch13",P0,3
+Spellcast SFX basic,"Sound cues per spell school (fire whoosh, thunder crack, healing chime). #audio #batch13",P0,3
+Unit ability VFX,"Visual cue for Knight Charge, Angel Resurrection, etc.; placeholder prefabs. #vfx #batch13",P0,3
+Unit ability SFX,"Sound cues for each unit ability (charge stomp, angel choir). #audio #batch13",P0,2
+Combat hit SFX,"Sword swing, bow twang, unit death grunt; reusable pool. #audio #batch13",P0,3
+Combat hit VFX,"Flash on impact, blood puff or dust cloud depending on unit. #vfx #batch13",P1,3
+Siege destruction VFX,"Wall crumble, gate shatter particles, moat splash; placeholder prefabs. #vfx #batch13",P1,3
+Siege destruction SFX,"Explosion/stone crack audio cues for wall/gate destruction. #audio #batch13",P1,2
+Victory jingle,"Play fanfare on combat/city capture victory. #audio #batch13",P0,1
+Defeat jingle,"Play somber defeat cue on combat loss. #audio #batch13",P0,1
+QA checklist: audio/vfx,"Test world/city/combat music transitions, spell/ability cues, resource/build feedback. #qa #batch13",P0,3
+
+Batch #13 Goal:
+- Music in world, city, combat with smooth crossfades.
+- SFX for UI, resources, combat, spells, and abilities.
+- VFX for spells, abilities, construction, and victories/defeats.
+- Game feels responsive and immersive with audiovisual feedback.
+
+--------------------------------------------------
+
+Batch #14: QA, Save/Load & Demo Map Assembly
+
+List of tasks (Title,Description,Priority,Effort):
+Save system core,"Implement save service storing heroes, cities, resources, quests, world clock. JSON or binary. #tech #batch14",P0,3
+Save slot UI,"Main menu: single save slot with Save/Load/Delete; placeholder UI. #uiux #batch14",P0,2
+Auto-save events,"Trigger auto-save at start of day and on battle result. #tech #batch14",P1,2
+Load validation,"Ensure load restores hero stats, inventory, cities, quests, resources, fog state. #qa #batch14",P0,3
+Balance: unit stats,"Review Knight unit stats T1–T7 vs costs; adjust HP/DMG/Pop cost for playability. #design #batch14",P0,3
+Balance: buildings,"Review construction costs for farms, defenses, recruitment; tweak Gold/Res. #design #batch14",P0,3
+Balance: spells,"Review 14 MVP spells mana cost vs power scaling; tweak Ether unlock costs. #design #batch14",P0,3
+Balance: quests,"Ensure secondary quest rewards (XP, artifacts, resources) balanced vs difficulty. #design #batch14",P1,2
+Demo map surface,"Author surface 64×64 map: player city, mines (gold/wood/iron/coal), 2 farms, POIs. #content #batch14",P0,3
+Demo map underground,"Author underground 32×32 map: diamond/ether/sulfur mines, ruins, grotto, hidden passage. #content #batch14",P0,3
+Demo map guardians,"Place neutral armies (weak near player, strong guarding rare mines). #content #ai #batch14",P0,2
+Demo map quests,"Add primary quest (capture enemy city) + 2 secondary (mine + artifact). #content #batch14",P0,2
+Demo enemy setup,"Enemy starts with Fortress + hero lvl3; recruit logic enabled; initial army placed. #content #ai #batch14",P0,2
+Playtest session 1,"Run full demo, log bugs/issues, adjust balance tables. #qa #batch14",P0,3
+Bugfix sprint,"Address critical bugs (movement, combat, spells, city upgrades, save/load). #tech #qa #batch14",P0,5
+Polish pass: UI,"Tweak margins, fonts, alignment in hero/city/combat UI; fix scaling issues. #uiux #batch14",P1,2
+Polish pass: audio/vfx,"Adjust volumes, particle sizes, timings; ensure consistency. #audio #vfx #batch14",P1,2
+Release build config,"Create build profile for Demo: Win/Mac; splash, icon, version string. #tech #batch14",P0,2
+Demo packaging,"Export build, verify it launches cleanly, prepare itch.io/Steam demo package. #tech #batch14",P0,2
+QA checklist: MVP demo,"Verify Boot→Map→City→Combat→Quests→Victory/Defeat→Meta loop works end-to-end. #qa #batch14",P0,3
+
+Batch #14 Goal:
+- Save/Load functional (slot + autosave).
+- Balance reviewed for units, buildings, spells, quests.
+- Demo map assembled with surface + underground, POIs, quests, enemy AI.
+- Full playtest and bugfix sprint.
+- Final release build packaged and ready.
