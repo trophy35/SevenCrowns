@@ -22,6 +22,8 @@ namespace SevenCrowns.Systems
         [SerializeField] private UiProgressBar _progressBar; // Reusable progress bar component
         [SerializeField] private TextMeshProUGUI _statusText;
         [SerializeField] private GameObject _pressAnyKeyRoot;
+        [SerializeField, Tooltip("TMP label inside PressAnyKey root (optional; auto-found if null)")]
+        private TextMeshProUGUI _pressAnyKeyText;
 
         [Header("Flow")]
         [SerializeField] private string _nextSceneName = "MainMenu";
@@ -129,7 +131,21 @@ namespace SevenCrowns.Systems
             }
 
             // Show the "press any key" prompt
-            if (_pressAnyKeyRoot != null) _pressAnyKeyRoot.SetActive(true);
+            if (_pressAnyKeyRoot != null)
+            {
+                _pressAnyKeyRoot.SetActive(true);
+                if (_pressAnyKeyText == null)
+                    _pressAnyKeyText = _pressAnyKeyRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+#if UNITY_LOCALIZATION
+                // Localize the prompt if Localization is available and tables are preloaded
+                if (_pressAnyKeyText != null)
+                {
+                    var localized = UnityEngine.Localization.Settings.LocalizationSettings.StringDatabase.GetLocalizedString("UI.Common", "PressAnyKey");
+                    if (!string.IsNullOrEmpty(localized))
+                        _pressAnyKeyText.text = localized;
+                }
+#endif
+            }
 
             // Wait for user input and play preloaded SFX if available
             yield return WaitForAnyKeyOrClickAndPlaySfx();
