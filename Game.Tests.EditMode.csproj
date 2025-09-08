@@ -3,8 +3,6 @@
   <!-- Generated file, do not modify, your changes will be overwritten (use AssetPostprocessor.OnGeneratedCSProject) -->
   <PropertyGroup>
     <LangVersion>9.0</LangVersion>
-    <RunSettingsFilePath>
-    </RunSettingsFilePath>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -64,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridCoordTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridBoundsTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Game\Scripts\Tests\EditMode\Game.Tests.EditMode.asmdef" />
