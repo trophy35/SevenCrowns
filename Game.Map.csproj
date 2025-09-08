@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridCoord.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\TileData.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Game\Scripts\Map\Game.Map.asmdef" />
