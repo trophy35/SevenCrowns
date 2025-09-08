@@ -1,7 +1,9 @@
 {
   "name": "Game.Tests.EditMode",
   "rootNamespace": "SevenCrowns.Tests.EditMode",
-  "references": [],
+  "references": [
+    "Game.Map"
+  ],
   "includePlatforms": [ "Editor" ],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
