@@ -152,7 +152,7 @@ MonoBehaviour:
   _statusText: {fileID: 414613566}
   _pressAnyKeyRoot: {fileID: 2090402337}
   _pressAnyKeyText: {fileID: 0}
-  _nextSceneName: MainMenu
+  _nextSceneName: Worldmap
   _minBootScreenSeconds: 0.6
   _tasks:
   - {fileID: 11400000, guid: 736a213262e8dc84da3e40435ef47ef7, type: 2}
