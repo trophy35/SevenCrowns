@@ -70,6 +70,7 @@
     <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IHeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TilemapTileDataProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\PathPreviewRenderer.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MapMovementService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridCoord.cs" />

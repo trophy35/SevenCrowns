@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace SevenCrowns.Map
 {
@@ -14,6 +15,7 @@ namespace SevenCrowns.Map
         [SerializeField] private Grid _grid;
         [SerializeField] private TilemapTileDataProvider _provider;
         [SerializeField] private HeroAgentComponent _hero;
+        [SerializeField] private PathPreviewRenderer _preview;
 
         [Header("Movement")]
         [SerializeField] private EnterMask8 _allowedMoves = EnterMask8.N | EnterMask8.E | EnterMask8.S | EnterMask8.W; // 4-way
@@ -23,6 +25,11 @@ namespace SevenCrowns.Map
 
         private AStarPathfinder _pf;
         private int _pfW, _pfH;
+        private bool _hasPreview;
+        private GridCoord _pendingGoal;
+        private GridCoord _pendingStart;
+        private List<GridCoord> _pendingPath;
+        private readonly List<int> _costBuffer = new List<int>(64);
 
         private void Awake()
         {
@@ -106,17 +113,35 @@ namespace SevenCrowns.Map
                     // Probe a simple cardinal line from start to goal to find the first blocked step
                     DebugProbeLine(start, goal);
                 }
+                _preview?.Clear();
+                _hasPreview = false;
                 return;
             }
 
-            if (_hero.Agent.SetPath(path))
+            // If we already previewed this exact goal and the hero hasn't moved since, confirm and move
+            if (_hasPreview && goal.Equals(_pendingGoal) && start.Equals(_pendingStart))
             {
-                if (_debugLogs) Debug.Log("[ClickToMove] Path set. Advancing all available steps.");
-                _hero.Agent.AdvanceAllAvailable();
+                if (_hero.Agent.SetPath(path))
+                {
+                    if (_debugLogs) Debug.Log("[ClickToMove] Confirmed click. Moving hero.");
+                    _preview?.Clear();
+                    _hasPreview = false;
+                    _hero.Agent.AdvanceAllAvailable();
+                }
+                else if (_debugLogs)
+                {
+                    Debug.Log("[ClickToMove] Failed to confirm path (invalid start or adjacency).");
+                }
             }
-            else if (_debugLogs)
+            else
             {
-                Debug.Log("[ClickToMove] Failed to set path (invalid start or adjacency).");
+                int payableSteps = ComputePayableSteps(path);
+                _preview?.Show(path, payableSteps);
+                _pendingPath = path;
+                _pendingGoal = goal;
+                _pendingStart = start;
+                _hasPreview = true;
+                if (_debugLogs) Debug.Log($"[ClickToMove] Preview shown. PayableSteps={payableSteps}");
             }
         }
 
@@ -125,6 +150,29 @@ namespace SevenCrowns.Map
             _hero.Agent.ClearPath();
             if (_debugLogs) Debug.Log("[ClickToMove] Cancelled current order.");
             // optional: clear preview/highlights
+            _preview?.Clear();
+            _hasPreview = false;
+        }
+
+        private int ComputePayableSteps(System.Collections.Generic.IReadOnlyList<GridCoord> path)
+        {
+            // Build per-step costs (4-way)
+            _costBuffer.Clear();
+            for (int i = 1; i < path.Count; i++)
+            {
+                var to = path[i];
+                if (_provider.TryGet(to, out var td))
+                {
+                    _costBuffer.Add(td.GetMoveCost(false));
+                }
+                else
+                {
+                    _costBuffer.Add(int.MaxValue / 4);
+                }
+            }
+            int payable;
+            _hero.Movement.PreviewSequenceCost(_costBuffer, out payable);
+            return payable;
         }
 
         // --- Debug helpers ---

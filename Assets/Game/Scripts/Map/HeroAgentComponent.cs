@@ -18,6 +18,10 @@ namespace SevenCrowns.Map
         [SerializeField] private int _maxDailyMp = 240;
         [SerializeField] private EnterMask8 _allowedMoves = EnterMask8.N | EnterMask8.E | EnterMask8.S | EnterMask8.W; // 4-way by default
         [SerializeField] private bool _validateSteps = true;
+
+        [Header("Visuals")]
+        [SerializeField] private Vector3 _visualOffset;
+
         [Header("Debug")]
         [SerializeField] private bool _debugLogs = false;
 
@@ -31,7 +35,10 @@ namespace SevenCrowns.Map
         {
             if (_provider == null) throw new InvalidOperationException("HeroAgentComponent requires a TilemapTileDataProvider.");
             if (_grid == null) throw new InvalidOperationException("HeroAgentComponent requires a Grid.");
+        }
 
+        private void Start()
+        {
             _movement = new MapMovementService(_maxDailyMp);
             var start = _provider.WorldToCoord(_grid, transform.position);
             var agent = new HeroMapAgent(_provider, _movement, start, _allowedMoves, _validateSteps);
@@ -58,7 +65,7 @@ namespace SevenCrowns.Map
         {
             // Convert provider-local coord back to the actual tilemap cell using provider origin.
             var world = _provider.CoordToWorld(_grid, c);
-            transform.position = new Vector3(world.x, world.y, transform.position.z);
+            transform.position = new Vector3(world.x, world.y, transform.position.z) + _visualOffset;
         }
     }
 }
