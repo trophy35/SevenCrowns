@@ -48,6 +48,14 @@ namespace SevenCrowns.Map
             EnterMask8.S, EnterMask8.SW, EnterMask8.W, EnterMask8.NW
         };
 
+        // 4-way only iteration helpers
+        private static readonly int[] DX4 = { 0, 1, 0, -1 };
+        private static readonly int[] DY4 = { 1, 0, -1, 0 };
+        private static readonly EnterMask8[] DIR_MASK4 =
+        {
+            EnterMask8.N, EnterMask8.E, EnterMask8.S, EnterMask8.W
+        };
+
         public AStarPathfinder(ITileDataProvider provider, GridBounds bounds, Config config = null)
         {
             _provider = provider ?? throw new ArgumentNullException(nameof(provider));
@@ -129,55 +137,90 @@ namespace SevenCrowns.Map
                 var cx = current % _w;
                 var cy = current / _w;
 
-                for (int dir = 0; dir < 8; dir++)
+                if (_cfg.AllowDiagonal)
                 {
-                    // Respect allowed movement mask and diagonal toggle
-                    var mask = DIR_MASK[dir];
-                    bool isDiag = (dir % 2) == 1; // NE, SE, SW, NW indices are odd in our ordering
-                    if ((_cfg.AllowDiagonal == false && isDiag) || (allowedMoves & mask) == 0)
-                        continue;
-
-                    int nx = cx + DX[dir];
-                    int ny = cy + DY[dir];
-                    if (nx < 0 || ny < 0 || nx >= _w || ny >= _h) continue;
-
-                    int nidx = nx + ny * _w;
-                    if (_state[nidx] == 2) continue; // already closed
-
-                    // Check target tile legality
-                    if (!_provider.TryGet(new GridCoord(nx, ny), out var nextTd)) continue;
-                    if (!nextTd.IsPassable) continue;
-                    if (!nextTd.CanEnterFrom(mask)) continue;
-
-                    // Optional corner cutting rule
-                    if (_cfg.DisallowCornerCutting && isDiag)
+                    for (int dir = 0; dir < 8; dir++)
                     {
-                        // Orthogonal neighbors must both permit entry
-                        int ox = cx + DX[(dir + 7) & 7]; // previous cardinal in our ordering
-                        int oy = cy + DY[(dir + 7) & 7];
-                        int px = cx + DX[(dir + 1) & 7]; // next cardinal
-                        int py = cy + DY[(dir + 1) & 7];
+                        var mask = DIR_MASK[dir];
+                        bool isDiag = (dir % 2) == 1; // NE, SE, SW, NW
+                        if ((allowedMoves & mask) == 0) continue;
 
-                        if (!IsCardinalEntryLegal(cx, cy, ox, oy) || !IsCardinalEntryLegal(cx, cy, px, py))
-                            continue;
+                        int nx = cx + DX[dir];
+                        int ny = cy + DY[dir];
+                        if (nx < 0 || ny < 0 || nx >= _w || ny >= _h) continue;
+
+                        int nidx = nx + ny * _w;
+                        if (_state[nidx] == 2) continue;
+
+                        if (!_provider.TryGet(new GridCoord(nx, ny), out var nextTd)) continue;
+                        if (!nextTd.IsPassable) continue;
+                        if (!nextTd.CanEnterFrom(mask)) continue;
+
+                        if (_cfg.DisallowCornerCutting && isDiag)
+                        {
+                            int ox = cx + DX[(dir + 7) & 7]; // previous cardinal
+                            int oy = cy + DY[(dir + 7) & 7];
+                            int px = cx + DX[(dir + 1) & 7]; // next cardinal
+                            int py = cy + DY[(dir + 1) & 7];
+                            if (!IsCardinalEntryLegal(cx, cy, ox, oy) || !IsCardinalEntryLegal(cx, cy, px, py))
+                                continue;
+                        }
+
+                        int stepCost = nextTd.GetMoveCost(isDiag);
+                        long tentativeG = (long)_gCost[current] + stepCost;
+                        if (tentativeG >= _gCost[nidx]) continue;
+
+                        _cameFrom[nidx] = new GridCoord(cx, cy);
+                        _gCost[nidx] = (int)tentativeG;
+                        _fCost[nidx] = _gCost[nidx] + Heuristic(new GridCoord(nx, ny), goal);
+
+                        if (_state[nidx] == 0)
+                        {
+                            HeapPush(nidx);
+                            _state[nidx] = 1;
+                        }
+                        else
+                        {
+                            HeapDecreaseKey(nidx);
+                        }
                     }
-
-                    int stepCost = nextTd.GetMoveCost(isDiag);
-                    long tentativeG = (long)_gCost[current] + stepCost; // prevent overflow
-                    if (tentativeG >= _gCost[nidx]) continue;
-
-                    _cameFrom[nidx] = new GridCoord(cx, cy);
-                    _gCost[nidx] = (int)tentativeG;
-                    _fCost[nidx] = _gCost[nidx] + Heuristic(new GridCoord(nx, ny), goal);
-
-                    if (_state[nidx] == 0)
+                }
+                else
+                {
+                    // 4-way only: simpler loop, no diagonal/corner-cutting checks
+                    for (int dir = 0; dir < 4; dir++)
                     {
-                        HeapPush(nidx);
-                        _state[nidx] = 1;
-                    }
-                    else
-                    {
-                        HeapDecreaseKey(nidx);
+                        var mask = DIR_MASK4[dir];
+                        if ((allowedMoves & mask) == 0) continue;
+
+                        int nx = cx + DX4[dir];
+                        int ny = cy + DY4[dir];
+                        if (nx < 0 || ny < 0 || nx >= _w || ny >= _h) continue;
+
+                        int nidx = nx + ny * _w;
+                        if (_state[nidx] == 2) continue;
+
+                        if (!_provider.TryGet(new GridCoord(nx, ny), out var nextTd)) continue;
+                        if (!nextTd.IsPassable) continue;
+                        if (!nextTd.CanEnterFrom(mask)) continue;
+
+                        int stepCost = nextTd.GetMoveCost(false); // cardinal only
+                        long tentativeG = (long)_gCost[current] + stepCost;
+                        if (tentativeG >= _gCost[nidx]) continue;
+
+                        _cameFrom[nidx] = new GridCoord(cx, cy);
+                        _gCost[nidx] = (int)tentativeG;
+                        _fCost[nidx] = _gCost[nidx] + Heuristic(new GridCoord(nx, ny), goal);
+
+                        if (_state[nidx] == 0)
+                        {
+                            HeapPush(nidx);
+                            _state[nidx] = 1;
+                        }
+                        else
+                        {
+                            HeapDecreaseKey(nidx);
+                        }
                     }
                 }
             }
@@ -201,6 +244,11 @@ namespace SevenCrowns.Map
         {
             int dx = Mathf.Abs(a.X - b.X);
             int dy = Mathf.Abs(a.Y - b.Y);
+            if (!_cfg.AllowDiagonal)
+            {
+                // Manhattan distance when only cardinal moves allowed
+                return _cfg.HeuristicCardinalBase * (dx + dy);
+            }
             int dmin = Mathf.Min(dx, dy);
             int dmax = Mathf.Max(dx, dy);
             return _cfg.HeuristicCardinalBase * (dmax - dmin) + _cfg.HeuristicDiagonalBase * dmin;
@@ -314,4 +362,3 @@ namespace SevenCrowns.Map
         }
     }
 }
-
