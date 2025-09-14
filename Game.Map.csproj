@@ -61,15 +61,19 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.39f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Game\Scripts\Map\TilesetBinding.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Authoring\TerrainTile.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ITileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IMapMovementService.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\HeroAgentComponent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IHeroMapAgent.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\TilemapTileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MapMovementService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridCoord.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\ClickToMoveController.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TileData.cs" />
   </ItemGroup>
   <ItemGroup>

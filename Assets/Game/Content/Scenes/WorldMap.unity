@@ -522,6 +522,55 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!1 &1522153905
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1522153906}
+  - component: {fileID: 1522153907}
+  m_Layer: 0
+  m_Name: MapRuntime
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1522153906
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1522153905}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1873579549}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1522153907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1522153905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2970cdfa2362d4d419b021814a9e7f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _groundTilemap: {fileID: 8355480987375726217}
+  _binding: {fileID: 11400000, guid: eb1de000c689a3b4ea2e8248604b80f3, type: 2}
+  _overlayTilemap: {fileID: 8355480987375726216}
+  _overlayBinding: {fileID: 11400000, guid: 0b9412ac3a8bdc646a906dea0623402d, type: 2}
+  _overlayRequiresGroundPassable: 1
 --- !u!1 &1535417960
 GameObject:
   m_ObjectHideFlags: 0
@@ -563,7 +612,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1873579549}
   m_Layer: 0
-  m_Name: _Code
+  m_Name: _Systems
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -581,7 +630,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1522153906}
   m_Father: {fileID: 161393214}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &8355480987375726214
@@ -5516,6 +5566,16 @@ PrefabInstance:
 --- !u!4 &8355480987375726215 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 141567360571197221, guid: 6a2b4ed6226e5914ab759d8ceafa2be1, type: 3}
+  m_PrefabInstance: {fileID: 8355480987375726214}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1839735485 &8355480987375726216 stripped
+Tilemap:
+  m_CorrespondingSourceObject: {fileID: 662485566236882757, guid: 6a2b4ed6226e5914ab759d8ceafa2be1, type: 3}
+  m_PrefabInstance: {fileID: 8355480987375726214}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1839735485 &8355480987375726217 stripped
+Tilemap:
+  m_CorrespondingSourceObject: {fileID: 8268845771892854979, guid: 6a2b4ed6226e5914ab759d8ceafa2be1, type: 3}
   m_PrefabInstance: {fileID: 8355480987375726214}
   m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
