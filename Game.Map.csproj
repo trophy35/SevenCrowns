@@ -65,6 +65,8 @@
     <Compile Include="Assets\Game\Scripts\Map\ITileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IMapMovementService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\IHeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MapMovementService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridCoord.cs" />

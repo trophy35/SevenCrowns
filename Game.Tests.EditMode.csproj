@@ -64,6 +64,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\MapMovementServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridCoordTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinderTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgentTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridBoundsTests.cs" />
   </ItemGroup>
   <ItemGroup>
