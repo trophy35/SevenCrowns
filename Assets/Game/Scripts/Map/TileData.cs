@@ -10,7 +10,8 @@ namespace SevenCrowns.Map
         Forest,
         Mountain,
         Water,
-        CliffRamp,
+        CliffRampBottom,
+        CliffRampTop
     }
 
     /// <summary>

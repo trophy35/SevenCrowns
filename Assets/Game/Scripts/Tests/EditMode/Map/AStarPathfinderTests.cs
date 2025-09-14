@@ -85,7 +85,7 @@ namespace SevenCrowns.Tests.EditMode.Map
         public void Directional_Cliff_Allows_Only_NS()
         {
             var grass = MakeTile(TerrainType.Grass, true, 10, 14, EnterMask8.All);
-            var cliffNS = MakeTile(TerrainType.CliffRamp, true, 12, 17, EnterMask8.N | EnterMask8.S, TileFlags.IsCliffRamp | TileFlags.BlocksVision);
+            var cliffNS = MakeTile(TerrainType.CliffRampBottom, true, 12, 17, EnterMask8.N | EnterMask8.S, TileFlags.IsCliffRamp | TileFlags.BlocksVision);
             // Case 1: East entry must be disallowed. Block the alternative north approach to prevent a detour.
             {
                 var mountain = MakeTile(TerrainType.Mountain, false, 25, 36, EnterMask8.None, TileFlags.IsMountain);

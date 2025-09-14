@@ -468,7 +468,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_22
+      name: grass_elevation_NW
       rect:
         serializedVersion: 2
         x: 704
@@ -490,7 +490,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_23
+      name: grass_elevation_N
       rect:
         serializedVersion: 2
         x: 768
@@ -512,7 +512,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_24
+      name: grass_elevation_NE
       rect:
         serializedVersion: 2
         x: 832
@@ -556,7 +556,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_26
+      name: grass_cliff_E1
       rect:
         serializedVersion: 2
         x: 1024
@@ -578,7 +578,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_27
+      name: grass_cliff_W1
       rect:
         serializedVersion: 2
         x: 1152
@@ -776,7 +776,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_36
+      name: grass_elevation_W
       rect:
         serializedVersion: 2
         x: 704
@@ -798,7 +798,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_37
+      name: grass_elevation_1
       rect:
         serializedVersion: 2
         x: 768
@@ -820,7 +820,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_38
+      name: grass_elevation_E
       rect:
         serializedVersion: 2
         x: 832
@@ -864,7 +864,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_40
+      name: grass_cliff_E2
       rect:
         serializedVersion: 2
         x: 1024
@@ -886,7 +886,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_41
+      name: grass_cliff_W2
       rect:
         serializedVersion: 2
         x: 1152
@@ -1084,7 +1084,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_50
+      name: grass_elevation_SW
       rect:
         serializedVersion: 2
         x: 704
@@ -1106,7 +1106,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_51
+      name: grass_elevation_S
       rect:
         serializedVersion: 2
         x: 768
@@ -1128,7 +1128,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_52
+      name: grass_elevation_SE
       rect:
         serializedVersion: 2
         x: 832
@@ -1348,7 +1348,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_62
+      name: elevation_SW
       rect:
         serializedVersion: 2
         x: 704
@@ -1370,7 +1370,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_63
+      name: elevation_S
       rect:
         serializedVersion: 2
         x: 768
@@ -1392,7 +1392,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tiles64_grass_64
+      name: elevation_SE
       rect:
         serializedVersion: 2
         x: 832
@@ -1988,34 +1988,21 @@ TextureImporter:
       Tiles64_grass_2: 6078707752154640616
       Tiles64_grass_20: 1509774475924178013
       Tiles64_grass_21: 1510581602441822725
-      Tiles64_grass_22: -3269252795802361555
-      Tiles64_grass_23: 5437616704077968651
-      Tiles64_grass_24: -753317444214383687
       Tiles64_grass_25: -9096006332973086660
-      Tiles64_grass_26: -2523392161975304975
-      Tiles64_grass_27: 3664894870311323761
       Tiles64_grass_3: 2719729539470993783
       Tiles64_grass_31: 251424627277632841
       Tiles64_grass_32: 1502567996987945972
       Tiles64_grass_33: -1135453106028898119
       Tiles64_grass_34: 5448990506134753971
       Tiles64_grass_35: -5483602343838152329
-      Tiles64_grass_36: 7391727465721141908
-      Tiles64_grass_37: -6161360251401819222
-      Tiles64_grass_38: -5460354733819979136
       Tiles64_grass_39: -7008477056041302200
       Tiles64_grass_4: -4886961756797634560
-      Tiles64_grass_40: -2646929983560316890
-      Tiles64_grass_41: -8265717212041595820
       Tiles64_grass_45: -9119786204639136587
       Tiles64_grass_46: 7944265322593579507
       Tiles64_grass_47: -6842002382964275597
       Tiles64_grass_48: 4622154297587087440
       Tiles64_grass_49: -5546583586640142520
       Tiles64_grass_5: -2188987832072238160
-      Tiles64_grass_50: 3205268849737548222
-      Tiles64_grass_51: -168869895361097042
-      Tiles64_grass_52: 2323341296451690336
       Tiles64_grass_53: -6091089750199395500
       Tiles64_grass_57: 1000711599683537515
       Tiles64_grass_58: 8678622349268178294
@@ -2023,9 +2010,6 @@ TextureImporter:
       Tiles64_grass_6: -8596686941719440942
       Tiles64_grass_60: 6363774955789680135
       Tiles64_grass_61: 6225641309354566986
-      Tiles64_grass_62: 730434585134336568
-      Tiles64_grass_63: -6751786349717154366
-      Tiles64_grass_64: 3828239344928296122
       Tiles64_grass_65: -696728085
       Tiles64_grass_66: 245401319
       Tiles64_grass_67: 280442393
@@ -2062,6 +2046,22 @@ TextureImporter:
       Tiles64_grass_95: 2111271039
       Tiles64_grass_96: 687390999
       Tiles64_grass_97: 619109524
+      elevation_S: -6751786349717154366
+      elevation_SE: 3828239344928296122
+      elevation_SW: 730434585134336568
+      grass_cliff_E1: -2523392161975304975
+      grass_cliff_E2: -2646929983560316890
+      grass_cliff_W1: 3664894870311323761
+      grass_cliff_W2: -8265717212041595820
+      grass_elevation_1: -6161360251401819222
+      grass_elevation_E: -5460354733819979136
+      grass_elevation_N: 5437616704077968651
+      grass_elevation_NE: -753317444214383687
+      grass_elevation_NW: -3269252795802361555
+      grass_elevation_S: -168869895361097042
+      grass_elevation_SE: 2323341296451690336
+      grass_elevation_SW: 3205268849737548222
+      grass_elevation_W: 7391727465721141908
       grass_flatground_1: -2563561572373305269
       grass_flatground_E: -6671486326575210967
       grass_flatground_N: 3886681141855466178

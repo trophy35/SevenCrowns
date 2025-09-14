@@ -47,6 +47,11 @@ namespace SevenCrowns.Map
             EnterMask8.N, EnterMask8.NE, EnterMask8.E, EnterMask8.SE,
             EnterMask8.S, EnterMask8.SW, EnterMask8.W, EnterMask8.NW
         };
+        private static readonly EnterMask8[] DIR_OPPOSITE_MASK =
+        {
+            EnterMask8.S, EnterMask8.SW, EnterMask8.W, EnterMask8.NW,
+            EnterMask8.N, EnterMask8.NE, EnterMask8.E, EnterMask8.SE
+        };
 
         // 4-way only iteration helpers
         private static readonly int[] DX4 = { 0, 1, 0, -1 };
@@ -54,6 +59,10 @@ namespace SevenCrowns.Map
         private static readonly EnterMask8[] DIR_MASK4 =
         {
             EnterMask8.N, EnterMask8.E, EnterMask8.S, EnterMask8.W
+        };
+        private static readonly EnterMask8[] DIR_OPPOSITE_MASK4 =
+        {
+            EnterMask8.S, EnterMask8.W, EnterMask8.N, EnterMask8.E
         };
 
         public AStarPathfinder(ITileDataProvider provider, GridBounds bounds, Config config = null)
@@ -136,6 +145,7 @@ namespace SevenCrowns.Map
 
                 var cx = current % _w;
                 var cy = current / _w;
+                if (!_provider.TryGet(new GridCoord(cx, cy), out var currentTd)) continue;
 
                 if (_cfg.AllowDiagonal)
                 {
@@ -154,7 +164,9 @@ namespace SevenCrowns.Map
 
                         if (!_provider.TryGet(new GridCoord(nx, ny), out var nextTd)) continue;
                         if (!nextTd.IsPassable) continue;
-                        if (!nextTd.CanEnterFrom(mask)) continue;
+
+                        var backwardMask = DIR_OPPOSITE_MASK[dir];
+                        if (!nextTd.CanEnterFrom(mask) || !currentTd.CanEnterFrom(backwardMask)) continue;
 
                         if (_cfg.DisallowCornerCutting && isDiag)
                         {
@@ -202,7 +214,9 @@ namespace SevenCrowns.Map
 
                         if (!_provider.TryGet(new GridCoord(nx, ny), out var nextTd)) continue;
                         if (!nextTd.IsPassable) continue;
-                        if (!nextTd.CanEnterFrom(mask)) continue;
+
+                        var backwardMask = DIR_OPPOSITE_MASK4[dir];
+                        if (!nextTd.CanEnterFrom(mask) || !currentTd.CanEnterFrom(backwardMask)) continue;
 
                         int stepCost = nextTd.GetMoveCost(false); // cardinal only
                         long tentativeG = (long)_gCost[current] + stepCost;

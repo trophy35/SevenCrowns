@@ -69,7 +69,9 @@
     <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IHeroMapAgent.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\TileVisualsSet.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TilemapTileDataProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\TileVisuals.cs" />
     <Compile Include="Assets\Game\Scripts\Map\PathPreviewRenderer.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MapMovementService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />

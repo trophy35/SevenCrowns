@@ -56,6 +56,10 @@ namespace SevenCrowns.Map
         [SerializeField] private string _sortingLayerName = "Default";
         [SerializeField] private int _orderInLayer = 50;
         [SerializeField] private Material _material;
+        [Tooltip("The default visual offset for all path markers.")]
+        [SerializeField] private Vector3 _visualOffset;
+        [Tooltip("A set of tile-specific offsets that override the default.")]
+        [SerializeField] private TileVisualsSet _visualsSet;
 
         private readonly List<SpriteRenderer> _pool = new List<SpriteRenderer>(128);
         private SpriteRenderer _crossRenderer;
@@ -91,7 +95,8 @@ namespace SevenCrowns.Map
                 sr.enabled = true;
                 sr.sprite = SelectSprite(curr, next, isStraight, isGreen);
                 var world = _provider.CoordToWorld(_grid, to);
-                sr.transform.position = new Vector3(world.x, world.y, sr.transform.position.z);
+                var offset = GetOffsetForCoord(to);
+                sr.transform.position = new Vector3(world.x, world.y, sr.transform.position.z) + offset;
             }
 
             // Disable extra pooled renderers
@@ -104,10 +109,11 @@ namespace SevenCrowns.Map
             EnsureCross();
             var last = path[path.Count - 1];
             var worldLast = _provider.CoordToWorld(_grid, last);
+            var lastOffset = GetOffsetForCoord(last);
             bool canReachThisTurn = payableSteps >= (path.Count - 1);
             _crossRenderer.sprite = canReachThisTurn ? (_crossGreen != null ? _crossGreen : _crossRed) : (_crossRed != null ? _crossRed : _crossGreen);
             _crossRenderer.enabled = true;
-            _crossRenderer.transform.position = new Vector3(worldLast.x, worldLast.y, _crossRenderer.transform.position.z);
+            _crossRenderer.transform.position = new Vector3(worldLast.x, worldLast.y, _crossRenderer.transform.position.z) + lastOffset;
         }
 
         public void Clear()
@@ -117,6 +123,22 @@ namespace SevenCrowns.Map
                 if (_pool[i].enabled) _pool[i].enabled = false;
             }
             if (_crossRenderer != null) _crossRenderer.enabled = false;
+        }
+
+        private Vector3 GetOffsetForCoord(GridCoord c)
+        {
+            // Start with the default
+            var finalOffset = _visualOffset;
+
+            // Check for a tile-specific override
+            if (_visualsSet != null && _provider.TryGet(c, out var tileData))
+            {
+                if (_visualsSet.TryGetVisualOffset(tileData.terrainType, out var specificOffset))
+                {
+                    finalOffset = specificOffset; // Use the override
+                }
+            }
+            return finalOffset;
         }
 
         private void EnsurePool(int needed)

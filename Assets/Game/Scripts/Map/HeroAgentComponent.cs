@@ -20,7 +20,10 @@ namespace SevenCrowns.Map
         [SerializeField] private bool _validateSteps = true;
 
         [Header("Visuals")]
+        [Tooltip("The default visual offset for the hero sprite.")]
         [SerializeField] private Vector3 _visualOffset;
+        [Tooltip("A set of tile-specific offsets that override the default.")]
+        [SerializeField] private TileVisualsSet _visualsSet;
 
         [Header("Debug")]
         [SerializeField] private bool _debugLogs = false;
@@ -65,7 +68,18 @@ namespace SevenCrowns.Map
         {
             // Convert provider-local coord back to the actual tilemap cell using provider origin.
             var world = _provider.CoordToWorld(_grid, c);
-            transform.position = new Vector3(world.x, world.y, transform.position.z) + _visualOffset;
+            var finalOffset = _visualOffset; // Start with the default
+
+            // Check for a tile-specific override
+            if (_visualsSet != null && _provider.TryGet(c, out var tileData))
+            {
+                if (_visualsSet.TryGetVisualOffset(tileData.terrainType, out var specificOffset))
+                {
+                    finalOffset = specificOffset; // Use the override
+                }
+            }
+
+            transform.position = new Vector3(world.x, world.y, transform.position.z) + finalOffset;
         }
     }
 }
