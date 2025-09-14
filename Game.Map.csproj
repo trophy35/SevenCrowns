@@ -62,6 +62,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Game\Scripts\Map\Authoring\TerrainTile.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\ITileDataProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridCoord.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TileData.cs" />
