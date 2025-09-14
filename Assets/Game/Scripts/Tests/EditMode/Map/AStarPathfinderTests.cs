@@ -140,5 +140,59 @@ namespace SevenCrowns.Tests.EditMode.Map
             // Should use one diagonal and one cardinal => 2 edges => count 3
             Assert.AreEqual(3, path8.Count);
         }
+
+        [Test]
+        public void StraightCardinal_UsesCorrectCost()
+        {
+            var grass = MakeTile(TerrainType.Grass, true, 10, 14, EnterMask8.All);
+            var prov = new ArrayProvider(1, 5, grass);
+            var pf = new AStarPathfinder(prov, prov.Bounds, new AStarPathfinder.Config());
+
+            var start = new GridCoord(0, 0);
+            var goal = new GridCoord(0, 4);
+            var path = pf.GetPath(start, goal);
+            Assert.AreEqual(5, path.Count); // 4 edges
+            Assert.AreEqual(40, PathCost(path, prov));
+        }
+
+        [Test]
+        public void Unreachable_ReturnsEmpty()
+        {
+            var grass = MakeTile(TerrainType.Grass, true, 10, 14, EnterMask8.All);
+            var mountain = MakeTile(TerrainType.Mountain, false, 25, 36, EnterMask8.None, TileFlags.IsMountain);
+            var prov = new ArrayProvider(3, 3, grass);
+            // Goal at center (1,1), surrounded by impassables
+            prov.Set(0,1, mountain);
+            prov.Set(2,1, mountain);
+            prov.Set(1,0, mountain);
+            prov.Set(1,2, mountain);
+
+            var pf = new AStarPathfinder(prov, prov.Bounds, new AStarPathfinder.Config());
+            var path = pf.GetPath(new GridCoord(0,0), new GridCoord(1,1));
+            Assert.AreEqual(0, path.Count);
+        }
+
+        [Test]
+        public void Deterministic_Tie_WhenMultipleShortestPaths()
+        {
+            var grass = MakeTile(TerrainType.Grass, true, 10, 14, EnterMask8.All);
+            var prov = new ArrayProvider(4, 3, grass);
+            var pf = new AStarPathfinder(prov, prov.Bounds, new AStarPathfinder.Config());
+
+            var start = new GridCoord(0,0);
+            var goal = new GridCoord(2,1);
+            var p1 = pf.GetPath(start, goal);
+            var p2 = pf.GetPath(start, goal);
+
+            Assert.Greater(p1.Count, 0);
+            Assert.AreEqual(PathCost(p1, prov), PathCost(p2, prov));
+            // Optimal cost should be one diagonal + one cardinal: 14 + 10 = 24
+            Assert.AreEqual(24, PathCost(p1, prov));
+            Assert.AreEqual(p1.Count, p2.Count);
+            for (int i = 0; i < p1.Count; i++)
+            {
+                Assert.AreEqual(p1[i], p2[i], $"Path tie-breaking not deterministic at index {i}");
+            }
+        }
     }
 }
