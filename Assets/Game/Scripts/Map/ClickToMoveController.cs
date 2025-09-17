@@ -30,6 +30,7 @@ namespace SevenCrowns.Map
         private GridCoord _pendingStart;
         private List<GridCoord> _pendingPath;
         private readonly List<int> _costBuffer = new List<int>(64);
+        private bool _isMoving;
 
         private void Awake()
         {
@@ -43,6 +44,8 @@ namespace SevenCrowns.Map
             {
                 Debug.Log($"[ClickToMove] Initialized. Bounds={_provider.Bounds}, Diagonal=false, Mask={_allowedMoves}");
             }
+
+            _hero.AgentInitialized += OnHeroAgentInitialized;
         }
 
         private void Start()
@@ -51,11 +54,27 @@ namespace SevenCrowns.Map
             BuildPathfinderIfNeeded(log: true);
         }
 
+        private void OnHeroAgentInitialized()
+        {
+            _hero.Agent.Started += OnMovementStarted;
+            _hero.Agent.Stopped += OnMovementStopped;
+        }
+
+        private void OnMovementStarted()
+        {
+            _isMoving = true;
+        }
+
+        private void OnMovementStopped(StopReason reason)
+        {
+            _isMoving = false;
+        }
+
         private void Update()
         {
             if (_camera == null || _grid == null || _provider == null || _hero == null) return;
 
-            if (Input.GetMouseButtonDown(0))
+            if (!_isMoving && Input.GetMouseButtonDown(0))
             {
                 BuildPathfinderIfNeeded(log: _debugLogs);
                 if (_pf == null)

@@ -1,7 +1,9 @@
 {
   "name": "Game.Map",
   "rootNamespace": "SevenCrowns.Map",
-  "references": [],
+  "references": [
+    "HeroEditor4D"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

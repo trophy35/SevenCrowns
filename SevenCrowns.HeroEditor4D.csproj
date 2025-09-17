@@ -9,11 +9,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <RootNamespace>SevenCrowns.Map</RootNamespace>
-    <ProjectGuid>{D64E9FFC-206D-0D84-3990-398060D0EBC1}</ProjectGuid>
+    <RootNamespace>SevenCrowns.HeroEditor4D</RootNamespace>
+    <ProjectGuid>{2E926A92-B54C-D648-A28D-D995FE809218}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <AssemblyName>Game.Map</AssemblyName>
+    <AssemblyName>SevenCrowns.HeroEditor4D</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <BaseDirectory>.</BaseDirectory>
@@ -50,7 +50,7 @@
     <UnityProjectGenerator>Package</UnityProjectGenerator>
     <UnityProjectGeneratorVersion>2.0.22</UnityProjectGeneratorVersion>
     <UnityProjectGeneratorStyle>Legacy</UnityProjectGeneratorStyle>
-    <UnityProjectType>Game:1</UnityProjectType>
+    <UnityProjectType>Editor:5</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows64:19</UnityBuildTarget>
     <UnityVersion>6000.0.39f1</UnityVersion>
   </PropertyGroup>
@@ -61,26 +61,109 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.39f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Game\Scripts\Map\TilesetBinding.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\Authoring\TerrainTile.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\ITileDataProvider.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\IMapMovementService.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\HeroAgentComponent.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\IHeroMapAgent.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\TileVisualsSet.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\TilemapTileDataProvider.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\TileVisuals.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\PathPreviewRenderer.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\MapMovementService.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\GridCoord.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\ClickToMoveController.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\TileData.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\CharacterSerializer.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Common\Serializer.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Enums\ItemType.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Enums\WeaponType.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Enums\ElementId.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\SimpleColorPicker\Scripts\ColorSlider.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Data\Expression.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Enums\ItemTag.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\SimpleColorPicker\Scripts\ColorPicker.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Data\ItemSprite.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\ExampleScripts\QuickStart.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Elements\Equipment.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\CharacterAppearance.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Data\ItemIcon.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Enums\CharacterState.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Data\LocalizedValue.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Data\Item.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Common\Extensions.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Common\Springs\PositionSpring.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Common\ScreenshotTransparent.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\EditorScripts\CaptureOptions.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Editor\SpriteCollectionRefresh.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Helpers\SetupResolver.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\ExampleScripts\ControlsExample.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\AnchorManager.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Editor\FirearmMuzzleResolver.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\InventoryBase.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Editor\PackageFeedback.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\Character.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\LayerManager.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\Character4D.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\EditorScripts\SliderReset.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Editor\PackageUpdater.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\CharacterSetup.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\ExampleScripts\FirearmFxExample.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Elements\ScrollInventoryFilter.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Common\Screenshot.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\WarehouseBase.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Elements\ItemInfo.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Collections\SpriteCollection.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\SimpleColorPicker\Scripts\ColorMode.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Enums\ModificatorType.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\ShopBase.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Elements\InventoryItem.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Collections\IconCollection.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\AnimationManager.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\EditorScripts\SpriteSequenceCapture.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Elements\ScrollInventory.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Enums\ItemClass.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Data\Property.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\UI\Dialog.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Editor\IconCollectionEditor.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\SimpleColorPicker\Scripts\RainbowGenerator.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\ItemCollection.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Common\Springs\ScaleSpring.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Common\SoloState.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\UI\Popup.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\SimpleColorPicker\Scripts\ColorJoystick.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\CharacterExtensions.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\AnimationEvents.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Enums\ItemRarity.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Editor\TransformHelper.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\ExampleScripts\AppearanceExample.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\EditorScripts\NavigateButton.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Data\ItemParams.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\SpriteMapping.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Enums\ItemMaterial.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\ExampleScripts\InventoryExample.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Editor\SpriteCollectionEditor.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Enums\EquipmentTag.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Data\Modifier.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Common\Springs\SpringBase.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Helpers\CharacterInventorySetup.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\UI\Links.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Common\StandaloneFilePicker.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Collections\FirearmCollection.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Enums\PropertyId.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Common\Md5.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\AvatarSetup.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Enums\EquipmentPart.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Editor\LayerManagerEditor.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\ExampleScripts\Projectile.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Elements\ItemSlot.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\EditorScripts\ColorSetup.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Common\StateHandler.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\CharacterScripts\MeleeWeapon.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\ExampleScripts\MouseInteractionExample.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\EditorScripts\CharacterEditor.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\SimpleColorPicker\Scripts\PaletteGradient.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Elements\ItemWorkspace.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\ExampleScripts\EquipmentExample.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\EditorScripts\SpriteSheetCapture.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\EditorScripts\HuePaint.cs" />
+    <Compile Include="Assets\HeroEditor4D\InventorySystem\Scripts\Elements\ItemContainer.cs" />
+    <Compile Include="Assets\HeroEditor4D\Common\Scripts\Enums\BodyPart.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Game\Scripts\Map\Game.Map.asmdef" />
+    <None Include="Assets\HeroEditor4D\Common\Shaders\GrayPaint.shader" />
+    <None Include="Assets\HeroEditor4D\Common\Animation\Bonus (Right Side Only)\Readme.txt" />
+    <None Include="Assets\HeroEditor4D\InventorySystem\ReadMe.txt" />
+    <None Include="Assets\HeroEditor4D\Common\Shaders\HuePaint.shader" />
+    <None Include="Assets\HeroEditor4D\Extensions\EpicHeroes\Readme.txt" />
+    <None Include="Assets\HeroEditor4D\HeroEditor4D.asmdef" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -1101,10 +1184,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="HeroEditor4D.csproj">
-      <Project>{D8A07CF0-92F6-DF21-BC45-E09531490680}</Project>
-      <Name>HeroEditor4D</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />
