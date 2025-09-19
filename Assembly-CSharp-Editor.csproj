@@ -1486,6 +1486,10 @@
       <Project>{A08CF2D0-2ED5-0066-0342-2D7E83C75DEF}</Project>
       <Name>Unity.Mathematics</Name>
     </ProjectReference>
+    <ProjectReference Include="TankAndHealer.UltimateRadialMenu.csproj">
+      <Project>{ADE29EA5-18E5-AF58-A99F-230490DC6E1F}</Project>
+      <Name>TankAndHealer.UltimateRadialMenu</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.VisualScripting.State.csproj">
       <Project>{9625A156-5F93-8FD0-ED29-B5F1225D7AE8}</Project>
       <Name>Unity.VisualScripting.State</Name>

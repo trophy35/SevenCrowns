@@ -75,8 +75,6 @@
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\PopupOpener.cs" />
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\Item Assigning Example\Scripts\ItemAssigningTutorialHandler.cs" />
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\RadialMenuPrefabDisplay.cs" />
-    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Scripts\UltimateRadialMenuStyle.cs" />
-    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Scripts\UltimateRadialMenu.cs" />
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\Gun Wheel Example\Scripts\GunWheelRadialMenuHandler.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\SoundManager.cs" />
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\World Object Example\Scripts\CubeController.cs" />
@@ -84,7 +82,6 @@
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\Capsule Man Item Pickup\Scripts\WorldItem.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\SpinWheel.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\Popup.cs" />
-    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Scripts\UltimateRadialButtonInfo.cs" />
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\Item Assigning Example\Scripts\ItemReceiverExample.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\PlayPopupOpener.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\SpriteSwapper.cs" />
@@ -92,7 +89,6 @@
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\MuteBackgroundMusic.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\TintedButton.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\SceneTransition.cs" />
-    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Scripts\UltimateRadialMenuInputManager.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\SoundButton.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -1366,6 +1362,10 @@
     <ProjectReference Include="Unity.Mathematics.csproj">
       <Project>{A08CF2D0-2ED5-0066-0342-2D7E83C75DEF}</Project>
       <Name>Unity.Mathematics</Name>
+    </ProjectReference>
+    <ProjectReference Include="TankAndHealer.UltimateRadialMenu.csproj">
+      <Project>{ADE29EA5-18E5-AF58-A99F-230490DC6E1F}</Project>
+      <Name>TankAndHealer.UltimateRadialMenu</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.VisualScripting.State.csproj">
       <Project>{9625A156-5F93-8FD0-ED29-B5F1225D7AE8}</Project>

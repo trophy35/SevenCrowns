@@ -5,6 +5,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using SevenCrowns.SceneFlow;
 using SevenCrowns.UI;
+using static Codice.CM.Common.CmCallContext;
+
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -104,6 +106,7 @@ namespace SevenCrowns.Systems
                 {
                     local = Mathf.Clamp01(p);
                     float current = (accumulated + local * taskWeight) / totalWeight;
+                    Debug.Log($"-- {current}");
                     if (_progressBar != null) _progressBar.SetSmooth(current);
                 });
 
@@ -115,14 +118,21 @@ namespace SevenCrowns.Systems
 
                 // Task finished: add its full weight
                 accumulated += taskWeight;
+                Debug.Log($"- {accumulated / totalWeight}");
                 if (_progressBar != null) _progressBar.SetSmooth(accumulated / totalWeight);
                 yield return null;
             }
 
-            // Ensure the progress bar is at 100%
-            if (_progressBar != null) _progressBar.SetImmediate(1f);
-            // Hide the status text
-            if (_statusText != null) _statusText.gameObject.SetActive(false);
+            // Clear status text first (it may share the same TMP as the bar's label)
+            if (_statusText != null) _statusText.text = string.Empty;
+            // Snap the bar to 100%
+            if (_progressBar != null)
+            {
+                _progressBar.SetImmediate(1f);
+                // Hide the numeric percentage so only the prompt remains visible
+                _progressBar.UseNumericLabel(false);
+                _progressBar.SetLabel(string.Empty);
+            }
 
             // Enforce minimal display duration to avoid flash
             while (_elapsed < _minBootScreenSeconds)
@@ -166,6 +176,9 @@ namespace SevenCrowns.Systems
         {
             while (true)
             {
+                // Keep the progress bar visually locked at 100% during the post-load wait
+                if (_progressBar != null)
+                    _progressBar.SetImmediate(1f);
 #if ENABLE_INPUT_SYSTEM
                 bool pressed =
                     (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame) ||
