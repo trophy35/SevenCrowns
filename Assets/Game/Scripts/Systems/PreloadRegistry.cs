@@ -60,6 +60,22 @@ namespace SevenCrowns.Systems
         }
 
         /// <summary>
+        /// Try to get the raw loaded object by key (without casting). Useful for diagnostics.
+        /// </summary>
+        public static bool TryGetRaw(object key, out object raw)
+        {
+            raw = null;
+            if (key == null) return false;
+
+            if (_handlesByKey.TryGetValue(key, out var handle) && handle.IsValid() && handle.Status == AsyncOperationStatus.Succeeded)
+            {
+                raw = handle.Result;
+                return raw != null;
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Releases a specific handle by key, if present.
         /// </summary>
         public static void Release(object key)
@@ -95,6 +111,7 @@ namespace SevenCrowns.Systems
         // Addressables not enabled: keep API available as no-ops so the codebase compiles.
         public static void Register(object key, object handle) { }
         public static bool TryGet<T>(object key, out T asset) where T : class { asset = null; return false; }
+        public static bool TryGetRaw(object key, out object raw) { raw = null; return false; }
         public static void Release(object key) { }
         public static void ReleaseAll() { }
 #endif

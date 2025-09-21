@@ -64,8 +64,10 @@
     <Compile Include="Assets\Game\Scripts\UI\VersionLabel.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorManager.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorSet.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\WorldMapRadialMenuController.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorState.cs" />
     <Compile Include="Assets\Game\Scripts\UI\UiProgressBar.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\IUiAssetProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Game\Scripts\UI\Game.UI.asmdef" />
@@ -1093,6 +1095,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Unity.Localization.csproj">
+      <Project>{681351D7-75FE-D690-6C8D-1AE0B3A1BA69}</Project>
+      <Name>Unity.Localization</Name>
+    </ProjectReference>
+    <ProjectReference Include="TankAndHealer.UltimateRadialMenu.csproj">
+      <Project>{ADE29EA5-18E5-AF58-A99F-230490DC6E1F}</Project>
+      <Name>TankAndHealer.UltimateRadialMenu</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

@@ -9,11 +9,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <RootNamespace>SevenCrowns.Map</RootNamespace>
-    <ProjectGuid>{D64E9FFC-206D-0D84-3990-398060D0EBC1}</ProjectGuid>
+    <RootNamespace>SevenCrowns</RootNamespace>
+    <ProjectGuid>{63D00158-7898-D0F8-6FA8-C9FB25892508}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <AssemblyName>Game.Map</AssemblyName>
+    <AssemblyName>UltimateRadialMenu</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <BaseDirectory>.</BaseDirectory>
@@ -61,26 +61,24 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.39f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Game\Scripts\Map\TilesetBinding.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\Authoring\TerrainTile.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\ITileDataProvider.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\IMapMovementService.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\HeroAgentComponent.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\IHeroMapAgent.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\TileVisualsSet.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\TilemapTileDataProvider.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\TileVisuals.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\PathPreviewRenderer.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\MapMovementService.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\GridCoord.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\ClickToMoveController.cs" />
-    <Compile Include="Assets\Game\Scripts\Map\TileData.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialMenuReadme.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialMenuInputManagerEditor.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\Capsule Man Item Pickup\Scripts\PlayerController.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\Look At Input Example\RadialMenuLookAtInput.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\Capsule Man Item Pickup\Scripts\CharacterInventoryGameManager.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialMenuEditor.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\Item Assigning Example\Scripts\ItemAssigningTutorialHandler.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\RadialMenuPrefabDisplay.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialMenuStyleEditor.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\Gun Wheel Example\Scripts\GunWheelRadialMenuHandler.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\World Object Example\Scripts\CubeController.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialMenuReadmeEditor.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialButtonInfoPropertyDrawer.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\Capsule Man Item Pickup\Scripts\WorldItem.cs" />
+    <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\_Examples\Item Assigning Example\Scripts\ItemReceiverExample.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Game\Scripts\Map\Game.Map.asmdef" />
+    <None Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\UltimateRadialMenu.asmdef" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -1091,19 +1089,19 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.0.39f1\Editor\Data\NetStandard\compat\2.1.0\shims\netfx\System.Xml.Serialization.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="HeroEditor4D.csproj">
-      <Project>{D8A07CF0-92F6-DF21-BC45-E09531490680}</Project>
-      <Name>HeroEditor4D</Name>
+    <ProjectReference Include="Unity.InputSystem.csproj">
+      <Project>{3820DFFE-3BB3-BD2F-6959-428DAECE19C2}</Project>
+      <Name>Unity.InputSystem</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

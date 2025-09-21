@@ -2,7 +2,9 @@
   "name": "Game.UI",
   "rootNamespace": "SevenCrowns",
   "references": [
-    "Unity.TextMeshPro"
+    "Unity.TextMeshPro",
+    "Unity.Localization",
+    "TankAndHealer.UltimateRadialMenu"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

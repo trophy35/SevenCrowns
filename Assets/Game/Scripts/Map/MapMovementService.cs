@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace SevenCrowns.Map
 {
@@ -46,6 +47,7 @@ namespace SevenCrowns.Map
         /// </summary>
         public void ResetDaily()
         {
+            UnityEngine.Debug.Log("ResetDaily");
             _current = _max;
             Refilled?.Invoke(_max, _current);
             Changed?.Invoke(_current, _max);

@@ -61,10 +61,12 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.39f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Game\Scripts\Systems\PreloadRegistryAssetProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\LocalizationPreloadTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\PreloadRegistry.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\LifetimeContentService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\SceneFlowConfig.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\WorldMapTurnController.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\IRuntimeWeightedTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\BootLoaderController.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\SceneTransitionFader.cs" />
@@ -1113,6 +1115,10 @@
     <ProjectReference Include="Game.UI.csproj">
       <Project>{9B567079-6673-7E94-D2E2-18E9B213FA56}</Project>
       <Name>Game.UI</Name>
+    </ProjectReference>
+    <ProjectReference Include="Game.Map.csproj">
+      <Project>{D64E9FFC-206D-0D84-3990-398060D0EBC1}</Project>
+      <Name>Game.Map</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.Localization.csproj">
       <Project>{681351D7-75FE-D690-6C8D-1AE0B3A1BA69}</Project>

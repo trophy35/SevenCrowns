@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using SevenCrowns.SceneFlow;
 using SevenCrowns.UI;
-using static Codice.CM.Common.CmCallContext;
 
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;

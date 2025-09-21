@@ -3,7 +3,7 @@ SevenCrowns – Agent Guidelines
 -------------------------------
 Purpose
 
-You are generating code for the SevenCrowns project (Unity 6 LTS).
+You are generating code for the SevenCrowns project - AAA game (Unity 6 LTS).
 RULES (always apply before writing CODE):
 1) REUSE SCAN — Search the repository for existing classes, services, or utilities that already solve or partially solve the problem. Output a table: {File, API/Class, What to reuse, Gaps}.
 2) PLAN — If reuse is possible, integrate or extend existing code. If not, explain briefly why new code is needed.

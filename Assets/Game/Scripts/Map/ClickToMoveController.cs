@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using System.Collections.Generic;
 
 namespace SevenCrowns.Map
@@ -22,6 +23,8 @@ namespace SevenCrowns.Map
 
         [Header("Debug")]
         [SerializeField] private bool _debugLogs = false;
+        [Header("Input")]
+        [SerializeField] private bool _ignoreClicksOverUI = true;
 
         private AStarPathfinder _pf;
         private int _pfW, _pfH;
@@ -58,6 +61,9 @@ namespace SevenCrowns.Map
         {
             _hero.Agent.Started += OnMovementStarted;
             _hero.Agent.Stopped += OnMovementStopped;
+            // Re-evaluate current preview when MP changes (e.g., after End Turn reset).
+            if (_hero.Movement != null)
+                _hero.Movement.Changed += OnMovementPointsChanged;
         }
 
         private void OnMovementStarted()
@@ -70,9 +76,22 @@ namespace SevenCrowns.Map
             _isMoving = false;
         }
 
+        private void OnMovementPointsChanged(int current, int max)
+        {
+            if (_hasPreview && _pendingPath != null && _pendingPath.Count > 1)
+            {
+                int payableSteps = ComputePayableSteps(_pendingPath);
+                _preview?.Show(_pendingPath, payableSteps);
+            }
+        }
+
         private void Update()
         {
             if (_camera == null || _grid == null || _provider == null || _hero == null) return;
+
+            // If configured, ignore world clicks when the pointer is over any UI element (robust raycast across input modules).
+            if (_ignoreClicksOverUI && IsPointerOverUI())
+                return;
 
             if (!_isMoving && Input.GetMouseButtonDown(0))
             {
@@ -88,6 +107,20 @@ namespace SevenCrowns.Map
             {
                 HandleRightClick();
             }
+        }
+
+        private static readonly List<RaycastResult> _uiRaycastResults = new List<RaycastResult>(16);
+        private static bool IsPointerOverUI()
+        {
+            var es = EventSystem.current;
+            if (es == null) return false;
+            // Quick path
+            if (es.IsPointerOverGameObject()) return true;
+            // Robust path
+            var ped = new PointerEventData(es) { position = Input.mousePosition };
+            _uiRaycastResults.Clear();
+            es.RaycastAll(ped, _uiRaycastResults);
+            return _uiRaycastResults.Count > 0;
         }
 
         private void HandleLeftClick()
