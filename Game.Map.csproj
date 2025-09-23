@@ -63,6 +63,8 @@
   <ItemGroup>
     <Compile Include="Assets\Game\Scripts\Map\TilesetBinding.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Authoring\TerrainTile.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\ISelectedHeroAgentProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\HeroIdentity.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ITileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IMapMovementService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroAgentComponent.cs" />

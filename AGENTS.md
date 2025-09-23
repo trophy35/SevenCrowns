@@ -12,8 +12,9 @@ RULES (always apply before writing CODE):
 UNITY/SEVENCROWNS SPECIFICS:
 - Always use Unity Localization (String Tables) for UI text/labels. No hardcoded strings. Add FR/EN keys.
 - Respect memory management and performance (low allocations, Addressables handles, batching).
-- Follow SOLID principles and Unity’s official C# naming conventions.
+- Follow SOLID principles (see below) and Unity’s official C# naming conventions.
 - All comments must be in English.
+- When it's possible Unity Tests unit are implemented to ensure there is no regressions when we implement new features.
 
 OUTPUT FORMAT:
 Sections in order: REUSE SCAN, PLAN, CONTRACTS, CODE.
@@ -71,6 +72,124 @@ Pointers & Entry Points
 - Boot controller: `Assets/Game/Scripts/Systems/BootLoaderController.cs`
 - Addressables tasks: `Assets/Game/Scripts/Systems/AddressablesLoadKeysTask.cs`
 - Localization tasks: `Assets/Game/Scripts/Systems/LocalizationPreloadTask.cs`
+
+---------------------------------------------
+SevenCrows respects strictly SOLID Principles
+---------------------------------------------
+
+The SOLID design principles guide how we structure agent code and behaviors for clarity, maintainability, and extensibility.
+
+1. Single Responsibility Principle (SRP)
+
+Definition: An agent or component should have one clearly defined responsibility.
+Why: Limits complexity, improves readability, and reduces unintended side effects.
+
+Example:
+✅ A DialogueManager handles conversation flow.
+❌ A DialogueManager that also fetches APIs, manages state, and logs telemetry.
+
+2. Open/Closed Principle (OCP)
+
+Definition: Agents should be open for extension, but closed for modification.
+Why: Adding new features should not require rewriting existing code.
+
+Example:
+✅ Add new output formats via plugins implementing an IFormatter interface.
+❌ Modify the core ResponseEngine class every time a new format is introduced.
+
+3. Liskov Substitution Principle (LSP)
+
+Definition: Subtypes must be replaceable for their base types without breaking correctness.
+Why: Guarantees safe polymorphism, avoids fragile inheritance.
+
+Example:
+✅ Any AgentTask subclass can replace BaseTask in the scheduler.
+❌ A subclass throws exceptions when used in place of the base type.
+
+4. Interface Segregation Principle (ISP)
+
+Definition: Prefer many small, specific interfaces over one large, general interface.
+Why: Prevents agents from depending on methods they don’t need.
+
+Example:
+✅ Separate ILocalizationProvider and ILoggingProvider.
+❌ One ISystemProvider with 20 unrelated methods.
+
+5. Dependency Inversion Principle (DIP)
+
+Definition: Depend on abstractions, not concretions. High-level modules shouldn’t rely on low-level details.
+Why: Enables inversion of control, testability, and flexible architecture.
+
+Example:
+✅ AgentPlanner depends on an IDataStore interface injected at runtime.
+❌ AgentPlanner directly instantiates a FileDatabase.
+
+Practical Guidance for Agents
+Keep each agent and helper module focused on one job.
+Add new behaviors via extension, not by hacking the old.
+Ensure subtypes behave like their parents without surprises.
+Break large interfaces down to what each agent actually needs.
+Use injection and abstractions so agents can evolve without rewiring everything.
+👉 Following SOLID keeps our agent codebase scalable, testable, and maintainable as the system grows.
+
+------------------------------------------------------------------
+Unity Unit Tests — Best Practices
+------------------------------------------------------------------
+- Test Types & When to Use
+
+Edit Mode tests (fast, no player loop): default for pure logic, data models, utility classes, domain rules, serializers, services with mocked dependencies.
+Play Mode tests (with player loop): only when behavior needs MonoBehaviour lifecycle, coroutines, physics, animation, scene loading, or frame-driven systems.
+Integration tests: limited scope; verify composition (small graphs of components/services). Keep under 1–2 seconds each.
+
+- Naming, Structure, Style
+
+File/class naming: {SUT}Tests.cs or {SUT}_{Concern}Tests.cs.
+Test naming: MethodOrScenario_Should_ExpectedOutcome_[Condition].
+AAA pattern: Arrange – Act – Assert. No hidden work in asserts.
+One logical assertion per test (multiple low-level asserts OK if they validate a single behavior).
+Keep tests <100ms (Edit Mode) and <500ms (Play Mode) whenever possible.
+
+- Determinism & Isolation
+
+No reliance on global state, time, randomness, or frame timing without control.
+Use seeded RNG; wrap time in an abstraction (ITimeProvider) and inject a fixed clock in tests.
+No network, file IO, or real Addressables in unit tests—mock them.
+Each test creates and disposes its own objects/scene state. Use [SetUp]/[TearDown] or [OneTimeSetUp] for shared fixtures.
+
+- Assertions & Test API
+
+Prefer constraint-based asserts (Assert.That(actual, Is.EqualTo(expected))) for clarity.
+Use [TestCase], [TestCaseSource] for data-driven coverage.
+For coroutines or frame-driven checks, use [UnityTest] and yield return null (keep frame counts minimal).
+When asserting floats/physics, use tolerances: Is.EqualTo(expected).Within(1e-4f).
+
+- Scenes, GameObjects, and Lifecycles
+
+Instantiate minimal hierarchies; avoid loading full game scenes in unit tests.
+In Play Mode, prefer additive mini-scenes created by the test, released after the test.
+Use GameObject + required components only; avoid FindObjectOfType/singletons—inject references.
+
+- Depend on interfaces/abstractions (DIP).
+
+Use lightweight fakes or hand-rolled stubs for clarity and zero allocations; introduce a mock framework only if it reduces code.
+Verify interactions that matter (calls, parameters) but focus primarily on observable behavior.
+
+- Concurrency, Coroutines, Async
+
+Keep coroutine tests short; prefer testing resulting state rather than internal yields.
+For async APIs (e.g., UniTask/Task), expose awaitable methods that can be awaited in Edit Mode tests when possible (no engine API usage).
+If the code touches Unity APIs, test with [UnityTest] and control time/frames deterministically.
+
+- Performance & Allocations (Unity-aware)
+
+Guard hot paths with allocation-free assertions when feasible (e.g., verify no boxing/log spam in tight loops).
+In Play Mode tests, set physics/animation to minimal usage and avoid long waits/sleeps.
+Never assert on exact frame counts unless inherent to the contract; assert on state within a bounded window.
+
+- Flakiness Kill-Switches
+
+No WaitForSeconds in unit tests. If timing must be tested, use manual ticking of your own clock or small frame advances with robust conditions.
+Avoid relying on Editor settings or PlayerPrefs; if unavoidable, back them up and restore.
 
 -----------------------------------------
 — World Map Radial Menu: Reuse Patterns —
@@ -186,3 +305,61 @@ Common Pitfalls
 - Wrong asset type: Sprite not showing if the key points to Texture2D (parent). Use child Sprite address.
 - No provider in scene: Ensure exactly one PreloadRegistryAssetProvider is present before UI binds.
 - Not preloaded: If not preloaded, first bind shows fallback; HeroPortraitView will late-bind within a short timeout.
+
+-------------------------------------
+Hero Selection – Reuse
+-------------------------------------
+
+Architecture
+
+Contract lives in Game.Map: ISelectedHeroAgentProvider (prevents Game.Map ↔ Game.Core cycles).
+Core implements selection via SelectedHeroService and mirrors to CurrentHeroService so UI (HeroPortraitView) updates automatically.
+ClickToMoveController depends only on ISelectedHeroAgentProvider.
+Scene Wiring Checklist
+
+Per hero GameObject:
+Add HeroIdentity and set HeroId (e.g., hero.harry).
+Ensure HeroAgentComponent exists.
+Add a Collider2D sized to the sprite for picking. Optional: put on “Heroes” layer.
+Core services:
+One CurrentHeroService with entries { heroId, portraitKey } and optional _defaultHeroId.
+One SelectedHeroService with _portraitService assigned.
+ClickToMoveController:
+Assign _selectionBehaviour to SelectedHeroService (or rely on auto‑discovery).
+Assign _grid, _provider, _preview, _camera.
+_heroLayer can stay 0 to search all layers (more forgiving), or set to “Heroes” layer.
+Keep _ignoreClicksOverUI = true to avoid fighting UI input.
+Lifecycle
+
+SelectedHeroService auto‑scans on Awake and Start (handles ordering). Call RefreshHeroes() after runtime spawns/despawns, then SelectById(id) if you need to focus.
+CurrentHeroService holds the only maintained list of heroes (id → portrait key). Do not duplicate hero lists elsewhere.
+Input & UX Flow
+
+Click a hero: ISelectedHeroAgentProvider.SelectById(heroId) fired; portrait updates via CurrentHeroService; ClickToMoveController binds to the new hero.
+Click on map:
+First click: path preview to target respecting movement points.
+Second click on same target: hero moves along the path.
+Right‑click: cancels current order and clears preview.
+World clicks are ignored when pointer is over UI (robust EventSystem raycast).
+Diagnostics
+
+Enable _debugLogs on SelectedHeroService and ClickToMoveController.
+Key logs:
+“[SelectedHeroService] Refreshed heroes. Count=X mapCount=X”
+“Selected hero id=..., agentGO=...”
+“[ClickToMove] Selected hero changed. HasHero=True”
+“Pathfinder built with bounds …”
+“Click ignored: pointer over UI.” (UI blocking)
+“No hero detected under cursor.” (no collider/layer mismatch)
+If preview doesn’t show: verify HeroIdentity present, Collider2D exists, TilemapTileDataProvider baked, and selection provider bound.
+Contracts Summary
+
+Map provides: HeroIdentity, ISelectedHeroAgentProvider
+Core implements: SelectedHeroService (RefreshHeroes, event SelectedHeroChanged), CurrentHeroService (CurrentHeroChanged)
+UI consumes: ICurrentHeroPortraitKeyProvider from CurrentHeroService; ClickToMoveController consumes ISelectedHeroAgentProvider
+Pitfalls
+
+Missing HeroIdentity or Collider2D → clicks won’t select.
+Duplicating hero lists in multiple services → maintenance burden. Keep list only in CurrentHeroService.
+Assembly cycles → keep ISelectedHeroAgentProvider in Game.Map; SelectedHeroService in Game.Core implements it.
+UI intercepting clicks → enable _ignoreClicksOverUI and ensure Canvas has a GraphicRaycaster.

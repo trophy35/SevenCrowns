@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: a6cfef40e65b7b140b467604a9a93687
+guid: 00674ffb79702dc429c9a9ea1d69cea3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7898257589499244510
-    second: Hero_Harry_0
+      213: -2480408330647489220
+    second: Hero_Jim_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Hero_Harry_0
+      name: Hero_Jim_0
       rect:
         serializedVersion: 2
         x: 9
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2205d51b190c36290800000000000000
-      internalID: -7898257589499244510
+      spriteID: c3536d9d3c1d39dd0800000000000000
+      internalID: -2480408330647489220
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Hero_Harry_0: -7898257589499244510
+      Hero_Jim_0: -2480408330647489220
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

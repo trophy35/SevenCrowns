@@ -15,8 +15,14 @@ namespace SevenCrowns.Map
         [SerializeField] private Camera _camera;
         [SerializeField] private Grid _grid;
         [SerializeField] private TilemapTileDataProvider _provider;
-        [SerializeField] private HeroAgentComponent _hero;
+        [SerializeField] private HeroAgentComponent _hero; // Fallback if no selection service assigned
         [SerializeField] private PathPreviewRenderer _preview;
+
+        [Header("Selection")]
+        [SerializeField] private MonoBehaviour _selectionBehaviour; // Optional; must implement ISelectedHeroAgentProvider
+        [SerializeField] private LayerMask _heroLayer = 0;           // Set to your "Heroes" layer in Inspector
+
+        private ISelectedHeroAgentProvider _selection;
 
         [Header("Movement")]
         [SerializeField] private EnterMask8 _allowedMoves = EnterMask8.N | EnterMask8.E | EnterMask8.S | EnterMask8.W; // 4-way
@@ -41,20 +47,69 @@ namespace SevenCrowns.Map
             if (_camera == null) Debug.LogWarning("ClickToMoveController: No camera assigned and Camera.main was null.");
             if (_grid == null) Debug.LogError("ClickToMoveController requires a Grid reference.");
             if (_provider == null) Debug.LogError("ClickToMoveController requires a TilemapTileDataProvider.");
-            if (_hero == null) Debug.LogError("ClickToMoveController requires a HeroAgentComponent.");
+
+            // Bind selection provider if supplied or discoverable
+            if (_selectionBehaviour != null && _selectionBehaviour is ISelectedHeroAgentProvider p1)
+            {
+                _selection = p1;
+            }
+            else
+            {
+                // Try find any selection provider in the scene
+                var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _selection == null; i++)
+                {
+                    if (behaviours[i] is ISelectedHeroAgentProvider p) _selection = p;
+                }
+            }
+
+            if (_selection != null)
+            {
+                _selection.SelectedHeroChanged += OnSelectedHeroChanged;
+                OnSelectedHeroChanged(_selection.CurrentHero);
+            }
+            else
+            {
+                if (_hero == null) Debug.LogError("ClickToMoveController requires a HeroAgentComponent when no selection provider is assigned.");
+                else _hero.AgentInitialized += OnHeroAgentInitialized;
+            }
 
             if (_debugLogs)
             {
                 Debug.Log($"[ClickToMove] Initialized. Bounds={_provider.Bounds}, Diagonal=false, Mask={_allowedMoves}");
             }
-
-            _hero.AgentInitialized += OnHeroAgentInitialized;
         }
 
         private void Start()
         {
             // Build pathfinder after provider has baked (its Awake runs before Start).
             BuildPathfinderIfNeeded(log: true);
+        }
+
+        private void OnDestroy()
+        {
+            if (_selection != null) _selection.SelectedHeroChanged -= OnSelectedHeroChanged;
+            UnsubscribeHero();
+        }
+
+        private void OnSelectedHeroChanged(HeroAgentComponent hero)
+        {
+            UnsubscribeHero();
+            _hero = hero;
+            if (_debugLogs) Debug.Log($"[ClickToMove] Selected hero changed. HasHero={(_hero!=null)}");
+            if (_hero != null)
+            {
+                _hero.AgentInitialized += OnHeroAgentInitialized;
+                if (_hero.Agent != null)
+                {
+                    _hero.Agent.Started += OnMovementStarted;
+                    _hero.Agent.Stopped += OnMovementStopped;
+                }
+                if (_hero.Movement != null)
+                    _hero.Movement.Changed += OnMovementPointsChanged;
+            }
+            _preview?.Clear();
+            _hasPreview = false;
         }
 
         private void OnHeroAgentInitialized()
@@ -64,6 +119,19 @@ namespace SevenCrowns.Map
             // Re-evaluate current preview when MP changes (e.g., after End Turn reset).
             if (_hero.Movement != null)
                 _hero.Movement.Changed += OnMovementPointsChanged;
+        }
+
+        private void UnsubscribeHero()
+        {
+            if (_hero == null) return;
+            _hero.AgentInitialized -= OnHeroAgentInitialized;
+            if (_hero.Agent != null)
+            {
+                _hero.Agent.Started -= OnMovementStarted;
+                _hero.Agent.Stopped -= OnMovementStopped;
+            }
+            if (_hero.Movement != null)
+                _hero.Movement.Changed -= OnMovementPointsChanged;
         }
 
         private void OnMovementStarted()
@@ -87,14 +155,23 @@ namespace SevenCrowns.Map
 
         private void Update()
         {
-            if (_camera == null || _grid == null || _provider == null || _hero == null) return;
+            if (_camera == null || _grid == null || _provider == null) return;
 
             // If configured, ignore world clicks when the pointer is over any UI element (robust raycast across input modules).
             if (_ignoreClicksOverUI && IsPointerOverUI())
                 return;
 
-            if (!_isMoving && Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0))
             {
+                // Try selecting a hero first if a selection service is present
+                if (_selection != null && TryPickHeroUnderMouse(out var heroId))
+                {
+                    _selection.SelectById(heroId);
+                    return;
+                }
+
+                if (_hero == null || _isMoving) return;
+
                 BuildPathfinderIfNeeded(log: _debugLogs);
                 if (_pf == null)
                 {
@@ -105,8 +182,43 @@ namespace SevenCrowns.Map
             }
             else if (Input.GetMouseButtonDown(1))
             {
+                if (_hero == null) return;
                 HandleRightClick();
             }
+        }
+
+        private bool TryPickHeroUnderMouse(out string heroId)
+        {
+            heroId = null;
+
+            var mouse = Input.mousePosition;
+            float depth = Mathf.Abs((_camera.transform.position - _grid.transform.position).z);
+            var world = _camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, depth));
+            var p = new Vector2(world.x, world.y);
+
+            Collider2D[] hits;
+            if (_heroLayer == 0)
+            {
+                // If no layer set, search all layers to be more forgiving in setup.
+                hits = Physics2D.OverlapPointAll(p);
+            }
+            else
+            {
+                hits = Physics2D.OverlapPointAll(p, _heroLayer);
+            }
+            for (int i = 0; i < hits.Length; i++)
+            {
+                var h = hits[i];
+                if (h == null) continue;
+                var id = h.GetComponentInParent<HeroIdentity>();
+                if (id != null && !string.IsNullOrWhiteSpace(id.HeroId))
+                {
+                    heroId = id.HeroId;
+                    return true;
+                }
+            }
+            if (_debugLogs) Debug.Log("[ClickToMove] No hero detected under cursor.");
+            return false;
         }
 
         private static readonly List<RaycastResult> _uiRaycastResults = new List<RaycastResult>(16);
