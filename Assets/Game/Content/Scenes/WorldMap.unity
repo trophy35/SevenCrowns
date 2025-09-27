@@ -1291,11 +1291,17 @@ MonoBehaviour:
   _uiStringTable: UI.Common
   _endTurnNameKey: EndTurn
   _endTurnDescKey: EndTurnDesc
+  _moveNameKey: Move
+  _moveDescKey: MoveDesc
   _endTurnSpriteKey: 'UI/Icons/EndTurn[EndTurn]'
   _endTurnSfxKey: Audio/SFX/UI/EndTurn
+  _moveSpriteKey: 'UI/Icons/Move[Move]'
+  _moveSfxKey: Audio/SFX/UI/click
   _endTurnSpriteFallback: {fileID: 0}
   _endTurnSfxFallback: {fileID: 0}
   _sfxVolume: 1
+  _moveSpriteFallback: {fileID: 0}
+  _moveSfxFallback: {fileID: 0}
   _onEndTurnRequested:
     m_PersistentCalls:
       m_Calls:
@@ -1311,6 +1317,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 1
+  _onMoveModeChanged:
+    m_PersistentCalls:
+      m_Calls: []
   _sfxWarmupTimeout: 2
 --- !u!114 &196974316
 MonoBehaviour:
@@ -1466,6 +1475,7 @@ MonoBehaviour:
   _allowedMoves: 85
   _debugLogs: 1
   _ignoreClicksOverUI: 1
+  _moveModeEnabled: 0
 --- !u!1 &535998806
 GameObject:
   m_ObjectHideFlags: 0
@@ -3205,8 +3215,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 780.5458, y: -364.9701}
-  m_SizeDelta: {x: 349.853, y: 349.853}
+  m_AnchoredPosition: {x: 780.421, y: -365.01044}
+  m_SizeDelta: {x: 349.8917, y: 349.8917}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &6433701789569441286
 MonoBehaviour:

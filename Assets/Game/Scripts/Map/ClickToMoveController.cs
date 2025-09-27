@@ -23,6 +23,7 @@ namespace SevenCrowns.Map
         [SerializeField] private LayerMask _heroLayer = 0;           // Set to your "Heroes" layer in Inspector
 
         private ISelectedHeroAgentProvider _selection;
+        private string _currentHeroId;
 
         [Header("Movement")]
         [SerializeField] private EnterMask8 _allowedMoves = EnterMask8.N | EnterMask8.E | EnterMask8.S | EnterMask8.W; // 4-way
@@ -31,6 +32,8 @@ namespace SevenCrowns.Map
         [SerializeField] private bool _debugLogs = false;
         [Header("Input")]
         [SerializeField] private bool _ignoreClicksOverUI = true;
+        [Tooltip("When enabled, left-click previews a path and second click confirms movement. When disabled, no path preview is shown.")]
+        private bool _moveModeEnabled = false; // controlled by UI button via SetMoveModeEnabled(bool)
 
         private AStarPathfinder _pf;
         private int _pfW, _pfH;
@@ -40,6 +43,7 @@ namespace SevenCrowns.Map
         private List<GridCoord> _pendingPath;
         private readonly List<int> _costBuffer = new List<int>(64);
         private bool _isMoving;
+        private readonly System.Collections.Generic.Dictionary<string, GridCoord> _lastGoalByHeroId = new System.Collections.Generic.Dictionary<string, GridCoord>(8);
 
         private void Awake()
         {
@@ -96,6 +100,13 @@ namespace SevenCrowns.Map
         {
             UnsubscribeHero();
             _hero = hero;
+            _currentHeroId = null;
+            if (_hero != null)
+            {
+                var id = _hero.GetComponent<HeroIdentity>();
+                if (id != null && !string.IsNullOrWhiteSpace(id.HeroId))
+                    _currentHeroId = id.HeroId;
+            }
             if (_debugLogs) Debug.Log($"[ClickToMove] Selected hero changed. HasHero={(_hero!=null)}");
             if (_hero != null)
             {
@@ -146,6 +157,12 @@ namespace SevenCrowns.Map
 
         private void OnMovementPointsChanged(int current, int max)
         {
+            if (!_moveModeEnabled)
+            {
+                // Keep the last preview data in memory but do not render while disabled.
+                _preview?.Clear();
+                return;
+            }
             if (_hasPreview && _pendingPath != null && _pendingPath.Count > 1)
             {
                 int payableSteps = ComputePayableSteps(_pendingPath);
@@ -171,6 +188,7 @@ namespace SevenCrowns.Map
                 }
 
                 if (_hero == null || _isMoving) return;
+                if (!_moveModeEnabled) return; // Do not preview/move when move mode is disabled
 
                 BuildPathfinderIfNeeded(log: _debugLogs);
                 if (_pf == null)
@@ -185,6 +203,69 @@ namespace SevenCrowns.Map
                 if (_hero == null) return;
                 HandleRightClick();
             }
+        }
+
+        /// <summary>
+        /// Enables move mode. If a previous path preview exists, it will be shown again.
+        /// </summary>
+        public void EnableMoveMode()
+        {
+            _moveModeEnabled = true;
+            // If we have a pending preview from last time, re-show it now.
+            if (_hasPreview && _pendingPath != null && _pendingPath.Count > 1)
+            {
+                int payableSteps = ComputePayableSteps(_pendingPath);
+                _preview?.Show(_pendingPath, payableSteps);
+            }
+            else if (!string.IsNullOrEmpty(_currentHeroId) && _lastGoalByHeroId.TryGetValue(_currentHeroId, out var lastGoal))
+            {
+                BuildPathfinderIfNeeded(log: _debugLogs);
+                if (_pf != null && _hero != null && _hero.Agent != null)
+                {
+                    var start = _hero.Agent.Position;
+                    if (!start.Equals(lastGoal))
+                    {
+                        var path = _pf.GetPath(start, lastGoal, _allowedMoves);
+                        if (path != null && path.Count > 0)
+                        {
+                            int payableSteps = ComputePayableSteps(path);
+                            _preview?.Show(path, payableSteps);
+                            _pendingPath = path;
+                            _pendingGoal = lastGoal;
+                            _pendingStart = start;
+                            _hasPreview = true;
+                            if (_debugLogs) Debug.Log($"[ClickToMove] Restored preview for hero={_currentHeroId} to lastGoal={lastGoal}");
+                        }
+                    }
+                }
+            }
+            if (_debugLogs) Debug.Log("[ClickToMove] Move mode ENABLED");
+        }
+
+        /// <summary>
+        /// Disables move mode and hides any currently rendered preview (but keeps the last preview data in memory).
+        /// </summary>
+        public void DisableMoveMode()
+        {
+            _moveModeEnabled = false;
+            _preview?.Clear();
+            if (_debugLogs) Debug.Log("[ClickToMove] Move mode DISABLED");
+        }
+
+        /// <summary>
+        /// Sets move mode enabled/disabled.
+        /// </summary>
+        public void SetMoveModeEnabled(bool enabled)
+        {
+            if (enabled) EnableMoveMode(); else DisableMoveMode();
+        }
+
+        /// <summary>
+        /// Toggles move mode state.
+        /// </summary>
+        public void ToggleMoveMode()
+        {
+            SetMoveModeEnabled(!_moveModeEnabled);
         }
 
         private bool TryPickHeroUnderMouse(out string heroId)
@@ -305,6 +386,10 @@ namespace SevenCrowns.Map
                 _pendingGoal = goal;
                 _pendingStart = start;
                 _hasPreview = true;
+                if (!string.IsNullOrEmpty(_currentHeroId))
+                {
+                    _lastGoalByHeroId[_currentHeroId] = goal;
+                }
                 if (_debugLogs) Debug.Log($"[ClickToMove] Preview shown. PayableSteps={payableSteps}");
             }
         }
