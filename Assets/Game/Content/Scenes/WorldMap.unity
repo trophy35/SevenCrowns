@@ -1335,6 +1335,56 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _convertTextureToSpriteIfNeeded: 1
   _autoLoadIfMissing: 1
+--- !u!1 &202561735
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 202561736}
+  - component: {fileID: 202561738}
+  m_Layer: 0
+  m_Name: CursorManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &202561736
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 202561735}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1873579549}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &202561738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 202561735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7e23fe67e4672340a8020ae76754266, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _hintSourceBehaviour: {fileID: 404685343}
+  _overrideSet: {fileID: 11400000, guid: f1481a370ae83e94c8f23dff957c936c, type: 2}
+  _hoverPriority: 100
+  _movePriority: 10
+  _autoDiscover: 1
+  _discoverInterval: 0.5
 --- !u!1 &263439004 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 9046815931943037152, guid: e7d55e172e6d540499c90c129ebbee11, type: 3}
@@ -1429,6 +1479,7 @@ GameObject:
   m_Component:
   - component: {fileID: 404685342}
   - component: {fileID: 404685343}
+  - component: {fileID: 404685344}
   m_Layer: 0
   m_Name: ClickToMoveController
   m_TagString: Untagged
@@ -1475,7 +1526,20 @@ MonoBehaviour:
   _allowedMoves: 85
   _debugLogs: 1
   _ignoreClicksOverUI: 1
-  _moveModeEnabled: 0
+--- !u!114 &404685344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 404685341}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2593bb7c9effb1c4890f584608c44108, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _menu: {fileID: 196974315}
+  _clickToMove: {fileID: 404685343}
 --- !u!1 &535998806
 GameObject:
   m_ObjectHideFlags: 0
@@ -3116,6 +3180,7 @@ Transform:
   - {fileID: 64689650}
   - {fileID: 1832840408}
   - {fileID: 1240371380}
+  - {fileID: 202561736}
   m_Father: {fileID: 161393214}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2091443600172886031
@@ -3215,8 +3280,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 780.421, y: -365.01044}
-  m_SizeDelta: {x: 349.8917, y: 349.8917}
+  m_AnchoredPosition: {x: 779.9901, y: -365.1499}
+  m_SizeDelta: {x: 350.02536, y: 350.02536}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &6433701789569441286
 MonoBehaviour:

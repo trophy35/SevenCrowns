@@ -70,6 +70,7 @@
     <Compile Include="Assets\Game\Scripts\Map\HeroAgentComponent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\IWorldCursorHintSource.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IHeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TileVisualsSet.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TilemapTileDataProvider.cs" />

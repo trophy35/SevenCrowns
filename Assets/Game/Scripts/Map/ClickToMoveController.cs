@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
+// UI cursor binding is done via IWorldCursorHintSource to avoid Map -> UI dependency
 
 namespace SevenCrowns.Map
 {
@@ -9,7 +10,7 @@ namespace SevenCrowns.Map
     /// Uses Grid.WorldToCell (no physics) and a cached A* pathfinder.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class ClickToMoveController : MonoBehaviour
+    public sealed class ClickToMoveController : MonoBehaviour, IWorldCursorHintSource
     {
         [Header("Wiring")]
         [SerializeField] private Camera _camera;
@@ -44,6 +45,15 @@ namespace SevenCrowns.Map
         private readonly List<int> _costBuffer = new List<int>(64);
         private bool _isMoving;
         private readonly System.Collections.Generic.Dictionary<string, GridCoord> _lastGoalByHeroId = new System.Collections.Generic.Dictionary<string, GridCoord>(8);
+
+        // Cursor hint caching to avoid per-frame heavy work
+        private bool _lastHoverHero;
+        private bool _lastMoveHint;
+        private bool _hasCachedGoal;
+        private GridCoord _cachedGoalCell;
+        private bool _cachedMoveHint;
+        public bool HoveringHero => _lastHoverHero;
+        public bool MoveHint => _lastMoveHint;
 
         private void Awake()
         {
@@ -94,6 +104,7 @@ namespace SevenCrowns.Map
         {
             if (_selection != null) _selection.SelectedHeroChanged -= OnSelectedHeroChanged;
             UnsubscribeHero();
+            // UI binder will clear any cursor overrides on unsubscribe
         }
 
         private void OnSelectedHeroChanged(HeroAgentComponent hero)
@@ -176,7 +187,16 @@ namespace SevenCrowns.Map
 
             // If configured, ignore world clicks when the pointer is over any UI element (robust raycast across input modules).
             if (_ignoreClicksOverUI && IsPointerOverUI())
+            {
+                // Report no hints while over UI
+                NotifyCursorHints(false, false);
                 return;
+            }
+
+            // Compute and publish hints each frame
+            var hover = EvaluateHoverHero();
+            var move = EvaluateMoveHint();
+            NotifyCursorHints(hover, move);
 
             if (Input.GetMouseButtonDown(0))
             {
@@ -401,6 +421,67 @@ namespace SevenCrowns.Map
             // optional: clear preview/highlights
             _preview?.Clear();
             _hasPreview = false;
+        }
+
+        /// <summary>
+        /// Compute and apply cursor hints based on current hover and move possibility.
+        /// Uses CursorManager with priorities so hero hover overrides move hint.
+        /// </summary>
+        private void NotifyCursorHints(bool hoverHero, bool moveHint)
+        {
+            if (hoverHero == _lastHoverHero && moveHint == _lastMoveHint)
+                return;
+            _lastHoverHero = hoverHero;
+            _lastMoveHint = moveHint;
+            CursorHintsChanged?.Invoke(_lastHoverHero, _lastMoveHint);
+        }
+
+        public event System.Action<bool, bool> CursorHintsChanged;
+
+        /// <summary>
+        /// Returns true if the mouse is currently hovering a hero (eligible for selection).
+        /// </summary>
+        private bool EvaluateHoverHero()
+        {
+            if (_selection == null)
+                return false;
+            return TryPickHeroUnderMouse(out _);
+        }
+
+        /// <summary>
+        /// Returns true if move mode is enabled, a hero is ready, and the tile under mouse has a valid path from hero.
+        /// Uses a cached result for the last hovered goal cell.
+        /// </summary>
+        private bool EvaluateMoveHint()
+        {
+            if (!_moveModeEnabled || _hero == null || _isMoving)
+                return false;
+
+            // Determine goal cell under mouse
+            var mouse = Input.mousePosition;
+            float depth = Mathf.Abs((_camera.transform.position - _grid.transform.position).z);
+            var world = _camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, depth));
+            var goal = _provider.WorldToCoord(_grid, world);
+
+            if (_hasCachedGoal && goal.Equals(_cachedGoalCell))
+                return _cachedMoveHint;
+
+            BuildPathfinderIfNeeded(log: false);
+            bool hint = false;
+            if (_pf != null && _hero.Agent != null)
+            {
+                var start = _hero.Agent.Position;
+                if (!start.Equals(goal))
+                {
+                    var path = _pf.GetPath(start, goal, _allowedMoves);
+                    hint = path != null && path.Count > 0;
+                }
+            }
+
+            _cachedGoalCell = goal;
+            _cachedMoveHint = hint;
+            _hasCachedGoal = true;
+            return hint;
         }
 
         private int ComputePayableSteps(System.Collections.Generic.IReadOnlyList<GridCoord> path)

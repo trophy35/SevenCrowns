@@ -23,6 +23,8 @@ namespace SevenCrowns.UI.CursorSystem
 
         [Header("Config")]
         [SerializeField] private CursorSet _set;
+        [SerializeField, Tooltip("When true, uses software cursor in Player builds for reliability (and for any animated cursor). Recommended ON on Windows/macOS Players.")]
+        private bool _forceSoftwareInPlayer = true;
 
         private readonly List<CursorOverride> _overrides = new();
         private CursorState _currentState = CursorState.Default;
@@ -162,8 +164,15 @@ namespace SevenCrowns.UI.CursorSystem
 
             // Unity expects hotspot from top-left in pixels; convert Vector2 directly
             Vector2 hs = _currentEntry.hotspot;
-            Cursor.SetCursor(tex, hs, _currentEntry.mode);
+            var mode = _currentEntry.mode;
+            // Animated cursors require software mode on most platforms
+            if (_currentEntry.frames.Length > 1 && _currentEntry.frameRate > 0f)
+                mode = CursorMode.ForceSoftware;
+#if !UNITY_EDITOR
+            if (_forceSoftwareInPlayer)
+                mode = CursorMode.ForceSoftware;
+#endif
+            Cursor.SetCursor(tex, hs, mode);
         }
     }
 }
-

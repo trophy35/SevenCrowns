@@ -64,6 +64,7 @@
     <Compile Include="Assets\Game\Scripts\UI\ICurrentHeroPortraitKeyProvider.cs" />
     <Compile Include="Assets\Game\Scripts\UI\VersionLabel.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorManager.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\WorldMapCursorBinder.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorSet.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldMapRadialMenuController.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorState.cs" />
@@ -1104,6 +1105,10 @@
     <ProjectReference Include="TankAndHealer.UltimateRadialMenu.csproj">
       <Project>{ADE29EA5-18E5-AF58-A99F-230490DC6E1F}</Project>
       <Name>TankAndHealer.UltimateRadialMenu</Name>
+    </ProjectReference>
+    <ProjectReference Include="Game.Map.csproj">
+      <Project>{D64E9FFC-206D-0D84-3990-398060D0EBC1}</Project>
+      <Name>Game.Map</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
