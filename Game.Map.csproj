@@ -69,14 +69,17 @@
     <Compile Include="Assets\Game\Scripts\Map\IMapMovementService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroAgentComponent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\IGridOccupancyProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IWorldCursorHintSource.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IHeroMapAgent.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\GridOccupancyService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TileVisualsSet.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TilemapTileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TileVisuals.cs" />
     <Compile Include="Assets\Game\Scripts\Map\PathPreviewRenderer.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MapMovementService.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\BlockingOverlayTileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridCoord.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ClickToMoveController.cs" />

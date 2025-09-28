@@ -192,6 +192,58 @@ No WaitForSeconds in unit tests. If timing must be tested, use manual ticking of
 Avoid relying on Editor settings or PlayerPrefs; if unavoidable, back them up and restore.
 
 -----------------------------------------
+Tile Occupancy & Path Blocking — Reuse Patterns
+-----------------------------------------
+
+Rule
+- A tile cannot be occupied by two heroes at the same time. When a hero is on a tile, that tile is blocked for other heroes; pathfinding must skirt it or fail if no route exists.
+
+Files
+- Occupancy service: `Assets/Game/Scripts/Map/GridOccupancyService.cs` (implements `IGridOccupancyProvider`)
+- Occupancy overlay provider: `Assets/Game/Scripts/Map/BlockingOverlayTileDataProvider.cs` (`ITileDataProvider` decorator)
+- Hero component: `Assets/Game/Scripts/Map/HeroAgentComponent.cs` (injects dynamic blocking; reports moves)
+- Click-to-move: `Assets/Game/Scripts/Map/ClickToMoveController.cs` (uses blocking overlay for A*)
+- Pathfinding: `Assets/Game/Scripts/Map/AStarPathfinder.cs` (unchanged; consumes provider)
+- Movement agent: `Assets/Game/Scripts/Map/HeroMapAgent.cs` (optional `isBlocked` predicate)
+
+Architecture
+- Discoverability-first: UI and Map systems auto-discover services if not assigned in Inspector (keeps scenes flexible).
+- Dynamic blocking is applied at two levels:
+  - Pathfinding-time via `BlockingOverlayTileDataProvider` to avoid planning through occupied tiles.
+  - Movement-time via `HeroMapAgent` injected predicate to stop if a tile becomes occupied between plan and commit.
+- The current hero is excluded when wrapping the provider so their own start cell is not treated as blocked.
+
+Scene Wiring
+- Place exactly one `GridOccupancyService` in the world map scene (Core object is recommended).
+- `ClickToMoveController`:
+  - Optional `MonoBehaviour _occupancyBehaviour` field; if left null, it discovers an `IGridOccupancyProvider` in scene.
+  - Internally wraps `TilemapTileDataProvider` with `BlockingOverlayTileDataProvider` and sets excluded hero on selection change.
+- `HeroAgentComponent`:
+  - Automatically discovers `IGridOccupancyProvider` and injects `isBlocked = c => occupancy.IsOccupiedByOther(c, self)` into `HeroMapAgent`.
+  - On position changes, calls `GridOccupancyService.UpdateHeroPosition(self, from, to)` to keep occupancy in sync.
+
+Contracts
+- Map provides: `ITileDataProvider` from `TilemapTileDataProvider`.
+- Core provides: `IGridOccupancyProvider` via `GridOccupancyService`.
+- Pathfinding consumes: `ITileDataProvider` (the blocking overlay decorator is transparent to A*).
+- Movement consumes: `isBlocked(GridCoord)` predicate (optional) to guard last‑moment conflicts.
+
+Extending
+- New movement systems should depend on `IGridOccupancyProvider` (or a predicate) rather than duplicating occupancy logic.
+- For custom path queries, wrap your `ITileDataProvider` with `BlockingOverlayTileDataProvider` and call `SetExcluded(heroIdentity)` when applicable.
+- Runtime spawns/despawns: after adding/removing heroes, call `GridOccupancyService.Refresh()` and `SelectedHeroService.RefreshHeroes()` to rescan scene state.
+
+Testing
+- Keep Edit Mode tests focused and engine‑free. Examples:
+  - Pathfinding avoids occupied tiles and fails when the goal is occupied.
+  - Movement stops with `BlockedByTerrain` when the next tile is occupied.
+
+Pitfalls
+- Lambda captures in event wiring: when subscribing inside loops, capture the current `HeroIdentity` in a local variable.
+- Provider types: the blocking overlay returns a shared impassable `TileData` for occupied cells; avoid per‑call allocations.
+- Multiple occupancy services: ensure there is only one active `GridOccupancyService` per scene.
+
+-----------------------------------------
 — World Map Radial Menu: Reuse Patterns —
 ------------------------------------------
 

@@ -16,6 +16,7 @@ namespace SevenCrowns.Map
         [SerializeField] private Camera _camera;
         [SerializeField] private Grid _grid;
         [SerializeField] private TilemapTileDataProvider _provider;
+        [SerializeField] private MonoBehaviour _occupancyBehaviour; // Optional; must implement IGridOccupancyProvider
         [SerializeField] private HeroAgentComponent _hero; // Fallback if no selection service assigned
         [SerializeField] private PathPreviewRenderer _preview;
 
@@ -37,6 +38,8 @@ namespace SevenCrowns.Map
         private bool _moveModeEnabled = false; // controlled by UI button via SetMoveModeEnabled(bool)
 
         private AStarPathfinder _pf;
+        private IGridOccupancyProvider _occupancy;
+        private BlockingOverlayTileDataProvider _blockedProvider;
         private int _pfW, _pfH;
         private bool _hasPreview;
         private GridCoord _pendingGoal;
@@ -88,6 +91,20 @@ namespace SevenCrowns.Map
                 else _hero.AgentInitialized += OnHeroAgentInitialized;
             }
 
+            // Bind occupancy provider if supplied or discoverable
+            if (_occupancyBehaviour != null && _occupancyBehaviour is IGridOccupancyProvider occ)
+            {
+                _occupancy = occ;
+            }
+            else
+            {
+                var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _occupancy == null; i++)
+                {
+                    if (behaviours[i] is IGridOccupancyProvider o) _occupancy = o;
+                }
+            }
+
             if (_debugLogs)
             {
                 Debug.Log($"[ClickToMove] Initialized. Bounds={_provider.Bounds}, Diagonal=false, Mask={_allowedMoves}");
@@ -96,6 +113,14 @@ namespace SevenCrowns.Map
 
         private void Start()
         {
+            // Prepare blocking overlay provider (wrap base provider)
+            _blockedProvider = new BlockingOverlayTileDataProvider(_provider, _occupancy);
+            if (_hero != null)
+            {
+                var id = _hero.GetComponent<HeroIdentity>();
+                _blockedProvider.SetExcluded(id);
+            }
+
             // Build pathfinder after provider has baked (its Awake runs before Start).
             BuildPathfinderIfNeeded(log: true);
         }
@@ -116,7 +141,14 @@ namespace SevenCrowns.Map
             {
                 var id = _hero.GetComponent<HeroIdentity>();
                 if (id != null && !string.IsNullOrWhiteSpace(id.HeroId))
+                {
                     _currentHeroId = id.HeroId;
+                    // Update blocker exclusion to allow starting tile
+                    if (_blockedProvider != null)
+                    {
+                        _blockedProvider.SetExcluded(id);
+                    }
+                }
             }
             if (_debugLogs) Debug.Log($"[ClickToMove] Selected hero changed. HasHero={(_hero!=null)}");
             if (_hero != null)
@@ -581,7 +613,8 @@ namespace SevenCrowns.Map
                 HeuristicCardinalBase = 8,
                 HeuristicDiagonalBase = 11
             };
-            _pf = new AStarPathfinder(_provider, b, cfg);
+            var providerForPath = (ITileDataProvider)_blockedProvider ?? _provider;
+            _pf = new AStarPathfinder(providerForPath, b, cfg);
             _pfW = b.Width; _pfH = b.Height;
             if (log) Debug.Log($"[ClickToMove] Pathfinder built with bounds {b}.");
         }

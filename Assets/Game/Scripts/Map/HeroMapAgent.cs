@@ -27,6 +27,7 @@ namespace SevenCrowns.Map
         private readonly IMapMovementService _mp;
         private readonly EnterMask8 _allowedMoves;
         private readonly bool _validateSteps;
+        private readonly System.Func<GridCoord, bool> _isBlocked;
 
         private List<GridCoord> _path;
         private int _pathIndex; // index of current position in path
@@ -36,7 +37,7 @@ namespace SevenCrowns.Map
         private readonly List<int> _costBuffer = new List<int>(64);
 
         public HeroMapAgent(ITileDataProvider provider, IMapMovementService movementService, GridCoord start,
-            EnterMask8 allowedMoves = EnterMask8.All, bool validateSteps = true)
+            EnterMask8 allowedMoves = EnterMask8.All, bool validateSteps = true, System.Func<GridCoord, bool> isBlocked = null)
         {
             _provider = provider ?? throw new ArgumentNullException(nameof(provider));
             _mp = movementService ?? throw new ArgumentNullException(nameof(movementService));
@@ -44,6 +45,7 @@ namespace SevenCrowns.Map
             Goal = start;
             _allowedMoves = allowedMoves;
             _validateSteps = validateSteps;
+            _isBlocked = isBlocked;
             _mp.Changed += OnMpChanged;
         }
 
@@ -195,7 +197,8 @@ namespace SevenCrowns.Map
                     break;
                 }
 
-                if (!_provider.TryGet(to, out var nextTd) || !nextTd.IsPassable || !nextTd.CanEnterFrom(enterDir))
+                // Dynamic blocking: prevent entering tiles occupied by other heroes
+                if ((_isBlocked != null && _isBlocked(to)) || !_provider.TryGet(to, out var nextTd) || !nextTd.IsPassable || !nextTd.CanEnterFrom(enterDir))
                 {
                     blocked = true;
                     break;
@@ -218,4 +221,3 @@ namespace SevenCrowns.Map
         }
     }
 }
-

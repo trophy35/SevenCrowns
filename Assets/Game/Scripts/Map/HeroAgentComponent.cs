@@ -55,6 +55,8 @@ namespace SevenCrowns.Map
         private IHeroMapAgent _agent;
         private IMapMovementService _movement;
         private GridCoord _previousPosition;
+        private IGridOccupancyProvider _occupancy;
+        private HeroIdentity _identity;
 
         private readonly Queue<VisualMoveStep> _visualMoveQueue = new Queue<VisualMoveStep>();
         private bool _isVisualMoving;
@@ -66,6 +68,17 @@ namespace SevenCrowns.Map
             if (_grid == null) throw new InvalidOperationException("HeroAgentComponent requires a Grid.");
             if (_character4D == null) throw new InvalidOperationException("HeroAgentComponent requires a Character4D.");
             if (_character4D.AnimationManager == null) throw new InvalidOperationException("AnimationManager is not assigned on the Character4D component in the Inspector. Please drag the AnimationManager component into this slot.");
+
+            _identity = GetComponent<HeroIdentity>();
+            // Discover occupancy provider once
+            var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+            for (int i = 0; i < behaviours.Length && _occupancy == null; i++)
+            {
+                if (behaviours[i] is IGridOccupancyProvider occ)
+                {
+                    _occupancy = occ;
+                }
+            }
         }
 
         private void Start()
@@ -73,7 +86,13 @@ namespace SevenCrowns.Map
             _movement = new MapMovementService(_maxDailyMp);
             var start = _provider.WorldToCoord(_grid, transform.position);
             _previousPosition = start;
-            var agent = new HeroMapAgent(_provider, _movement, start, _allowedMoves, _validateSteps);
+            System.Func<GridCoord, bool> isBlocked = null;
+            if (_occupancy != null)
+            {
+                var self = _identity; // capture
+                isBlocked = c => _occupancy.IsOccupiedByOther(c, self);
+            }
+            var agent = new HeroMapAgent(_provider, _movement, start, _allowedMoves, _validateSteps, isBlocked);
             agent.PositionChanged += OnAgentPositionChanged;
             agent.Started += OnMovementStarted;
             agent.Stopped += OnMovementStopped;
@@ -138,6 +157,19 @@ namespace SevenCrowns.Map
             if (moveDirection != Vector2.zero)
             {
                 _visualMoveQueue.Enqueue(new VisualMoveStep(pos, moveDirection));
+            }
+
+            // Update occupancy service if available
+            if (_occupancy != null && _identity != null)
+            {
+                _occupancy.TryGetOccupant(_previousPosition, out _); // ensure map initialized
+                if (_previousPosition.X != pos.X || _previousPosition.Y != pos.Y)
+                {
+                    if (_occupancy is GridOccupancyService service)
+                    {
+                        service.UpdateHeroPosition(_identity, _previousPosition, pos);
+                    }
+                }
             }
 
             _previousPosition = pos;
