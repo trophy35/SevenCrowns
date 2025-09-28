@@ -1380,6 +1380,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _hintSourceBehaviour: {fileID: 404685343}
+  _ensureManagerIfMissing: 1
+  _defaultSet: {fileID: 0}
   _overrideSet: {fileID: 11400000, guid: f1481a370ae83e94c8f23dff957c936c, type: 2}
   _hoverPriority: 100
   _movePriority: 10
@@ -1517,6 +1519,7 @@ MonoBehaviour:
   _camera: {fileID: 671041943}
   _grid: {fileID: 8355480987375726218}
   _provider: {fileID: 1522153907}
+  _occupancyBehaviour: {fileID: 1616408129}
   _hero: {fileID: 873991350}
   _preview: {fileID: 535998808}
   _selectionBehaviour: {fileID: 1240371381}
@@ -1780,6 +1783,7 @@ GameObject:
   - component: {fileID: 671041943}
   - component: {fileID: 671041942}
   - component: {fileID: 671041945}
+  - component: {fileID: 671041946}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1905,6 +1909,45 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &671041946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 671041941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05a0a81d80ab4094aa71dfc3f1436ec4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _camera: {fileID: 671041943}
+  _grid: {fileID: 8355480987375726218}
+  _provider: {fileID: 1522153907}
+  _pan:
+    edgePanEnabled: 1
+    edgePanThreshold: 32
+    edgePanSpeed: 12
+    edgePanRequiresPointerInWindow: 1
+    edgePanBlockedByUI: 1
+    keyboardPanEnabled: 1
+    keyboardPanSpeed: 15
+    horizontalAxis: Horizontal
+    verticalAxis: Vertical
+    normalizeDiagonal: 1
+    smoothingTime: 0.1
+  _zoom:
+    enabled: 1
+    minSize: 6
+    maxSize: 18
+    scrollSensitivity: 3
+    invertScroll: 0
+    smoothTime: 0.15
+    blockWhenPointerOverUI: 1
+  _clamp:
+    padding: {x: 0, y: 0}
+    recenterOnInvalidBounds: 1
+  _inputEnabled: 1
 --- !u!1 &701774798
 GameObject:
   m_ObjectHideFlags: 0
@@ -3094,6 +3137,51 @@ MonoBehaviour:
   _overlayTilemap: {fileID: 8355480987375726216}
   _overlayBinding: {fileID: 11400000, guid: 0b9412ac3a8bdc646a906dea0623402d, type: 2}
   _overlayRequiresGroundPassable: 1
+--- !u!1 &1616408127
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1616408128}
+  - component: {fileID: 1616408129}
+  m_Layer: 0
+  m_Name: GridOccupancyService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1616408128
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1616408127}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1873579549}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1616408129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1616408127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccd12f5efbb3bce48a9b427f1925e551, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _debugLogs: 0
 --- !u!1 &1832840407
 GameObject:
   m_ObjectHideFlags: 0
@@ -3181,6 +3269,7 @@ Transform:
   - {fileID: 1832840408}
   - {fileID: 1240371380}
   - {fileID: 202561736}
+  - {fileID: 1616408128}
   m_Father: {fileID: 161393214}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2091443600172886031
@@ -3280,8 +3369,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 779.9901, y: -365.1499}
-  m_SizeDelta: {x: 350.02536, y: 350.02536}
+  m_AnchoredPosition: {x: 780.50024, y: -364.98486}
+  m_SizeDelta: {x: 349.86716, y: 349.86716}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &6433701789569441286
 MonoBehaviour:

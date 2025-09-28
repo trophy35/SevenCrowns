@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using System.Collections.Generic;
 // UI cursor binding is done via IWorldCursorHintSource to avoid Map -> UI dependency
 
@@ -218,7 +217,7 @@ namespace SevenCrowns.Map
             if (_camera == null || _grid == null || _provider == null) return;
 
             // If configured, ignore world clicks when the pointer is over any UI element (robust raycast across input modules).
-            if (_ignoreClicksOverUI && IsPointerOverUI())
+            if (_ignoreClicksOverUI && UiPointerUtility.IsPointerOverUI(Input.mousePosition))
             {
                 // Report no hints while over UI
                 NotifyCursorHints(false, false);
@@ -352,20 +351,6 @@ namespace SevenCrowns.Map
             }
             if (_debugLogs) Debug.Log("[ClickToMove] No hero detected under cursor.");
             return false;
-        }
-
-        private static readonly List<RaycastResult> _uiRaycastResults = new List<RaycastResult>(16);
-        private static bool IsPointerOverUI()
-        {
-            var es = EventSystem.current;
-            if (es == null) return false;
-            // Quick path
-            if (es.IsPointerOverGameObject()) return true;
-            // Robust path
-            var ped = new PointerEventData(es) { position = Input.mousePosition };
-            _uiRaycastResults.Clear();
-            es.RaycastAll(ped, _uiRaycastResults);
-            return _uiRaycastResults.Count > 0;
         }
 
         private void HandleLeftClick()
@@ -620,3 +605,4 @@ namespace SevenCrowns.Map
         }
     }
 }
+
