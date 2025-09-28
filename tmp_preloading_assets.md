@@ -46,24 +46,6 @@
   * Addressables Groups → Play Mode Script: Use Existing Build (or Packed).
   * Build Addressables via Build \> New Build.
 
-# **Group Labels (Bulk Preload)**
-
-* Goal: Avoid listing every asset key manually; preload by Addressables group or label.
-* Task support (AddressablesLoadKeysTask):
-  * `_labels`: add one or more Addressables labels to bulk preload.
-  * `_groupNames`: add Addressables group names to bulk preload; at runtime these map to labels `group:<GroupName>`.
-* Setup (Editor):
-  * Ensure each entry of a group has a label `group:<GroupName>` (e.g., `group:UI.Common`).
-  * You can add labels manually in the Addressables Groups window.
-* Runtime behavior:
-  * The task queries `Addressables.LoadResourceLocationsAsync(label)` for every label (explicit and `group:<Name>`), deduplicates primary keys, and loads all assets in parallel.
-  * Every loaded handle is registered in `PreloadRegistry` under its address key for later retrieval.
-* Usage examples:
-  * Preload a whole group named `UI.Common`:
-    - In Addressables, assign label `group:UI.Common` to all entries of that group.
-    - In your `AddressablesLoadKeysTask` asset, add `UI.Common` to `_groupNames` (or add `group:UI.Common` to `_labels`).
-  * Preload by a custom label (e.g., `sfx.ui`): add `sfx.ui` to `_labels`.
-
 # **Using The Cache (PreloadRegistry)**
 
 * Register: after starting a load, call PreloadRegistry.Register(key, handle) once per key.
