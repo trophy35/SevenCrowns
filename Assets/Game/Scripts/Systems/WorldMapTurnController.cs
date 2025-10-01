@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using SevenCrowns.Map;
+using SevenCrowns.Map.FogOfWar;
 
 namespace SevenCrowns.Systems
 {
@@ -17,9 +18,14 @@ namespace SevenCrowns.Systems
         [Tooltip("Explicit heroes to affect. If empty, the scene will be scanned on Awake.")]
         [SerializeField] private List<HeroAgentComponent> _heroes = new();
 
+        [Header("Fog of War")]
+        [SerializeField] private MonoBehaviour _fogServiceBehaviour; // Optional; must implement IFogOfWarService
+
         [Header("Events")]
         [Tooltip("Raised after end turn processing completes.")]
         [SerializeField] private UnityEvent _onTurnEnded;
+
+        private IFogOfWarService _fog;
 
         private void Awake()
         {
@@ -29,6 +35,22 @@ namespace SevenCrowns.Systems
                 var found = FindObjectsOfType<HeroAgentComponent>(true);
                 if (found != null && found.Length > 0)
                     _heroes = new List<HeroAgentComponent>(found);
+            }
+
+            if (_fogServiceBehaviour != null)
+            {
+                if (_fogServiceBehaviour is IFogOfWarService fogService)
+                {
+                    _fog = fogService;
+                }
+                else
+                {
+                    Debug.LogError("Assigned fog service must implement IFogOfWarService.", this);
+                }
+            }
+            else
+            {
+                _fog = FindObjectOfType<FogOfWarService>(true);
             }
         }
 
@@ -40,6 +62,8 @@ namespace SevenCrowns.Systems
         {
             Debug.Log($"OnEndTurnRequested {_heroes.Count}");
             if (_heroes == null) return;
+
+            _fog?.ClearTransientVisibility();
 
             for (int i = 0; i < _heroes.Count; i++)
             {

@@ -71,6 +71,7 @@
     <Compile Include="Assets\Game\Scripts\Map\HeroAgentComponent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IGridOccupancyProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\CameraClampUtility.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IWorldCursorHintSource.cs" />
@@ -80,8 +81,12 @@
     <Compile Include="Assets\Game\Scripts\Map\TilemapTileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TileVisuals.cs" />
     <Compile Include="Assets\Game\Scripts\Map\PathPreviewRenderer.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarState.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarTilemapRenderer.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\FogOfWar\IFogOfWarService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MapMovementService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\BlockingOverlayTileDataProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\FogOfWar\HeroFogVisionDriver.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MapCameraController.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridCoord.cs" />

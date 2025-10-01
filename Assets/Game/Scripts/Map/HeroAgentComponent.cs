@@ -1,5 +1,4 @@
-
-using Assets.HeroEditor4D.Common.Scripts.CharacterScripts;
+﻿using Assets.HeroEditor4D.Common.Scripts.CharacterScripts;
 using Assets.HeroEditor4D.Common.Scripts.Enums;
 using System;
 using System.Collections;
@@ -28,6 +27,7 @@ namespace SevenCrowns.Map
         }
 
         public event Action AgentInitialized;
+        public event Action<GridCoord> VisualStepCompleted;
 
         [Header("Wiring")]
         [SerializeField] private TilemapTileDataProvider _provider;
@@ -61,6 +61,7 @@ namespace SevenCrowns.Map
         private readonly Queue<VisualMoveStep> _visualMoveQueue = new Queue<VisualMoveStep>();
         private bool _isVisualMoving;
         private Vector2 _currentFacingDirection;
+        private bool _autoAdvance;
 
         private void Awake()
         {
@@ -113,6 +114,12 @@ namespace SevenCrowns.Map
             MoveTransformToCell(start, true);
 
             AgentInitialized?.Invoke();
+            VisualStepCompleted?.Invoke(start);
+
+            if (_autoAdvance)
+            {
+                AdvanceNextStep();
+            }
         }
 
         private void Update()
@@ -140,7 +147,7 @@ namespace SevenCrowns.Map
 
         private void OnMovementStopped(StopReason reason)
         {
-            // Logic moved to be driven by visual queue.
+            _autoAdvance = false;
         }
 
         private void OnAgentPositionChanged(GridCoord pos)
@@ -191,11 +198,51 @@ namespace SevenCrowns.Map
             }
 
             transform.position = endPos; // Ensure final position is accurate
+            VisualStepCompleted?.Invoke(targetCoord);
             _isVisualMoving = false;
+
+            if (_autoAdvance && _visualMoveQueue.Count == 0)
+            {
+                AdvanceNextStep();
+            }
 
             if (_visualMoveQueue.Count == 0)
             {
                 _character4D.AnimationManager.SetState(CharacterState.Idle);
+            }
+        }
+
+        public void BeginAutoTraversal()
+        {
+            if (_agent == null)
+                return;
+            _autoAdvance = true;
+            AdvanceNextStep();
+        }
+
+        public void StopAutoTraversal()
+        {
+            _autoAdvance = false;
+            _visualMoveQueue.Clear();
+            if (_isVisualMoving)
+            {
+                StopAllCoroutines();
+                _isVisualMoving = false;
+                MoveTransformToCell(_previousPosition, true);
+                VisualStepCompleted?.Invoke(_previousPosition);
+                _character4D.AnimationManager.SetState(CharacterState.Idle);
+            }
+        }
+
+        private void AdvanceNextStep()
+        {
+            if (!_autoAdvance || _agent == null || _isVisualMoving)
+                return;
+
+            var result = _agent.AdvanceSteps(1);
+            if (result.StepsCommitted == 0 || result.Reason != StopReason.None)
+            {
+                _autoAdvance = false;
             }
         }
 

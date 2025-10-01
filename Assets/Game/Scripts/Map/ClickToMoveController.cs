@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using SevenCrowns.Map.FogOfWar;
 // UI cursor binding is done via IWorldCursorHintSource to avoid Map -> UI dependency
 
 namespace SevenCrowns.Map
@@ -16,6 +17,7 @@ namespace SevenCrowns.Map
         [SerializeField] private Grid _grid;
         [SerializeField] private TilemapTileDataProvider _provider;
         [SerializeField] private MonoBehaviour _occupancyBehaviour; // Optional; must implement IGridOccupancyProvider
+        [SerializeField] private MonoBehaviour _fogServiceBehaviour; // Optional; must implement IFogOfWarService
         [SerializeField] private HeroAgentComponent _hero; // Fallback if no selection service assigned
         [SerializeField] private PathPreviewRenderer _preview;
 
@@ -39,6 +41,7 @@ namespace SevenCrowns.Map
         private AStarPathfinder _pf;
         private IGridOccupancyProvider _occupancy;
         private BlockingOverlayTileDataProvider _blockedProvider;
+        private IFogOfWarService _fog;
         private int _pfW, _pfH;
         private bool _hasPreview;
         private GridCoord _pendingGoal;
@@ -101,6 +104,19 @@ namespace SevenCrowns.Map
                 for (int i = 0; i < behaviours.Length && _occupancy == null; i++)
                 {
                     if (behaviours[i] is IGridOccupancyProvider o) _occupancy = o;
+                }
+            }
+
+            if (_fogServiceBehaviour != null && _fogServiceBehaviour is IFogOfWarService fogService)
+            {
+                _fog = fogService;
+            }
+            else
+            {
+                var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _fog == null; i++)
+                {
+                    if (behaviours[i] is IFogOfWarService service) _fog = service;
                 }
             }
 
@@ -177,6 +193,7 @@ namespace SevenCrowns.Map
         private void UnsubscribeHero()
         {
             if (_hero == null) return;
+            _hero.StopAutoTraversal();
             _hero.AgentInitialized -= OnHeroAgentInitialized;
             if (_hero.Agent != null)
             {
@@ -353,6 +370,18 @@ namespace SevenCrowns.Map
             return false;
         }
 
+        private bool IsGoalVisible(GridCoord goal)
+        {
+            if (_fog == null) return true;
+            if (_fog.Bounds.IsEmpty)
+            {
+                if (_hero != null && _hero.Agent != null && goal.Equals(_hero.Agent.Position))
+                    return true;
+                return false;
+            }
+            return _fog.IsVisible(goal);
+        }
+
         private void HandleLeftClick()
         {
             var mouse = Input.mousePosition;
@@ -369,6 +398,14 @@ namespace SevenCrowns.Map
                 DebugLogNeighbors("StartNbrs", start);
                 DebugLogNeighbors("GoalNbrs", goal);
             }
+            if (!IsGoalVisible(goal))
+            {
+                if (_debugLogs) Debug.Log("[ClickToMove] Goal is not currently visible. Ignored.");
+                _preview?.Clear();
+                _hasPreview = false;
+                return;
+            }
+
             if (start.Equals(goal))
             {
                 if (_debugLogs) Debug.Log("[ClickToMove] Start == Goal. Ignored.");
@@ -403,12 +440,13 @@ namespace SevenCrowns.Map
             // If we already previewed this exact goal and the hero hasn't moved since, confirm and move
             if (_hasPreview && goal.Equals(_pendingGoal) && start.Equals(_pendingStart))
             {
-                if (_hero.Agent.SetPath(path))
+                _hero?.StopAutoTraversal();
+                if (_hero != null && _hero.Agent.SetPath(path))
                 {
                     if (_debugLogs) Debug.Log("[ClickToMove] Confirmed click. Moving hero.");
                     _preview?.Clear();
                     _hasPreview = false;
-                    _hero.Agent.AdvanceAllAvailable();
+                    _hero.BeginAutoTraversal();
                 }
                 else if (_debugLogs)
                 {
@@ -433,7 +471,14 @@ namespace SevenCrowns.Map
 
         private void HandleRightClick()
         {
-            _hero.Agent.ClearPath();
+            if (_hero == null) return;
+
+            _hero.StopAutoTraversal();
+            if (_hero.Agent != null)
+            {
+                _hero.Agent.ClearPath();
+            }
+
             if (_debugLogs) Debug.Log("[ClickToMove] Cancelled current order.");
             // optional: clear preview/highlights
             _preview?.Clear();
@@ -479,6 +524,14 @@ namespace SevenCrowns.Map
             float depth = Mathf.Abs((_camera.transform.position - _grid.transform.position).z);
             var world = _camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, depth));
             var goal = _provider.WorldToCoord(_grid, world);
+
+            if (!IsGoalVisible(goal))
+            {
+                _hasCachedGoal = true;
+                _cachedGoalCell = goal;
+                _cachedMoveHint = false;
+                return false;
+            }
 
             if (_hasCachedGoal && goal.Equals(_cachedGoalCell))
                 return _cachedMoveHint;
