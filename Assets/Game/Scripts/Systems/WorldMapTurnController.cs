@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using SevenCrowns.Map;
@@ -25,7 +25,11 @@ namespace SevenCrowns.Systems
         [Tooltip("Raised after end turn processing completes.")]
         [SerializeField] private UnityEvent _onTurnEnded;
 
+        [Header("Time")]
+        [SerializeField] private MonoBehaviour _timeServiceBehaviour; // Optional; must implement IWorldTimeService
+
         private IFogOfWarService _fog;
+        private IWorldTimeService _timeService;
 
         private void Awake()
         {
@@ -52,6 +56,8 @@ namespace SevenCrowns.Systems
             {
                 _fog = FindObjectOfType<FogOfWarService>(true);
             }
+
+            ResolveTimeService();
         }
 
         /// <summary>
@@ -83,13 +89,41 @@ namespace SevenCrowns.Systems
                 }
             }
 
-            if (_onTurnEnded==null)
+            _timeService?.AdvanceDay();
+
+            if (_onTurnEnded == null)
             {
                 Debug.Log("_onTurnEnded is null");
                 return;
             }
             _onTurnEnded?.Invoke();
         }
+
+        private void ResolveTimeService()
+        {
+            if (_timeServiceBehaviour != null)
+            {
+                if (_timeServiceBehaviour is IWorldTimeService service)
+                {
+                    _timeService = service;
+                }
+                else
+                {
+                    Debug.LogError("Assigned time service must implement IWorldTimeService.", this);
+                }
+            }
+
+            if (_timeService != null) return;
+
+            var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+            for (int i = 0; i < behaviours.Length; i++)
+            {
+                if (behaviours[i] is IWorldTimeService candidate)
+                {
+                    _timeService = candidate;
+                    break;
+                }
+            }
+        }
     }
 }
-

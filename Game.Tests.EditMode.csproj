@@ -66,6 +66,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinderTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgentTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgent_OccupancyTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\WorldTimeCounterTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FogOfWarServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinder_OccupancyTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridBoundsTests.cs" />
@@ -1072,6 +1073,14 @@
     <ProjectReference Include="Game.Map.csproj">
       <Project>{D64E9FFC-206D-0D84-3990-398060D0EBC1}</Project>
       <Name>Game.Map</Name>
+    </ProjectReference>
+    <ProjectReference Include="Game.Core.csproj">
+      <Project>{65217C3B-6966-C93D-9971-A8716020FF7F}</Project>
+      <Name>Game.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="Game.UI.csproj">
+      <Project>{9B567079-6673-7E94-D2E2-18E9B213FA56}</Project>
+      <Name>Game.UI</Name>
     </ProjectReference>
     <ProjectReference Include="UnityEngine.TestRunner.csproj">
       <Project>{C0B8944B-381B-FDE0-EBE8-09C574FE1930}</Project>

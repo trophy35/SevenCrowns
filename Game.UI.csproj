@@ -61,8 +61,11 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.39f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Game\Scripts\UI\WorldTime\IWorldTimeService.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\WorldTime\WorldDate.cs" />
     <Compile Include="Assets\Game\Scripts\UI\ICurrentHeroPortraitKeyProvider.cs" />
     <Compile Include="Assets\Game\Scripts\UI\VersionLabel.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\WorldTimeHudView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorManager.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldMapCursorBinder.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorSet.cs" />

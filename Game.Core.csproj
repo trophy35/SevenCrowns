@@ -71,6 +71,8 @@
     <Compile Include="Assets\Game\Scripts\Systems\IRuntimeWeightedTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\BootLoaderController.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\CurrentHeroService.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\WorldTimeCounter.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\WorldTimeService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\SceneTransitionFader.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\AddressablesLoadKeysTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\BasePreloadTask.cs" />
