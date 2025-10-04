@@ -1,4 +1,4 @@
-SevenCrowns – Agent Guidelines
+﻿SevenCrowns – Agent Guidelines
 
 -------------------------------
 Purpose
@@ -415,3 +415,30 @@ Missing HeroIdentity or Collider2D → clicks won’t select.
 Duplicating hero lists in multiple services → maintenance burden. Keep list only in CurrentHeroService.
 Assembly cycles → keep ISelectedHeroAgentProvider in Game.Map; SelectedHeroService in Game.Core implements it.
 UI intercepting clicks → enable _ignoreClicksOverUI and ensure Canvas has a GraphicRaycaster.
+
+-------------------------------------
+World Time - Reuse
+-------------------------------------
+
+Files
+- Service: Assets/Game/Scripts/Systems/WorldTimeService.cs (Game.Core) manages day/week/month rollover via WorldTimeCounter.
+- Contracts: Assets/Game/Scripts/UI/WorldTime/IWorldTimeService.cs and WorldDate.cs (Game.UI) expose the shared API.
+- UI binding: Assets/Game/Scripts/UI/WorldTimeHudView.cs updates TextMeshPro values and localized labels.
+- Tests: Assets/Game/Scripts/Tests/EditMode/Systems/WorldTimeCounterTests.cs covers rollover rules.
+
+Goal
+
+Track the in-game calendar (day 1/week 1/month 1 start), incrementing each End Turn: 7 days per week, 4 weeks per month. Surface current values in UI and let gameplay systems react to DateChanged events.
+
+Scene Wiring
+
+1) Place exactly one WorldTimeService in the world map scene. Configure DaysPerWeek, WeeksPerMonth, and starting date.
+2) WorldMapTurnController auto-discovers WorldTimeService (or wire _timeServiceBehaviour) and calls AdvanceDay() after hero cleanup.
+3) Add WorldTimeHudView to the calendar HUD, assign TextMeshPro fields for day/week/month numbers and labels, and reference the same WorldTimeService (optional; auto-discovery works when a single implementation exists).
+4) Ensure localization keys WorldTime.DayLabel / WeekLabel / MonthLabel exist in UI.Common with EN/FR entries.
+
+Extending / Reuse
+
+- Any system needing time progression should depend on IWorldTimeService (event DateChanged, property CurrentDate) rather than the concrete MonoBehaviour.
+- To skip ahead or reset (e.g., time travel, debugging), call ResetTo(WorldDate) or repeated AdvanceDay().
+- For save/load, serialize WorldDate (Day/Week/Month) and reapply via ResetTo on load before enabling listeners.
