@@ -417,6 +417,43 @@ Assembly cycles → keep ISelectedHeroAgentProvider in Game.Map; SelectedHeroSer
 UI intercepting clicks → enable _ignoreClicksOverUI and ensure Canvas has a GraphicRaycaster.
 
 -------------------------------------
+Generic Popup System — Reuse
+-------------------------------------
+
+Files
+- Contracts & requests: Assets/Game/Scripts/UI/Popups/IPopupService.cs, PopupRequest.cs, PopupOptionDefinition.cs, PopupResult.cs, PopupOptionIds.cs
+- View layer: Assets/Game/Scripts/UI/Popups/PopupView.cs, PopupButtonView.cs
+- Service orchestrator: Assets/Game/Scripts/UI/Popups/PopupService.cs
+- Example usage: Assets/Game/Scripts/Systems/WorldMapTurnController.cs (end-turn confirmation)
+
+Scene Wiring
+1) Place a PopupService MonoBehaviour on a UI canvas/root. Assign its PopupView prefab and optional parent transform (leave _instantiateOnAwake true for reuse).
+2) PopupView prefab: CanvasGroup + TMP title/message + button container populated with PopupButtonView prefabs. Assign this prefab to PopupService.
+3) Ensure exactly one PopupService is active in the scene so callers resolving IPopupService succeed (drag-drop reference or rely on auto-discovery).
+
+Usage Pattern
+- Build popup data with PopupRequest; use CreateConfirmation(tableId, titleKey, bodyKey, confirmKey, cancelKey, args) for standard dialogs.
+- Each PopupOptionDefinition needs localized strings (EN/FR) in the UI string tables; pass additional arguments through PopupRequest.CreateLocalized where needed.
+- Call IPopupService.RequestPopup(request, result => { ... }); inspect result.OptionId against PopupOptionIds constants (Confirm/Cancel/Ok).
+- PopupService queues requests; only one popup is shown at a time, later requests wait until the active one completes.
+
+Localization & Assets
+- Add string entries to UI.Common (and preload via LocalizationPreloadTask) for all popup text.
+- If popups need icons or SFX, resolve them via IUiAssetProvider in PopupView/PopupService instead of direct Addressables lookups.
+
+Extending
+- Customize popup styling via alternate PopupView prefabs or wrapper services that assemble PopupRequest instances.
+- Keep logic in Game.UI and depend on IPopupService to avoid assembly cycles or duplicated UI logic.
+
+Testing
+- PopupRequestTests (Assets/Game/Scripts/Tests/EditMode/UI) cover helper factories. Add similar focused tests when extending options/result handling.
+
+Pitfalls
+- Do not duplicate popup logic; reuse PopupService/IPopupService so behavior stays consistent.
+- Ensure the string table holds EN/FR entries before shipping; missing keys surface as empty labels.
+- Trigger audio or gameplay effects only after the callback confirms the chosen option (e.g., when OptionId == PopupOptionIds.Confirm).
+
+-------------------------------------
 World Time - Reuse
 -------------------------------------
 
