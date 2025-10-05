@@ -64,6 +64,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\PopupRequestTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\MapMovementServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridCoordTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\CurrentHeroServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinderTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgentTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgent_OccupancyTests.cs" />

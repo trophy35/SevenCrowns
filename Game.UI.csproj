@@ -65,6 +65,7 @@
     <Compile Include="Assets\Game\Scripts\UI\WorldTime\WorldDate.cs" />
     <Compile Include="Assets\Game\Scripts\UI\ICurrentHeroPortraitKeyProvider.cs" />
     <Compile Include="Assets\Game\Scripts\UI\VersionLabel.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\HeroLevelView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldTimeHudView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorManager.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupButtonView.cs" />

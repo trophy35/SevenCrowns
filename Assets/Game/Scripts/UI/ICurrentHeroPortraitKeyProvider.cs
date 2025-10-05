@@ -10,7 +10,9 @@ namespace SevenCrowns.UI
     {
         string CurrentHeroId { get; }
         string CurrentPortraitKey { get; }
+        int CurrentLevel { get; }
         event Action<string, string> CurrentHeroChanged; // (heroId, portraitKey)
+        event Action<string, int> CurrentHeroLevelChanged; // (heroId, level)
     }
 }
 

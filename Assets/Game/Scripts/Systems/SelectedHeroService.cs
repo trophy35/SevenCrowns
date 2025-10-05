@@ -20,7 +20,9 @@ namespace SevenCrowns.Systems
         private List<HeroIdentity> _heroes = new();
 
         private readonly Dictionary<string, HeroAgentComponent> _byId = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, HeroIdentity> _identityById = new(StringComparer.Ordinal);
         private HeroAgentComponent _current;
+        private HeroIdentity _currentIdentity;
 
         public HeroAgentComponent CurrentHero => _current;
         public event Action<HeroAgentComponent> SelectedHeroChanged;
@@ -67,6 +69,8 @@ namespace SevenCrowns.Systems
             {
                 _portraitService.CurrentHeroChanged -= OnPortraitServiceHeroChanged;
             }
+
+            SetCurrentIdentity(null);
         }
 
         /// <summary>
@@ -76,17 +80,36 @@ namespace SevenCrowns.Systems
         public void RefreshHeroes()
         {
             var found = FindObjectsOfType<HeroIdentity>(true);
+            string previousHeroId = _currentIdentity != null ? _currentIdentity.HeroId : null;
+            SetCurrentIdentity(null);
+
             _heroes = (found != null && found.Length > 0)
                 ? new List<HeroIdentity>(found)
                 : new List<HeroIdentity>();
 
             _byId.Clear();
+            _identityById.Clear();
             for (int i = 0; i < _heroes.Count; i++)
             {
                 var h = _heroes[i];
                 if (h == null || string.IsNullOrWhiteSpace(h.HeroId)) continue;
+
+                if (!_identityById.ContainsKey(h.HeroId))
+                {
+                    _identityById.Add(h.HeroId, h);
+                }
+
                 if (!_byId.ContainsKey(h.HeroId) && h.Agent != null)
+                {
                     _byId.Add(h.HeroId, h.Agent);
+                }
+
+                _portraitService?.SetHeroLevelById(h.HeroId, h.Level);
+            }
+
+            if (!string.IsNullOrEmpty(previousHeroId) && _identityById.TryGetValue(previousHeroId, out var refreshedIdentity))
+            {
+                SetCurrentIdentity(refreshedIdentity);
             }
 
             if (_debugLogs)
@@ -109,6 +132,16 @@ namespace SevenCrowns.Systems
                 _byId.TryGetValue(heroId, out agent);
             }
 
+            if (_identityById.TryGetValue(heroId, out var identity))
+            {
+                SetCurrentIdentity(identity);
+                _portraitService?.SetCurrentHeroLevel(identity.Level);
+            }
+            else
+            {
+                SetCurrentIdentity(null);
+            }
+
             if (agent != null && agent != _current)
             {
                 _current = agent;
@@ -128,6 +161,17 @@ namespace SevenCrowns.Systems
         private void OnPortraitServiceHeroChanged(string heroId, string _)
         {
             if (string.IsNullOrWhiteSpace(heroId)) return;
+
+            if (_identityById.TryGetValue(heroId, out var identity))
+            {
+                SetCurrentIdentity(identity);
+                _portraitService?.SetCurrentHeroLevel(identity.Level);
+            }
+            else
+            {
+                SetCurrentIdentity(null);
+            }
+
             if (_byId.TryGetValue(heroId, out var agent) && agent != _current)
             {
                 _current = agent;
@@ -142,5 +186,29 @@ namespace SevenCrowns.Systems
                 Debug.Log($"[SelectedHeroService] PortraitService change ignored or unresolved for id={heroId} (same as current or not found).");
             }
         }
+
+        private void SetCurrentIdentity(HeroIdentity identity)
+        {
+            if (_currentIdentity == identity) return;
+
+            if (_currentIdentity != null)
+            {
+                _currentIdentity.LevelChanged -= OnCurrentHeroLevelChanged;
+            }
+
+            _currentIdentity = identity;
+
+            if (_currentIdentity != null)
+            {
+                _portraitService?.SetHeroLevelById(_currentIdentity.HeroId, _currentIdentity.Level);
+                _currentIdentity.LevelChanged += OnCurrentHeroLevelChanged;
+            }
+        }
+
+        private void OnCurrentHeroLevelChanged(int level)
+        {
+            _portraitService?.SetCurrentHeroLevel(level);
+        }
     }
 }
+

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace SevenCrowns.Map
@@ -11,6 +12,7 @@ namespace SevenCrowns.Map
     {
         [SerializeField] private string _heroId; // e.g., "hero.harry"
         [SerializeField] private HeroAgentComponent _agent;
+        [SerializeField, Min(1)] private int _level = 1;
 
         public string HeroId => _heroId;
         public HeroAgentComponent Agent
@@ -22,9 +24,21 @@ namespace SevenCrowns.Map
             }
         }
 
+        public int Level => _level;
+        public event Action<int> LevelChanged;
+
+        public void SetLevel(int level)
+        {
+            int normalized = Mathf.Max(1, level);
+            if (_level == normalized) return;
+            _level = normalized;
+            LevelChanged?.Invoke(_level);
+        }
+
         private void OnValidate()
         {
             if (_agent == null) _agent = GetComponent<HeroAgentComponent>();
+            _level = Mathf.Max(1, _level);
         }
     }
 }
