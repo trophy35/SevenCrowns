@@ -7,7 +7,7 @@ namespace SevenCrowns.Systems
 {
     /// <summary>
     /// Tracks the current hero and exposes its portrait Addressables key to UI.
-    /// Configure id→portraitKey pairs in the inspector. Other systems set the current hero by id.
+    /// Configure id???portraitKey pairs in the inspector. Other systems set the current hero by id.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CurrentHeroService : MonoBehaviour, ICurrentHeroPortraitKeyProvider
@@ -33,6 +33,9 @@ namespace SevenCrowns.Systems
         public string CurrentHeroId => _currentId;
         public string CurrentPortraitKey => _currentKey;
         public event Action<string, string> CurrentHeroChanged;
+        public IReadOnlyCollection<string> KnownHeroIds => _map.Keys;
+        public bool IsKnownHeroId(string heroId) => !string.IsNullOrWhiteSpace(heroId) && _map.ContainsKey(heroId);
+
 
         private void Awake()
         {

@@ -379,8 +379,9 @@ namespace SevenCrowns.Map
                     return true;
                 return false;
             }
-            return _fog.IsVisible(goal);
+            return _fog.IsVisible(goal) || _fog.IsExplored(goal);
         }
+
 
         private void HandleLeftClick()
         {

@@ -1,10 +1,11 @@
-﻿{
+{
     "name":  "Game.Tests.EditMode",
     "rootNamespace":  "SevenCrowns.Tests.EditMode",
     "references":  [
                        "Game.Map",
                        "Game.Core",
-                       "Game.UI"
+                       "Game.UI",
+                       "Unity.Localization"
                    ],
     "includePlatforms":  [
                              "Editor"

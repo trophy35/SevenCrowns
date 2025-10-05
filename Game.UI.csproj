@@ -67,11 +67,19 @@
     <Compile Include="Assets\Game\Scripts\UI\VersionLabel.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldTimeHudView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorManager.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Popups\PopupButtonView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldMapCursorBinder.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Popups\PopupResult.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorSet.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Popups\IPopupService.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldMapRadialMenuController.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Popups\PopupRequest.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorState.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Popups\PopupOptionIds.cs" />
     <Compile Include="Assets\Game\Scripts\UI\UiProgressBar.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Popups\PopupView.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Popups\PopupService.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Popups\PopupOptionDefinition.cs" />
     <Compile Include="Assets\Game\Scripts\UI\HeroPortraitView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\IUiAssetProvider.cs" />
   </ItemGroup>

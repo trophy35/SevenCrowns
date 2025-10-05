@@ -232,8 +232,12 @@ namespace SevenCrowns.UI
         private void OnEndTurnPressed()
         {
             Debug.Log("OnEndTurnPressed");
-            TryPlaySfx(_cachedEndTurnClip, _endTurnSfxKey, _endTurnSfxFallback, clip => _cachedEndTurnClip = clip);
             _onEndTurnRequested?.Invoke();
+        }
+
+        public void PlayEndTurnSfx()
+        {
+            TryPlaySfx(_cachedEndTurnClip, _endTurnSfxKey, _endTurnSfxFallback, clip => _cachedEndTurnClip = clip);
         }
 
         private void OnMovePressed()

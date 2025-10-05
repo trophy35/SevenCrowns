@@ -1,4 +1,4 @@
-﻿using Assets.HeroEditor4D.Common.Scripts.CharacterScripts;
+using Assets.HeroEditor4D.Common.Scripts.CharacterScripts;
 using Assets.HeroEditor4D.Common.Scripts.Enums;
 using System;
 using System.Collections;
@@ -14,6 +14,18 @@ namespace SevenCrowns.Map
     [DisallowMultipleComponent]
     public sealed class HeroAgentComponent : MonoBehaviour
     {
+        private static readonly (int dx, int dy, EnterMask8 direction)[] NeighborOffsets = new (int, int, EnterMask8)[]
+        {
+            (0, 1, EnterMask8.N),
+            (1, 0, EnterMask8.E),
+            (0, -1, EnterMask8.S),
+            (-1, 0, EnterMask8.W),
+            (1, 1, EnterMask8.NE),
+            (1, -1, EnterMask8.SE),
+            (-1, -1, EnterMask8.SW),
+            (-1, 1, EnterMask8.NW)
+        };
+
         private readonly struct VisualMoveStep
         {
             public readonly GridCoord TargetCoord;
@@ -50,6 +62,7 @@ namespace SevenCrowns.Map
         [SerializeField] private bool _debugLogs = false;
 
         public IHeroMapAgent Agent => _agent;
+        public GridCoord GridPosition => _previousPosition;
         public IMapMovementService Movement => _movement;
 
         private IHeroMapAgent _agent;
@@ -212,6 +225,63 @@ namespace SevenCrowns.Map
             }
         }
 
+        public bool TryGetCheapestStepCost(out int cost)
+        {
+            cost = int.MaxValue;
+            if (_provider == null)
+            {
+                cost = -1;
+                return false;
+            }
+
+            bool found = false;
+            var origin = _previousPosition;
+
+            for (int i = 0; i < NeighborOffsets.Length; i++)
+            {
+                var (dx, dy, direction) = NeighborOffsets[i];
+                if ((_allowedMoves & direction) == 0)
+                {
+                    continue;
+                }
+
+                var next = new GridCoord(origin.X + dx, origin.Y + dy);
+                if (!_provider.TryGet(next, out var tileData))
+                {
+                    continue;
+                }
+
+                if (!tileData.IsPassable || !tileData.CanEnterFrom(direction))
+                {
+                    continue;
+                }
+
+                if (_occupancy != null && _identity != null && _occupancy.IsOccupiedByOther(next, _identity))
+                {
+                    continue;
+                }
+
+                bool isDiagonal = TileData.IsDiagonalStep(dx, dy);
+                int stepCost = tileData.GetMoveCost(isDiagonal);
+                if (stepCost <= 0)
+                {
+                    stepCost = 1;
+                }
+
+                if (stepCost < cost)
+                {
+                    cost = stepCost;
+                    found = true;
+                }
+            }
+
+            if (!found)
+            {
+                cost = -1;
+            }
+
+            return found;
+        }
         public void BeginAutoTraversal()
         {
             if (_agent == null)
