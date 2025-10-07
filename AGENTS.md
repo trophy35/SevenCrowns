@@ -479,3 +479,34 @@ Extending / Reuse
 - Any system needing time progression should depend on IWorldTimeService (event DateChanged, property CurrentDate) rather than the concrete MonoBehaviour.
 - To skip ahead or reset (e.g., time travel, debugging), call ResetTo(WorldDate) or repeated AdvanceDay().
 - For save/load, serialize WorldDate (Day/Week/Month) and reapply via ResetTo on load before enabling listeners.
+-------------------------------------
+Resource Nodes — Reuse
+-------------------------------------
+
+Files
+- Definitions: Assets/Game/Scripts/Map/Resources/ResourceDefinition.cs (ScriptableObject with localized name/description, sprite variants, random selection metadata)
+- Runtime registry: Assets/Game/Scripts/Map/Resources/ResourceNodeService.cs (MonoBehaviour implementing IResourceNodeProvider)
+- Scene authoring: Assets/Game/Scripts/Map/ResourceNodeAuthoring.cs (component on each resource GameObject, handles variant selection, grid snapping, registration)
+- Tests: Assets/Game/Scripts/Tests/EditMode/Systems/Resources/ResourceNodeServiceTests.cs (register/update/unregister coverage)
+
+Authoring Flow
+1) Data: create a ResourceDefinition asset under Assets/Game/Content/ScriptableObjects/Resources, set Resource Id (e.g., resource.gold), wire LocalizedString entries (Gameplay.Resources table) with EN/FR text, and configure Map Visual variants with Sprite sub-asset keys + shared local offsets.
+2) Scene services: ensure exactly one ResourceNodeService exists in the world scene; keep _logCoordinateConflicts enabled while authoring. Reference the same Grid/TilemapTileDataProvider used by movement so grid coords align.
+3) Placement: drop a GameObject with SpriteRenderer + ResourceNodeAuthoring, assign Resource Definition, Base Yield, Grid, TilemapTileDataProvider. Leave Node Id empty for GUID auto-generation or set a stable id when needed. Choose Variant mode: Specific (provide Variant Id) or Random (optional Random Seed for deterministic picks). Manual Offset provides per-instance tweaks on top of the definition’s LocalOffset.
+4) Prefab: when consistent, convert configured nodes into prefabs (Assets/Game/Content/Prefabs/WorldMap/Resources/) so designers drag-and-drop stacks without reassigning fields.
+
+Runtime Usage
+- ResourceNodeAuthoring registers with ResourceNodeService on enable, providing NodeId, GridCoord (if snapped), BaseYield, and chosen variant. Consumers (economy, UI) should depend on IResourceNodeProvider to query Nodes or subscribe to NodeRegistered/Updated/Unregistered.
+- Keep Addressables handles warm by adding portrait/icon sprite keys to AddressablesLoadKeysTask when nodes must display instantly.
+- Localization preloads: ensure LocalizationPreloadTask includes Gameplay.Resources to avoid first-use string fetch delays.
+
+Best Practices
+- Store shared offsets in ResourceDefinition variants; use Manual Offset only for unique scene adjustments.
+- Avoid duplicate NodeIds; conflicts log warnings when _logCoordinateConflicts is true. If hand-authoring ids, prefer a faction/region prefix (e.g., gold.surface.01).
+- When runtime spawning/despawning nodes, call ResourceNodeService.RegisterOrUpdate / Unregister and consider pairing with PreloadRegistry for asset lifetime.
+- Extend tests alongside new service behaviors (e.g., coordinate collision handling, filtering APIs) to keep regression coverage tight.
+
+Pitfalls
+- Missing Grid or TilemapTileDataProvider references prevent snapping; the node still registers but lacks GridCoord (pathfinding blockers won’t see it).
+- Sprite Addressable keys should target Sprite sub-assets; pointing to Texture2D main assets breaks SpriteRenderer assignment.
+- Forgetting to preload Localization table causes one-frame empty labels when UI first queries resource names.

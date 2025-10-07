@@ -73,6 +73,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinder_OccupancyTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridBoundsTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\CameraClampUtilityTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceNodeServiceTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Game\Scripts\Tests\EditMode\Game.Tests.EditMode.asmdef" />

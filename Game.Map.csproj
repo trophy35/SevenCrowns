@@ -66,8 +66,11 @@
     <Compile Include="Assets\Game\Scripts\Map\ISelectedHeroAgentProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroIdentity.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ITileDataProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Resources\ResourceNodeService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\UiPointerUtility.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Resources\ResourceDefinition.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IMapMovementService.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Resources\IResourceNodeProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroAgentComponent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IGridOccupancyProvider.cs" />
@@ -78,16 +81,19 @@
     <Compile Include="Assets\Game\Scripts\Map\IHeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridOccupancyService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TileVisualsSet.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Resources\ResourceVisualVariant.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TilemapTileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TileVisuals.cs" />
     <Compile Include="Assets\Game\Scripts\Map\PathPreviewRenderer.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarState.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarTilemapRenderer.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\ResourceNodeAuthoring.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\IFogOfWarService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MapMovementService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\BlockingOverlayTileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\HeroFogVisionDriver.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Resources\ResourceNodeDescriptor.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MapCameraController.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridCoord.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ClickToMoveController.cs" />
@@ -1118,6 +1124,10 @@
     <ProjectReference Include="HeroEditor4D.csproj">
       <Project>{D8A07CF0-92F6-DF21-BC45-E09531490680}</Project>
       <Name>HeroEditor4D</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.Localization.csproj">
+      <Project>{681351D7-75FE-D690-6C8D-1AE0B3A1BA69}</Project>
+      <Name>Unity.Localization</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

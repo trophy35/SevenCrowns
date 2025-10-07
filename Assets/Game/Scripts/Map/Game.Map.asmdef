@@ -3,7 +3,8 @@
   "rootNamespace": "SevenCrowns.Map",
   "references": [
     "HeroEditor4D",
-    "UnityEngine.UI"
+    "UnityEngine.UI",
+    "Unity.Localization"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
