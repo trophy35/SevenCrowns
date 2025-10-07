@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using SevenCrowns.Map.FogOfWar;
+using SevenCrowns.Map.Resources;
 // UI cursor binding is done via IWorldCursorHintSource to avoid Map -> UI dependency
 
 namespace SevenCrowns.Map
@@ -25,7 +26,11 @@ namespace SevenCrowns.Map
         [SerializeField] private MonoBehaviour _selectionBehaviour; // Optional; must implement ISelectedHeroAgentProvider
         [SerializeField] private LayerMask _heroLayer = 0;           // Set to your "Heroes" layer in Inspector
 
+        [Header("Resources")]
+        [SerializeField] private MonoBehaviour _resourceProviderBehaviour; // Optional; must implement IResourceNodeProvider
+
         private ISelectedHeroAgentProvider _selection;
+        private IResourceNodeProvider _resourceProvider;
         private string _currentHeroId;
 
         [Header("Movement")]
@@ -54,11 +59,13 @@ namespace SevenCrowns.Map
         // Cursor hint caching to avoid per-frame heavy work
         private bool _lastHoverHero;
         private bool _lastMoveHint;
+        private bool _lastCollectHint;
         private bool _hasCachedGoal;
         private GridCoord _cachedGoalCell;
         private bool _cachedMoveHint;
         public bool HoveringHero => _lastHoverHero;
         public bool MoveHint => _lastMoveHint;
+        public bool CollectHint => _lastCollectHint;
 
         private void Awake()
         {
@@ -66,6 +73,8 @@ namespace SevenCrowns.Map
             if (_camera == null) Debug.LogWarning("ClickToMoveController: No camera assigned and Camera.main was null.");
             if (_grid == null) Debug.LogError("ClickToMoveController requires a Grid reference.");
             if (_provider == null) Debug.LogError("ClickToMoveController requires a TilemapTileDataProvider.");
+
+            MonoBehaviour[] behaviours = null;
 
             // Bind selection provider if supplied or discoverable
             if (_selectionBehaviour != null && _selectionBehaviour is ISelectedHeroAgentProvider p1)
@@ -75,7 +84,7 @@ namespace SevenCrowns.Map
             else
             {
                 // Try find any selection provider in the scene
-                var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
                 for (int i = 0; i < behaviours.Length && _selection == null; i++)
                 {
                     if (behaviours[i] is ISelectedHeroAgentProvider p) _selection = p;
@@ -93,6 +102,20 @@ namespace SevenCrowns.Map
                 else _hero.AgentInitialized += OnHeroAgentInitialized;
             }
 
+            // Bind resource provider if supplied or discoverable
+            if (_resourceProviderBehaviour != null && _resourceProviderBehaviour is IResourceNodeProvider resourceProvider)
+            {
+                _resourceProvider = resourceProvider;
+            }
+            else
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _resourceProvider == null; i++)
+                {
+                    if (behaviours[i] is IResourceNodeProvider provider) _resourceProvider = provider;
+                }
+            }
+
             // Bind occupancy provider if supplied or discoverable
             if (_occupancyBehaviour != null && _occupancyBehaviour is IGridOccupancyProvider occ)
             {
@@ -100,7 +123,7 @@ namespace SevenCrowns.Map
             }
             else
             {
-                var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
                 for (int i = 0; i < behaviours.Length && _occupancy == null; i++)
                 {
                     if (behaviours[i] is IGridOccupancyProvider o) _occupancy = o;
@@ -113,7 +136,7 @@ namespace SevenCrowns.Map
             }
             else
             {
-                var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
                 for (int i = 0; i < behaviours.Length && _fog == null; i++)
                 {
                     if (behaviours[i] is IFogOfWarService service) _fog = service;
@@ -237,14 +260,16 @@ namespace SevenCrowns.Map
             if (_ignoreClicksOverUI && UiPointerUtility.IsPointerOverUI(Input.mousePosition))
             {
                 // Report no hints while over UI
-                NotifyCursorHints(false, false);
+                NotifyCursorHints(false, false, false);
                 return;
             }
 
             // Compute and publish hints each frame
             var hover = EvaluateHoverHero();
-            var move = EvaluateMoveHint();
-            NotifyCursorHints(hover, move);
+            var hasHoveredCoord = TryGetHoveredCoord(out var hoveredCoord, out var hoveredVisible);
+            var collect = EvaluateCollectHint(hasHoveredCoord, hoveredCoord, hoveredVisible);
+            var move = EvaluateMoveHint(hasHoveredCoord, hoveredCoord, hoveredVisible);
+            NotifyCursorHints(hover, move, collect);
 
             if (Input.GetMouseButtonDown(0))
             {
@@ -487,23 +512,37 @@ namespace SevenCrowns.Map
         }
 
         /// <summary>
-        /// Compute and apply cursor hints based on current hover and move possibility.
-        /// Uses CursorManager with priorities so hero hover overrides move hint.
+        /// Compute and apply cursor hints based on current hover, movement, and resource states.
+        /// Uses CursorManager with priorities so hero hover overrides collect and move hints.
         /// </summary>
-        private void NotifyCursorHints(bool hoverHero, bool moveHint)
+        private void NotifyCursorHints(bool hoverHero, bool moveHint, bool collectHint)
         {
-            if (hoverHero == _lastHoverHero && moveHint == _lastMoveHint)
+            if (hoverHero == _lastHoverHero && moveHint == _lastMoveHint && collectHint == _lastCollectHint)
                 return;
             _lastHoverHero = hoverHero;
             _lastMoveHint = moveHint;
-            CursorHintsChanged?.Invoke(_lastHoverHero, _lastMoveHint);
+            _lastCollectHint = collectHint;
+            CursorHintsChanged?.Invoke(_lastHoverHero, _lastMoveHint, _lastCollectHint);
         }
 
-        public event System.Action<bool, bool> CursorHintsChanged;
+        public event System.Action<bool, bool, bool> CursorHintsChanged;
 
         /// <summary>
-        /// Returns true if the mouse is currently hovering a hero (eligible for selection).
+        /// Computes the grid coordinate under the pointer and reports its visibility.
         /// </summary>
+        private bool TryGetHoveredCoord(out GridCoord coord, out bool isVisible)
+        {
+            coord = default;
+            isVisible = false;
+
+            var mouse = Input.mousePosition;
+            float depth = Mathf.Abs((_camera.transform.position - _grid.transform.position).z);
+            var world = _camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, depth));
+            coord = _provider.WorldToCoord(_grid, world);
+            isVisible = IsGoalVisible(coord);
+            return true;
+        }
+
         private bool EvaluateHoverHero()
         {
             if (_selection == null)
@@ -515,25 +554,19 @@ namespace SevenCrowns.Map
         /// Returns true if move mode is enabled, a hero is ready, and the tile under mouse has a valid path from hero.
         /// Uses a cached result for the last hovered goal cell.
         /// </summary>
-        private bool EvaluateMoveHint()
+        private bool EvaluateMoveHint(bool hasGoal, GridCoord goal, bool goalVisible)
         {
             if (!_moveModeEnabled || _hero == null || _isMoving)
                 return false;
-
-            // Determine goal cell under mouse
-            var mouse = Input.mousePosition;
-            float depth = Mathf.Abs((_camera.transform.position - _grid.transform.position).z);
-            var world = _camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, depth));
-            var goal = _provider.WorldToCoord(_grid, world);
-
-            if (!IsGoalVisible(goal))
+            if (!hasGoal)
+                return false;
+            if (!goalVisible)
             {
                 _hasCachedGoal = true;
                 _cachedGoalCell = goal;
                 _cachedMoveHint = false;
                 return false;
             }
-
             if (_hasCachedGoal && goal.Equals(_cachedGoalCell))
                 return _cachedMoveHint;
 
@@ -553,6 +586,15 @@ namespace SevenCrowns.Map
             _cachedMoveHint = hint;
             _hasCachedGoal = true;
             return hint;
+        }
+
+        private bool EvaluateCollectHint(bool hasGoal, GridCoord goal, bool goalVisible)
+        {
+            if (_resourceProvider == null || !hasGoal || !goalVisible)
+                return false;
+            if (!_resourceProvider.TryGetByCoord(goal, out var descriptor))
+                return false;
+            return descriptor.IsValid;
         }
 
         private int ComputePayableSteps(System.Collections.Generic.IReadOnlyList<GridCoord> path)

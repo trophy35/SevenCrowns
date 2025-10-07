@@ -67,6 +67,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\CurrentHeroServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinderTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgentTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ClickToMoveControllerCursorHintsTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgent_OccupancyTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\WorldTimeCounterTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FogOfWarServiceTests.cs" />

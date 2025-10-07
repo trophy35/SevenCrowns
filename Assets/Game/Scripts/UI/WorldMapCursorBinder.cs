@@ -26,10 +26,12 @@ namespace SevenCrowns.UI.CursorSystem
         [Header("Priorities")]
         [SerializeField] private int _hoverPriority = 100;
         [SerializeField] private int _movePriority = 10;
+        [SerializeField] private int _collectPriority = 60;
 
         private IWorldCursorHintSource _source;
         private const string TagHover = "map-hover-hero";
         private const string TagMove = "map-move-hint";
+        private const string TagCollect = "map-collect-hint";
 
         [Header("Discovery")]
         [SerializeField, Tooltip("Auto-discover a hint source if none assigned.")]
@@ -71,6 +73,7 @@ namespace SevenCrowns.UI.CursorSystem
             {
                 cm.Clear(TagHover);
                 cm.Clear(TagMove);
+                cm.Clear(TagCollect);
             }
         }
 
@@ -106,16 +109,17 @@ namespace SevenCrowns.UI.CursorSystem
             if (_source != null)
             {
                 _source.CursorHintsChanged += OnHintsChanged;
-                OnHintsChanged(_source.HoveringHero, _source.MoveHint);
+                OnHintsChanged(_source.HoveringHero, _source.MoveHint, _source.CollectHint);
             }
         }
 
-        private void OnHintsChanged(bool hoverHero, bool moveHint)
+        private void OnHintsChanged(bool hoverHero, bool moveHint, bool collectHint)
         {
             var cm = CursorManager.Instance;
             if (cm == null) return;
 
             if (hoverHero) cm.Set(CursorState.Hover, _hoverPriority, TagHover); else cm.Clear(TagHover);
+            if (collectHint) cm.Set(CursorState.Collect, _collectPriority, TagCollect); else cm.Clear(TagCollect);
             if (moveHint) cm.Set(CursorState.Move, _movePriority, TagMove); else cm.Clear(TagMove);
         }
     }

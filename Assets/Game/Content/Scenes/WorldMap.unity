@@ -1401,6 +1401,7 @@ MonoBehaviour:
   _overrideSet: {fileID: 11400000, guid: f1481a370ae83e94c8f23dff957c936c, type: 2}
   _hoverPriority: 100
   _movePriority: 10
+  _collectPriority: 60
   _autoDiscover: 1
   _discoverInterval: 0.5
 --- !u!1 &263439004 stripped
@@ -1551,13 +1552,14 @@ MonoBehaviour:
   _grid: {fileID: 8355480987375726218}
   _provider: {fileID: 1522153907}
   _occupancyBehaviour: {fileID: 1616408129}
-  _fogServiceBehaviour: {fileID: 0}
+  _fogServiceBehaviour: {fileID: 1256229410}
   _hero: {fileID: 873991350}
   _preview: {fileID: 535998808}
   _selectionBehaviour: {fileID: 1240371381}
   _heroLayer:
     serializedVersion: 2
     m_Bits: 4294967295
+  _resourceProviderBehaviour: {fileID: 453423376}
   _allowedMoves: 85
   _debugLogs: 1
   _ignoreClicksOverUI: 1

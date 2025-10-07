@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Localization;
+using UnityEngine.Localization.Tables;
 
 namespace SevenCrowns.Map.Resources
 {
@@ -97,11 +98,15 @@ namespace SevenCrowns.Map.Resources
 
         private void EnsureDefaults()
         {
+            if (_displayName == null) _displayName = new LocalizedString();
+            if (_description == null) _description = new LocalizedString();
             _resourceId = string.IsNullOrWhiteSpace(_resourceId)
                 ? name?.Replace(' ', '.').ToLowerInvariant() ?? "resource.unnamed"
                 : _resourceId.Trim();
 
-            if (string.IsNullOrEmpty(_displayName.TableReference.TableCollectionName))
+            var nameTableRef = _displayName.TableReference;
+            bool hasNameTable = nameTableRef.ReferenceType == TableReference.Type.Name && !string.IsNullOrEmpty(nameTableRef.TableCollectionName);
+            if (!hasNameTable)
             {
                 _displayName.TableReference = DefaultTable;
             }
@@ -111,7 +116,9 @@ namespace SevenCrowns.Map.Resources
                 _displayName.TableEntryReference = _resourceId + ".Name";
             }
 
-            if (string.IsNullOrEmpty(_description.TableReference.TableCollectionName))
+            var descriptionTableRef = _description.TableReference;
+            bool hasDescriptionTable = descriptionTableRef.ReferenceType == TableReference.Type.Name && !string.IsNullOrEmpty(descriptionTableRef.TableCollectionName);
+            if (!hasDescriptionTable)
             {
                 _description.TableReference = DefaultTable;
             }
