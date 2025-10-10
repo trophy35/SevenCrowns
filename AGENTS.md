@@ -244,6 +244,26 @@ Pitfalls
 - Multiple occupancy services: ensure there is only one active `GridOccupancyService` per scene.
 
 -----------------------------------------
+Audio SFX — Reuse
+-------------------------------------
+
+Pattern
+- WorldMapRadialMenuController (UI) and ResourceWalletService (Core) share a two-stage approach for Addressable SFX.
+
+How it works
+1) Discover IUiAssetProvider in-scene (or via serialized reference).
+2) Ensure an AudioSource (2D) exists on the component; do not create transient sources per play.
+3) Warm up the Addressable clip with a coroutine (poll provider or PreloadRegistry) so the first click is instant.
+4) Cache the AudioClip once resolved, then play with AudioSource.PlayOneShot.
+5) Keep volume configurable and default spatialBlend = 0.
+
+When adding new SFX
+- Reuse the helper logic (EnsureAudioSource, ResolveAssetProvider, warmup routine).
+- Trigger PreloadRegistry.TryGet<AudioClip> before fallback to provider.
+- Only spin up new coroutines if the clip is missing; stop them on OnDisable.
+
+-------------------------------------
+
 — World Map Radial Menu: Reuse Patterns —
 ------------------------------------------
 
@@ -510,3 +530,4 @@ Pitfalls
 - Missing Grid or TilemapTileDataProvider references prevent snapping; the node still registers but lacks GridCoord (pathfinding blockers won’t see it).
 - Sprite Addressable keys should target Sprite sub-assets; pointing to Texture2D main assets breaks SpriteRenderer assignment.
 - Forgetting to preload Localization table causes one-frame empty labels when UI first queries resource names.
+
