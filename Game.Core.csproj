@@ -75,6 +75,7 @@
     <Compile Include="Assets\Game\Scripts\Systems\WorldTimeService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\SceneTransitionFader.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\AddressablesLoadKeysTask.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\Resources\ResourceWalletService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\BasePreloadTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\SelectedHeroService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\SceneFlowController.cs" />

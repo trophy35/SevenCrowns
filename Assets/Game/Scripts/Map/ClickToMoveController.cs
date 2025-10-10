@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections.Generic;
 using SevenCrowns.Map.FogOfWar;
@@ -28,9 +29,11 @@ namespace SevenCrowns.Map
 
         [Header("Resources")]
         [SerializeField] private MonoBehaviour _resourceProviderBehaviour; // Optional; must implement IResourceNodeProvider
+        [SerializeField] private MonoBehaviour _resourceWalletBehaviour;  // Optional; must implement IResourceWallet
 
         private ISelectedHeroAgentProvider _selection;
         private IResourceNodeProvider _resourceProvider;
+        private IResourceWallet _resourceWallet;
         private string _currentHeroId;
 
         [Header("Movement")]
@@ -56,13 +59,34 @@ namespace SevenCrowns.Map
         private bool _isMoving;
         private readonly System.Collections.Generic.Dictionary<string, GridCoord> _lastGoalByHeroId = new System.Collections.Generic.Dictionary<string, GridCoord>(8);
 
+        private static readonly GridCoord[] s_CardinalDirections =
+        {
+            new GridCoord(0, 1),
+            new GridCoord(1, 0),
+            new GridCoord(0, -1),
+            new GridCoord(-1, 0),
+        };
+
         // Cursor hint caching to avoid per-frame heavy work
         private bool _lastHoverHero;
         private bool _lastMoveHint;
         private bool _lastCollectHint;
+        private bool _hoveredResourceAvailable;
+        private bool _hoveredResourceReachable;
+        private GridCoord _hoveredResourceCoord;
+        private GridCoord _hoveredResourceApproach;
+        private ResourceNodeDescriptor _hoveredResourceDescriptor;
+        private int _hoveredResourcePathLength;
+        private string _pendingResourceNodeId;
         private bool _hasCachedGoal;
         private GridCoord _cachedGoalCell;
         private bool _cachedMoveHint;
+        private bool _resourceHintCached;
+        private GridCoord _resourceHintHeroCoord;
+        private string _resourceHintNodeId;
+        private bool _resourceHintReachable;
+        private GridCoord _resourceHintApproach;
+        private int _resourceHintPathLength;
         public bool HoveringHero => _lastHoverHero;
         public bool MoveHint => _lastMoveHint;
         public bool CollectHint => _lastCollectHint;
@@ -113,6 +137,20 @@ namespace SevenCrowns.Map
                 for (int i = 0; i < behaviours.Length && _resourceProvider == null; i++)
                 {
                     if (behaviours[i] is IResourceNodeProvider provider) _resourceProvider = provider;
+                }
+            }
+
+            // Bind resource wallet if supplied or discoverable
+            if (_resourceWalletBehaviour != null && _resourceWalletBehaviour is IResourceWallet walletBehaviour)
+            {
+                _resourceWallet = walletBehaviour;
+            }
+            else
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _resourceWallet == null; i++)
+                {
+                    if (behaviours[i] is IResourceWallet wallet) _resourceWallet = wallet;
                 }
             }
 
@@ -175,6 +213,8 @@ namespace SevenCrowns.Map
             UnsubscribeHero();
             _hero = hero;
             _currentHeroId = null;
+            ClearResourceHintCache();
+            ResetHoveredResource();
             if (_hero != null)
             {
                 var id = _hero.GetComponent<HeroIdentity>();
@@ -230,11 +270,15 @@ namespace SevenCrowns.Map
         private void OnMovementStarted()
         {
             _isMoving = true;
+            ClearResourceHintCache();
+            ResetHoveredResource();
         }
 
         private void OnMovementStopped(StopReason reason)
         {
             _isMoving = false;
+            ClearResourceHintCache();
+            ResetHoveredResource();
         }
 
         private void OnMovementPointsChanged(int current, int max)
@@ -411,20 +455,46 @@ namespace SevenCrowns.Map
         private void HandleLeftClick()
         {
             var mouse = Input.mousePosition;
-            // Account for perspective cameras by providing depth to ScreenToWorldPoint
             float depth = Mathf.Abs((_camera.transform.position - _grid.transform.position).z);
             var world = _camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, depth));
-            var goal = _provider.WorldToCoord(_grid, world);
+            var rawGoal = _provider.WorldToCoord(_grid, world);
             var start = _hero.Agent.Position;
+
+            bool clickedResource = _hoveredResourceAvailable && rawGoal.Equals(_hoveredResourceCoord);
+            bool resourceReachable = clickedResource && _hoveredResourceReachable;
+            var effectiveGoal = clickedResource ? _hoveredResourceApproach : rawGoal;
+
             if (_debugLogs)
             {
-                Debug.Log($"[ClickToMove] Click at world={world:F2} mouse={mouse} -> start={start} goal={goal}");
+                Debug.Log($"[ClickToMove] Click at world={world:F2} mouse={mouse} -> start={start} rawGoal={rawGoal} effectiveGoal={effectiveGoal} resource={clickedResource}");
                 DebugLogTile("Start", start);
-                DebugLogTile("Goal", goal);
+                DebugLogTile("Goal", effectiveGoal);
                 DebugLogNeighbors("StartNbrs", start);
-                DebugLogNeighbors("GoalNbrs", goal);
+                DebugLogNeighbors("GoalNbrs", effectiveGoal);
             }
-            if (!IsGoalVisible(goal))
+
+            if (clickedResource)
+            {
+                if (!resourceReachable)
+                {
+                    if (_debugLogs) Debug.Log("[ClickToMove] Resource goal is not currently reachable.");
+                    return;
+                }
+
+                if (_isMoving)
+                {
+                    if (_debugLogs) Debug.Log("[ClickToMove] Hero is already moving; ignoring collect request.");
+                    return;
+                }
+
+                if (_hero != null && _hero.Agent != null && _hero.Agent.Position.Equals(effectiveGoal))
+                {
+                    TryCollectResource(_hoveredResourceDescriptor);
+                    return;
+                }
+            }
+
+            if (!IsGoalVisible(effectiveGoal))
             {
                 if (_debugLogs) Debug.Log("[ClickToMove] Goal is not currently visible. Ignored.");
                 _preview?.Clear();
@@ -432,13 +502,13 @@ namespace SevenCrowns.Map
                 return;
             }
 
-            if (start.Equals(goal))
+            if (start.Equals(effectiveGoal))
             {
                 if (_debugLogs) Debug.Log("[ClickToMove] Start == Goal. Ignored.");
                 return;
             }
 
-            var path = _pf.GetPath(start, goal, _allowedMoves);
+            var path = _pf.GetPath(start, effectiveGoal, _allowedMoves);
             if (_debugLogs)
             {
                 Debug.Log($"[ClickToMove] Path length={path.Count}");
@@ -447,7 +517,7 @@ namespace SevenCrowns.Map
             {
                 if (_debugLogs)
                 {
-                    if (_provider.TryGet(goal, out var td))
+                    if (_provider.TryGet(effectiveGoal, out var td))
                     {
                         Debug.Log($"[ClickToMove] No path. Goal TileData: type={td.terrainType} passable={td.IsPassable} mask={td.enterMask}");
                     }
@@ -455,16 +525,15 @@ namespace SevenCrowns.Map
                     {
                         Debug.Log("[ClickToMove] No path. Provider could not resolve goal tile.");
                     }
-                    // Probe a simple cardinal line from start to goal to find the first blocked step
-                    DebugProbeLine(start, goal);
+                    DebugProbeLine(start, effectiveGoal);
                 }
                 _preview?.Clear();
                 _hasPreview = false;
                 return;
             }
 
-            // If we already previewed this exact goal and the hero hasn't moved since, confirm and move
-            if (_hasPreview && goal.Equals(_pendingGoal) && start.Equals(_pendingStart))
+            bool confirmMove = _hasPreview && effectiveGoal.Equals(_pendingGoal) && start.Equals(_pendingStart);
+            if (confirmMove)
             {
                 _hero?.StopAutoTraversal();
                 if (_hero != null && _hero.Agent.SetPath(path))
@@ -472,6 +541,7 @@ namespace SevenCrowns.Map
                     if (_debugLogs) Debug.Log("[ClickToMove] Confirmed click. Moving hero.");
                     _preview?.Clear();
                     _hasPreview = false;
+                    _pendingResourceNodeId = null;
                     _hero.BeginAutoTraversal();
                 }
                 else if (_debugLogs)
@@ -484,16 +554,18 @@ namespace SevenCrowns.Map
                 int payableSteps = ComputePayableSteps(path);
                 _preview?.Show(path, payableSteps);
                 _pendingPath = path;
-                _pendingGoal = goal;
+                _pendingGoal = effectiveGoal;
                 _pendingStart = start;
                 _hasPreview = true;
+                _pendingResourceNodeId = clickedResource ? _hoveredResourceDescriptor.NodeId : null;
                 if (!string.IsNullOrEmpty(_currentHeroId))
                 {
-                    _lastGoalByHeroId[_currentHeroId] = goal;
+                    _lastGoalByHeroId[_currentHeroId] = effectiveGoal;
                 }
                 if (_debugLogs) Debug.Log($"[ClickToMove] Preview shown. PayableSteps={payableSteps}");
             }
         }
+
 
         private void HandleRightClick()
         {
@@ -509,6 +581,9 @@ namespace SevenCrowns.Map
             // optional: clear preview/highlights
             _preview?.Clear();
             _hasPreview = false;
+            _pendingResourceNodeId = null;
+            ClearResourceHintCache();
+            ResetHoveredResource();
         }
 
         /// <summary>
@@ -554,20 +629,102 @@ namespace SevenCrowns.Map
         /// Returns true if move mode is enabled, a hero is ready, and the tile under mouse has a valid path from hero.
         /// Uses a cached result for the last hovered goal cell.
         /// </summary>
+        private bool EvaluateCollectHint(bool hasGoal, GridCoord goal, bool goalVisible)
+        {
+            if (_resourceProvider == null || !_moveModeEnabled || _hero == null || _hero.Agent == null || _isMoving)
+            {
+                ResetHoveredResource();
+                return false;
+            }
+
+            if (!hasGoal || !_resourceProvider.TryGetByCoord(goal, out var descriptor) || !descriptor.IsValid || !descriptor.GridCoord.HasValue)
+            {
+                ResetHoveredResource();
+                return false;
+            }
+
+            var resourceCoord = descriptor.GridCoord.Value;
+            _hoveredResourceAvailable = true;
+            _hoveredResourceDescriptor = descriptor;
+            _hoveredResourceCoord = resourceCoord;
+
+            var heroPosition = _hero.Agent.Position;
+            bool needsRecompute = !_resourceHintCached
+                                   || !string.Equals(_resourceHintNodeId, descriptor.NodeId, StringComparison.Ordinal)
+                                   || !_resourceHintHeroCoord.Equals(heroPosition);
+
+            if (needsRecompute)
+            {
+                if (TryResolveResourceApproach(resourceCoord, out var approach, out var pathLength))
+                {
+                    _hoveredResourceReachable = true;
+                    _hoveredResourceApproach = approach;
+                    _hoveredResourcePathLength = pathLength;
+
+                    _resourceHintReachable = true;
+                    _resourceHintApproach = approach;
+                    _resourceHintPathLength = pathLength;
+                }
+                else
+                {
+                    _hoveredResourceReachable = false;
+                    _hoveredResourceApproach = default;
+                    _hoveredResourcePathLength = 0;
+
+                    _resourceHintReachable = false;
+                    _resourceHintApproach = default;
+                    _resourceHintPathLength = 0;
+                }
+
+                _resourceHintCached = true;
+                _resourceHintHeroCoord = heroPosition;
+                _resourceHintNodeId = descriptor.NodeId;
+            }
+            else
+            {
+                _hoveredResourceReachable = _resourceHintReachable;
+                _hoveredResourceApproach = _resourceHintApproach;
+                _hoveredResourcePathLength = _resourceHintPathLength;
+            }
+
+            if (!_hoveredResourceReachable)
+            {
+                return false;
+            }
+
+            if (!_hoveredResourceApproach.Equals(heroPosition) && !IsGoalVisible(_hoveredResourceApproach))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         private bool EvaluateMoveHint(bool hasGoal, GridCoord goal, bool goalVisible)
         {
             if (!_moveModeEnabled || _hero == null || _isMoving)
                 return false;
             if (!hasGoal)
                 return false;
-            if (!goalVisible)
+
+            bool targetingResource = _hoveredResourceReachable && goal.Equals(_hoveredResourceCoord);
+            GridCoord effectiveGoal = goal;
+            bool effectiveVisible = goalVisible;
+            if (targetingResource)
+            {
+                effectiveGoal = _hoveredResourceApproach;
+                effectiveVisible = IsGoalVisible(effectiveGoal);
+            }
+
+            if (!effectiveVisible)
             {
                 _hasCachedGoal = true;
-                _cachedGoalCell = goal;
+                _cachedGoalCell = effectiveGoal;
                 _cachedMoveHint = false;
                 return false;
             }
-            if (_hasCachedGoal && goal.Equals(_cachedGoalCell))
+
+            if (_hasCachedGoal && effectiveGoal.Equals(_cachedGoalCell))
                 return _cachedMoveHint;
 
             BuildPathfinderIfNeeded(log: false);
@@ -575,26 +732,138 @@ namespace SevenCrowns.Map
             if (_pf != null && _hero.Agent != null)
             {
                 var start = _hero.Agent.Position;
-                if (!start.Equals(goal))
+                if (!start.Equals(effectiveGoal))
                 {
-                    var path = _pf.GetPath(start, goal, _allowedMoves);
+                    var path = _pf.GetPath(start, effectiveGoal, _allowedMoves);
                     hint = path != null && path.Count > 0;
                 }
             }
 
-            _cachedGoalCell = goal;
+            _cachedGoalCell = effectiveGoal;
             _cachedMoveHint = hint;
             _hasCachedGoal = true;
             return hint;
         }
 
-        private bool EvaluateCollectHint(bool hasGoal, GridCoord goal, bool goalVisible)
+        private bool TryResolveResourceApproach(GridCoord resourceCoord, out GridCoord approach, out int pathLength)
         {
-            if (_resourceProvider == null || !hasGoal || !goalVisible)
+            approach = default;
+            pathLength = 0;
+
+            if (_hero == null || _hero.Agent == null)
                 return false;
-            if (!_resourceProvider.TryGetByCoord(goal, out var descriptor))
+
+            BuildPathfinderIfNeeded(log: false);
+            if (_pf == null)
                 return false;
-            return descriptor.IsValid;
+
+            var start = _hero.Agent.Position;
+            bool found = false;
+            int bestLength = int.MaxValue;
+            GridCoord bestApproach = default;
+
+            for (int i = 0; i < s_CardinalDirections.Length; i++)
+            {
+                var offset = s_CardinalDirections[i];
+                var candidate = new GridCoord(resourceCoord.X + offset.X, resourceCoord.Y + offset.Y);
+
+                bool passable = _provider.TryGet(candidate, out var tile) && tile.IsPassable;
+                if (!passable && !candidate.Equals(start))
+                    continue;
+
+                if (candidate.Equals(start))
+                {
+                    approach = candidate;
+                    pathLength = 0;
+                    return true;
+                }
+
+                var path = _pf.GetPath(start, candidate, _allowedMoves);
+                if (path != null && path.Count > 0)
+                {
+                    if (!found || path.Count < bestLength)
+                    {
+                        found = true;
+                        bestLength = path.Count;
+                        bestApproach = candidate;
+                    }
+                }
+            }
+
+            if (!found)
+                return false;
+
+            approach = bestApproach;
+            pathLength = bestLength;
+            return true;
+        }
+
+
+        private void TryCollectResource(ResourceNodeDescriptor descriptor)
+        {
+            if (!descriptor.IsValid)
+                return;
+
+            ClearResourceHintCache();
+
+            if (descriptor.Resource != null && descriptor.BaseYield != 0)
+            {
+                if (_resourceWallet != null)
+                {
+                    _resourceWallet.Add(descriptor.Resource.ResourceId, descriptor.BaseYield);
+                }
+                else if (_debugLogs)
+                {
+                    Debug.LogWarning("[ClickToMove] No resource wallet service assigned. Collection will not update totals.", this);
+                }
+            }
+            else if (descriptor.BaseYield != 0 && _resourceWallet == null && _debugLogs)
+            {
+                Debug.LogWarning("[ClickToMove] No resource wallet service assigned. Collection will not update totals.");
+            }
+
+            bool nodeFound = false;
+            if (!string.IsNullOrEmpty(descriptor.NodeId) && ResourceNodeAuthoring.TryGetNode(descriptor.NodeId, out var authoring))
+            {
+                nodeFound = true;
+                authoring.Collect();
+            }
+
+            if (nodeFound && descriptor.Resource != null)
+            {
+                var amountText = descriptor.BaseYield.ToString("+#;-#;0");
+                Debug.Log($"[ClickToMove] Collected resource '{descriptor.Resource.ResourceId}' ({amountText}).", this);
+            }
+
+            if (!nodeFound && _debugLogs)
+            {
+                Debug.LogWarning($"[ClickToMove] Resource node '{descriptor.NodeId}' not found for collection.", this);
+            }
+
+            _preview?.Clear();
+            _hasPreview = false;
+            _pendingResourceNodeId = null;
+            ResetHoveredResource();
+        }
+
+        private void ClearResourceHintCache()
+        {
+            _resourceHintCached = false;
+            _resourceHintHeroCoord = default;
+            _resourceHintNodeId = null;
+            _resourceHintReachable = false;
+            _resourceHintApproach = default;
+            _resourceHintPathLength = 0;
+        }
+
+        private void ResetHoveredResource()
+        {
+            _hoveredResourceAvailable = false;
+            _hoveredResourceReachable = false;
+            _hoveredResourceDescriptor = default;
+            _hoveredResourceCoord = default;
+            _hoveredResourceApproach = default;
+            _hoveredResourcePathLength = 0;
         }
 
         private int ComputePayableSteps(System.Collections.Generic.IReadOnlyList<GridCoord> path)
@@ -701,4 +970,20 @@ namespace SevenCrowns.Map
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

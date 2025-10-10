@@ -68,11 +68,13 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinderTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgentTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ClickToMoveControllerCursorHintsTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ClickToMoveControllerCollectTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgent_OccupancyTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\WorldTimeCounterTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FogOfWarServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinder_OccupancyTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridBoundsTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceWalletServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\CameraClampUtilityTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceNodeServiceTests.cs" />
   </ItemGroup>

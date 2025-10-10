@@ -100,33 +100,53 @@ namespace SevenCrowns.Map.Resources
         {
             if (_displayName == null) _displayName = new LocalizedString();
             if (_description == null) _description = new LocalizedString();
+
+            var assetName = name;
+            var generatedId = !string.IsNullOrWhiteSpace(assetName)
+                ? assetName.Replace(' ', '.').ToLowerInvariant()
+                : "resource.unnamed";
+
             _resourceId = string.IsNullOrWhiteSpace(_resourceId)
-                ? name?.Replace(' ', '.').ToLowerInvariant() ?? "resource.unnamed"
+                ? generatedId
                 : _resourceId.Trim();
 
-            var nameTableRef = _displayName.TableReference;
-            bool hasNameTable = nameTableRef.ReferenceType == TableReference.Type.Name && !string.IsNullOrEmpty(nameTableRef.TableCollectionName);
-            if (!hasNameTable)
+            if (NeedsTableReference(_displayName.TableReference))
             {
                 _displayName.TableReference = DefaultTable;
             }
 
-            if (string.IsNullOrEmpty(_displayName.TableEntryReference))
+            if (!HasEntryReference(_displayName.TableEntryReference))
             {
                 _displayName.TableEntryReference = _resourceId + ".Name";
             }
 
-            var descriptionTableRef = _description.TableReference;
-            bool hasDescriptionTable = descriptionTableRef.ReferenceType == TableReference.Type.Name && !string.IsNullOrEmpty(descriptionTableRef.TableCollectionName);
-            if (!hasDescriptionTable)
+            if (NeedsTableReference(_description.TableReference))
             {
                 _description.TableReference = DefaultTable;
             }
 
-            if (string.IsNullOrEmpty(_description.TableEntryReference))
+            if (!HasEntryReference(_description.TableEntryReference))
             {
                 _description.TableEntryReference = _resourceId + ".Description";
             }
+        }
+
+        private static bool NeedsTableReference(TableReference reference)
+        {
+            switch (reference.ReferenceType)
+            {
+                case TableReference.Type.Name:
+                    return string.IsNullOrEmpty(reference.TableCollectionName);
+                case TableReference.Type.Guid:
+                    return reference.TableCollectionNameGuid == Guid.Empty;
+                default:
+                    return true;
+            }
+        }
+
+        private static bool HasEntryReference(TableEntryReference reference)
+        {
+            return reference.ReferenceType != TableEntryReference.Type.Empty;
         }
 
         private void RebuildCaches()
@@ -181,3 +201,4 @@ namespace SevenCrowns.Map.Resources
         }
     }
 }
+

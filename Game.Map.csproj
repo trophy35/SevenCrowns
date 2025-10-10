@@ -93,6 +93,7 @@
     <Compile Include="Assets\Game\Scripts\Map\BlockingOverlayTileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\HeroFogVisionDriver.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Resources\IResourceWallet.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\ResourceNodeDescriptor.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MapCameraController.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridCoord.cs" />
