@@ -1,0 +1,67 @@
+        private void TryPlayCollectSfx(string resourceId, int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            if (!string.Equals(resourceId, _goldResourceId, StringComparison.Ordinal))
+                return;
+
+            if (string.IsNullOrEmpty(_goldCollectSfxKey))
+                return;
+
+            EnsureAudioSource();
+
+            if (_goldCollectClip == null)
+            {
+                if (PreloadRegistry.TryGet<AudioClip>(_goldCollectSfxKey, out var preloadClip) && preloadClip != null)
+                {
+                    _goldCollectClip = preloadClip;
+                }
+                else if (_assetProvider != null && _assetProvider.TryGetAudioClip(_goldCollectSfxKey, out var providerClip) && providerClip != null)
+                {
+                    _goldCollectClip = providerClip;
+                }
+                else
+                {
+                    WarmupGoldSfx();
+                }
+            }
+
+            if (_goldCollectClip != null)
+            {
+                _audioSource.PlayOneShot(_goldCollectClip, Mathf.Clamp01(_goldSfxVolume));
+            }
+        }
+
+        private void InitializeFromStartingResources()
+        {
+            _amounts.Clear();
+            if (_startingResources == null)
+                return;
+
+            for (int i = 0; i < _startingResources.Count; i++)
+            {
+                var entry = _startingResources[i];
+                if (string.IsNullOrWhiteSpace(entry.resourceId) || entry.amount == 0)
+                    continue;
+
+                var key = NormalizeResourceId(entry.resourceId);
+                if (_amounts.TryGetValue(key, out var existing))
+                {
+                    _amounts[key] = existing + entry.amount;
+                }
+                else
+                {
+                    _amounts.Add(key, entry.amount);
+                }
+            }
+        }
+
+        private static string NormalizeResourceId(string resourceId)
+        {
+            return string.IsNullOrWhiteSpace(resourceId)
+                ? string.Empty
+                : resourceId.Trim();
+        }
+    }
+}

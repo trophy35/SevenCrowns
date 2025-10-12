@@ -1,0 +1,165 @@
+﻿*** Begin Patch
+*** Add File: Assets/Game/Scripts/UI/ResourceAmountHudView.cs
++using System.Globalization;
++using TMPro;
++using UnityEngine;
++using UnityEngine.Localization;
++using SevenCrowns.Map.Resources;
++
++namespace SevenCrowns.UI
++{
++    /// <summary>
++    /// Displays the current amount of a specific resource from IResourceWallet.
++    /// Updates automatically when the wallet raises ResourceChanged.
++    /// </summary>
++    [DisallowMultipleComponent]
++    public sealed class ResourceAmountHudView : MonoBehaviour
++    {
++        private const string DefaultTable = "UI.Common";
++
++        [Header("Wallet")]
++        [SerializeField] private MonoBehaviour _walletBehaviour; // Optional; must implement IResourceWallet
++
++        [Header("Resource")]
++        [SerializeField] private string _resourceId = "resource.gold";
++
++        [Header("Value")] 
++        [SerializeField] private TextMeshProUGUI _valueText;
++
++        [Header("Label (Optional)")]
++        [SerializeField] private TextMeshProUGUI _labelText;
++        [SerializeField] private LocalizedString _labelEntry;
++
++        private IResourceWallet _wallet;
++        private readonly System.Globalization.CultureInfo _culture = System.Globalization.CultureInfo.InvariantCulture;
++        private LocalizedString.ChangeHandler _labelHandler;
++
++        private void Awake()
++        {
++            _resourceId = NormalizeId(_resourceId);
++            ResolveWallet();
++            HookLabel();
++        }
++
++        private void OnEnable()
++        {
++            if (_wallet != null)
++            {
++                _wallet.ResourceChanged += OnResourceChanged;
++                SetValue(_wallet.GetAmount(_resourceId));
++            }
++            else
++            {
++                SetValue(0);
++            }
++
++            RefreshLabel();
++        }
++
++        private void OnDisable()
++        {
++            if (_wallet != null)
++            {
++                _wallet.ResourceChanged -= OnResourceChanged;
++            }
++        }
++
++        private void OnDestroy()
++        {
++            UnhookLabel();
++        }
++
++#if UNITY_EDITOR
++        private void OnValidate()
++        {
++            _resourceId = NormalizeId(_resourceId);
++            EnsureLabelDefaults();
++        }
++#endif
++
++        private void OnResourceChanged(ResourceChange change)
++        {
++            if (!string.Equals(change.ResourceId, _resourceId, System.StringComparison.Ordinal))
++                return;
++            SetValue(change.NewAmount);
++        }
++
++        private void SetValue(int amount)
++        {
++            if (_valueText != null)
++            {
++                _valueText.text = amount.ToString(_culture);
++            }
++        }
++
++        private void ResolveWallet()
++        {
++            if (_walletBehaviour != null && _walletBehaviour is IResourceWallet wb)
++            {
++                _wallet = wb;
++                return;
++            }
++
++            var behaviours = FindObjectsOfType<MonoBehaviour>(true);
++            for (int i = 0; i < behaviours.Length; i++)
++            {
++                if (behaviours[i] is IResourceWallet candidate)
++                {
++                    _wallet = candidate;
++                    break;
++                }
++            }
++        }
++
++        private void HookLabel()
++        {
++            if (_labelText == null)
++                return;
++
++            EnsureLabelDefaults();
++            _labelHandler = value =>
++            {
++                if (_labelText != null)
++                {
++                    _labelText.text = value;
++                }
++            };
++            _labelEntry.StringChanged += _labelHandler;
++        }
++
++        private void UnhookLabel()
++        {
++            if (_labelHandler == null)
++                return;
++            _labelEntry.StringChanged -= _labelHandler;
++            _labelHandler = null;
++        }
++
++        private void RefreshLabel()
++        {
++            if (_labelText == null)
++                return;
++            _labelEntry.RefreshString();
++        }
++
++#if UNITY_EDITOR
++        private void EnsureLabelDefaults()
++        {
++            if (string.IsNullOrEmpty(_labelEntry.TableReference.TableCollectionName))
++            {
++                _labelEntry.TableReference = DefaultTable;
++            }
++            // Do not force a default entry name; let designers assign e.g., "Resources.GoldLabel"
++        }
++#else
++        private void EnsureLabelDefaults() { }
++#endif
++
++        private static string NormalizeId(string id)
++        {
++            return string.IsNullOrWhiteSpace(id) ? string.Empty : id.Trim();
++        }
++    }
+}
+
+*** End Patch

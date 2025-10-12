@@ -5,6 +5,7 @@
                        "Game.Map",
                        "Game.Core",
                        "Game.UI",
+                       "Unity.TextMeshPro",
                        "Unity.Localization"
                    ],
     "includePlatforms":  [

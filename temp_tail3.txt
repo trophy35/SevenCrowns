@@ -1,0 +1,511 @@
+                    _preview?.Clear();
+                    _hasPreview = false;
+                    _pendingResourceNodeId = null;
+                    _hero.BeginAutoTraversal();
+                }
+                else if (_debugLogs)
+                {
+                    Debug.Log("[ClickToMove] Failed to confirm path (invalid start or adjacency).");
+                }
+            }
+            else
+            {
+                int payableSteps = ComputePayableSteps(path);
+                _preview?.Show(path, payableSteps);
+                _pendingPath = path;
+                _pendingGoal = effectiveGoal;
+                _pendingStart = start;
+                _hasPreview = true;
+                _pendingResourceNodeId = clickedResource ? _hoveredResourceDescriptor.NodeId : null;
+                if (!string.IsNullOrEmpty(_currentHeroId))
+                {
+                    _lastGoalByHeroId[_currentHeroId] = effectiveGoal;
+                }
+                if (_debugLogs) Debug.Log($"[ClickToMove] Preview shown. PayableSteps={payableSteps}");
+            }
+        }
+
+
+        private void HandleRightClick()
+        {
+            if (_hero == null) return;
+
+            _hero.StopAutoTraversal();
+            if (_hero.Agent != null)
+            {
+                _hero.Agent.ClearPath();
+            }
+
+            if (_debugLogs) Debug.Log("[ClickToMove] Cancelled current order.");
+            // optional: clear preview/highlights
+            _preview?.Clear();
+            _hasPreview = false;
+            _pendingResourceNodeId = null;
+            ClearResourceHintCache();
+            ResetHoveredResource();
+            HideTooltipImmediate();
+        }
+
+        /// <summary>
+        /// Compute and apply cursor hints based on current hover, movement, and resource states.
+        /// Uses CursorManager with priorities so hero hover overrides collect and move hints.
+        /// </summary>
+        private void UpdateResourceTooltip(bool hasGoal, GridCoord goal)
+        {
+            var state = EnsureTooltipState();
+            bool changed;
+            WorldTooltipHint hint;
+
+            if (_resourceProvider != null && hasGoal && _resourceProvider.TryGetByCoord(goal, out var descriptor) && descriptor.IsValid)
+            {
+                changed = state.Update(descriptor, Time.unscaledDeltaTime, out hint);
+            }
+            else
+            {
+                changed = state.Update(null, Time.unscaledDeltaTime, out hint);
+            }
+
+            if (changed)
+            {
+                PublishTooltipHint(hint);
+            }
+        }
+
+        private ResourceTooltipState EnsureTooltipState()
+        {
+            if (_resourceTooltipState == null)
+            {
+                _resourceTooltipState = new ResourceTooltipState(_resourceTooltipDelay);
+            }
+
+            return _resourceTooltipState;
+        }
+
+        private void PublishTooltipHint(WorldTooltipHint hint)
+        {
+            if (_currentTooltipHint.Equals(hint))
+                return;
+
+            _currentTooltipHint = hint;
+            TooltipHintChanged?.Invoke(_currentTooltipHint);
+        }
+
+        private void HideTooltipImmediate()
+        {
+            if (_resourceTooltipState == null)
+            {
+                if (_currentTooltipHint.HasTooltip)
+                {
+                    _currentTooltipHint = WorldTooltipHint.None;
+                    TooltipHintChanged?.Invoke(_currentTooltipHint);
+                }
+                return;
+            }
+
+            if (_resourceTooltipState.ForceHide(out var hint))
+            {
+                PublishTooltipHint(hint);
+            }
+            else if (_currentTooltipHint.HasTooltip)
+            {
+                PublishTooltipHint(WorldTooltipHint.None);
+            }
+        }
+
+        private void NotifyCursorHints(bool hoverHero, bool moveHint, bool collectHint)
+        {
+            if (hoverHero == _lastHoverHero && moveHint == _lastMoveHint && collectHint == _lastCollectHint)
+                return;
+            _lastHoverHero = hoverHero;
+            _lastMoveHint = moveHint;
+            _lastCollectHint = collectHint;
+            CursorHintsChanged?.Invoke(_lastHoverHero, _lastMoveHint, _lastCollectHint);
+        }
+
+        public event System.Action<bool, bool, bool> CursorHintsChanged;
+
+        /// <summary>
+        /// Computes the grid coordinate under the pointer and reports its visibility.
+        /// </summary>
+        private bool TryGetHoveredCoord(out GridCoord coord, out bool isVisible)
+        {
+            coord = default;
+            isVisible = false;
+
+            var mouse = Input.mousePosition;
+            float depth = Mathf.Abs((_camera.transform.position - _grid.transform.position).z);
+            var world = _camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, depth));
+            coord = _provider.WorldToCoord(_grid, world);
+            isVisible = IsGoalVisible(coord);
+            return true;
+        }
+
+        private bool EvaluateHoverHero()
+        {
+            if (_selection == null)
+                return false;
+            return TryPickHeroUnderMouse(out _);
+        }
+
+        /// <summary>
+        /// Returns true if move mode is enabled, a hero is ready, and the tile under mouse has a valid path from hero.
+        /// Uses a cached result for the last hovered goal cell.
+        /// </summary>
+        private bool EvaluateCollectHint(bool hasGoal, GridCoord goal, bool goalVisible)
+        {
+            if (_resourceProvider == null || !_moveModeEnabled || _hero == null || _hero.Agent == null || _isMoving)
+            {
+                ResetHoveredResource();
+                return false;
+            }
+
+            if (!hasGoal || !_resourceProvider.TryGetByCoord(goal, out var descriptor) || !descriptor.IsValid || !descriptor.GridCoord.HasValue)
+            {
+                ResetHoveredResource();
+                return false;
+            }
+
+            var resourceCoord = descriptor.GridCoord.Value;
+            _hoveredResourceAvailable = true;
+            _hoveredResourceDescriptor = descriptor;
+            _hoveredResourceCoord = resourceCoord;
+
+            var heroPosition = _hero.Agent.Position;
+            bool needsRecompute = !_resourceHintCached
+                                   || !string.Equals(_resourceHintNodeId, descriptor.NodeId, StringComparison.Ordinal)
+                                   || !_resourceHintHeroCoord.Equals(heroPosition);
+
+            if (needsRecompute)
+            {
+                if (TryResolveResourceApproach(resourceCoord, out var approach, out var pathLength))
+                {
+                    _hoveredResourceReachable = true;
+                    _hoveredResourceApproach = approach;
+                    _hoveredResourcePathLength = pathLength;
+
+                    _resourceHintReachable = true;
+                    _resourceHintApproach = approach;
+                    _resourceHintPathLength = pathLength;
+                }
+                else
+                {
+                    _hoveredResourceReachable = false;
+                    _hoveredResourceApproach = default;
+                    _hoveredResourcePathLength = 0;
+
+                    _resourceHintReachable = false;
+                    _resourceHintApproach = default;
+                    _resourceHintPathLength = 0;
+                }
+
+                _resourceHintCached = true;
+                _resourceHintHeroCoord = heroPosition;
+                _resourceHintNodeId = descriptor.NodeId;
+            }
+            else
+            {
+                _hoveredResourceReachable = _resourceHintReachable;
+                _hoveredResourceApproach = _resourceHintApproach;
+                _hoveredResourcePathLength = _resourceHintPathLength;
+            }
+
+            if (!_hoveredResourceReachable)
+            {
+                return false;
+            }
+
+            if (!_hoveredResourceApproach.Equals(heroPosition) && !IsGoalVisible(_hoveredResourceApproach))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool EvaluateMoveHint(bool hasGoal, GridCoord goal, bool goalVisible)
+        {
+            if (!_moveModeEnabled || _hero == null || _isMoving)
+                return false;
+            if (!hasGoal)
+                return false;
+
+            bool targetingResource = _hoveredResourceReachable && goal.Equals(_hoveredResourceCoord);
+            GridCoord effectiveGoal = goal;
+            bool effectiveVisible = goalVisible;
+            if (targetingResource)
+            {
+                effectiveGoal = _hoveredResourceApproach;
+                effectiveVisible = IsGoalVisible(effectiveGoal);
+            }
+
+            if (!effectiveVisible)
+            {
+                _hasCachedGoal = true;
+                _cachedGoalCell = effectiveGoal;
+                _cachedMoveHint = false;
+                return false;
+            }
+
+            if (_hasCachedGoal && effectiveGoal.Equals(_cachedGoalCell))
+                return _cachedMoveHint;
+
+            BuildPathfinderIfNeeded(log: false);
+            bool hint = false;
+            if (_pf != null && _hero.Agent != null)
+            {
+                var start = _hero.Agent.Position;
+                if (!start.Equals(effectiveGoal))
+                {
+                    var path = _pf.GetPath(start, effectiveGoal, _allowedMoves);
+                    hint = path != null && path.Count > 0;
+                }
+            }
+
+            _cachedGoalCell = effectiveGoal;
+            _cachedMoveHint = hint;
+            _hasCachedGoal = true;
+            return hint;
+        }
+
+        private bool TryResolveResourceApproach(GridCoord resourceCoord, out GridCoord approach, out int pathLength)
+        {
+            approach = default;
+            pathLength = 0;
+
+            if (_hero == null || _hero.Agent == null)
+                return false;
+
+            BuildPathfinderIfNeeded(log: false);
+            if (_pf == null)
+                return false;
+
+            var start = _hero.Agent.Position;
+            bool found = false;
+            int bestLength = int.MaxValue;
+            GridCoord bestApproach = default;
+
+            for (int i = 0; i < s_CardinalDirections.Length; i++)
+            {
+                var offset = s_CardinalDirections[i];
+                var candidate = new GridCoord(resourceCoord.X + offset.X, resourceCoord.Y + offset.Y);
+
+                bool passable = _provider.TryGet(candidate, out var tile) && tile.IsPassable;
+                if (!passable && !candidate.Equals(start))
+                    continue;
+
+                if (candidate.Equals(start))
+                {
+                    approach = candidate;
+                    pathLength = 0;
+                    return true;
+                }
+
+                var path = _pf.GetPath(start, candidate, _allowedMoves);
+                if (path != null && path.Count > 0)
+                {
+                    if (!found || path.Count < bestLength)
+                    {
+                        found = true;
+                        bestLength = path.Count;
+                        bestApproach = candidate;
+                    }
+                }
+            }
+
+            if (!found)
+                return false;
+
+            approach = bestApproach;
+            pathLength = bestLength;
+            return true;
+        }
+
+
+        private void TryCollectResource(ResourceNodeDescriptor descriptor)
+        {
+            if (!descriptor.IsValid)
+                return;
+
+            ClearResourceHintCache();
+
+            if (descriptor.Resource != null && descriptor.BaseYield != 0)
+            {
+                if (_resourceWallet != null)
+                {
+                    _resourceWallet.Add(descriptor.Resource.ResourceId, descriptor.BaseYield);
+                }
+                else if (_debugLogs)
+                {
+                    Debug.LogWarning("[ClickToMove] No resource wallet service assigned. Collection will not update totals.", this);
+                }
+            }
+            else if (descriptor.BaseYield != 0 && _resourceWallet == null && _debugLogs)
+            {
+                Debug.LogWarning("[ClickToMove] No resource wallet service assigned. Collection will not update totals.");
+            }
+
+            bool nodeFound = false;
+            if (!string.IsNullOrEmpty(descriptor.NodeId) && ResourceNodeAuthoring.TryGetNode(descriptor.NodeId, out var authoring))
+            {
+                nodeFound = true;
+                authoring.Collect();
+            }
+
+            if (nodeFound && descriptor.Resource != null)
+            {
+                var amountText = descriptor.BaseYield.ToString("+#;-#;0");
+                Debug.Log($"[ClickToMove] Collected resource '{descriptor.Resource.ResourceId}' ({amountText}).", this);
+            }
+
+            if (!nodeFound && _debugLogs)
+            {
+                Debug.LogWarning($"[ClickToMove] Resource node '{descriptor.NodeId}' not found for collection.", this);
+            }
+
+            _preview?.Clear();
+            _hasPreview = false;
+            _pendingResourceNodeId = null;
+            ResetHoveredResource();
+        }
+
+        private void ClearResourceHintCache()
+        {
+            _resourceHintCached = false;
+            _resourceHintHeroCoord = default;
+            _resourceHintNodeId = null;
+            _resourceHintReachable = false;
+            _resourceHintApproach = default;
+            _resourceHintPathLength = 0;
+        }
+
+        private void ResetHoveredResource()
+        {
+            _hoveredResourceAvailable = false;
+            _hoveredResourceReachable = false;
+            _hoveredResourceDescriptor = default;
+            _hoveredResourceCoord = default;
+            _hoveredResourceApproach = default;
+            _hoveredResourcePathLength = 0;
+        }
+
+        private int ComputePayableSteps(System.Collections.Generic.IReadOnlyList<GridCoord> path)
+        {
+            // Build per-step costs (4-way)
+            _costBuffer.Clear();
+            for (int i = 1; i < path.Count; i++)
+            {
+                var to = path[i];
+                if (_provider.TryGet(to, out var td))
+                {
+                    _costBuffer.Add(td.GetMoveCost(false));
+                }
+                else
+                {
+                    _costBuffer.Add(int.MaxValue / 4);
+                }
+            }
+            int payable;
+            _hero.Movement.PreviewSequenceCost(_costBuffer, out payable);
+            return payable;
+        }
+
+        // --- Debug helpers ---
+        private void DebugLogTile(string label, GridCoord c)
+        {
+            if (_provider.TryGet(c, out var td))
+            {
+                Debug.Log($"[ClickToMove][{label}] {c} -> type={td.terrainType} passable={td.IsPassable} mask={td.enterMask}");
+            }
+            else
+            {
+                Debug.Log($"[ClickToMove][{label}] {c} -> no TileData");
+            }
+        }
+
+        private void DebugLogNeighbors(string label, GridCoord c)
+        {
+            var north = new GridCoord(c.X, c.Y + 1);
+            var east  = new GridCoord(c.X + 1, c.Y);
+            var south = new GridCoord(c.X, c.Y - 1);
+            var west  = new GridCoord(c.X - 1, c.Y);
+            DebugLogTile(label + ":N", north);
+            DebugLogTile(label + ":E", east);
+            DebugLogTile(label + ":S", south);
+            DebugLogTile(label + ":W", west);
+        }
+
+        private void DebugProbeLine(GridCoord start, GridCoord goal)
+        {
+            int sx = start.X, sy = start.Y;
+            int gx = goal.X, gy = goal.Y;
+            int dx = gx > sx ? 1 : gx < sx ? -1 : 0;
+            int dy = gy > sy ? 1 : gy < sy ? -1 : 0;
+
+            var cur = start;
+            // Move in X until aligned, then Y (4-way like our pathfinder config)
+            while (cur.X != gx)
+            {
+                var next = new GridCoord(cur.X + dx, cur.Y);
+                var enter = (dx > 0) ? EnterMask8.E : EnterMask8.W;
+                if (!_provider.TryGet(next, out var td) || !td.IsPassable || !td.CanEnterFrom(enter))
+                {
+                    Debug.Log($"[ClickToMove][Probe] Blocked at {next} passable={(td!=null && td.IsPassable)} mask={(td!=null ? td.enterMask.ToString() : "<null>")}, needed={enter}");
+                    return;
+                }
+                cur = next;
+            }
+            while (cur.Y != gy)
+            {
+                var next = new GridCoord(cur.X, cur.Y + dy);
+                var enter = (dy > 0) ? EnterMask8.N : EnterMask8.S;
+                if (!_provider.TryGet(next, out var td) || !td.IsPassable || !td.CanEnterFrom(enter))
+                {
+                    Debug.Log($"[ClickToMove][Probe] Blocked at {next} passable={(td!=null && td.IsPassable)} mask={(td!=null ? td.enterMask.ToString() : "<null>")}, needed={enter}");
+                    return;
+                }
+                cur = next;
+            }
+            Debug.Log("[ClickToMove][Probe] Cardinal line from start to goal has no immediate blockers. Path may be blocked by alternative route or overlay/ground mapping inconsistencies.");
+        }
+
+        private void BuildPathfinderIfNeeded(bool log)
+        {
+            var b = _provider.Bounds;
+            if (b.Width <= 0 || b.Height <= 0)
+            {
+                _pf = null;
+                return;
+            }
+            if (_pf != null && _pfW == b.Width && _pfH == b.Height) return;
+
+            var cfg = new AStarPathfinder.Config
+            {
+                AllowDiagonal = false,
+                DisallowCornerCutting = true,
+                HeuristicCardinalBase = 8,
+                HeuristicDiagonalBase = 11
+            };
+            var providerForPath = (ITileDataProvider)_blockedProvider ?? _provider;
+            _pf = new AStarPathfinder(providerForPath, b, cfg);
+            _pfW = b.Width; _pfH = b.Height;
+            if (log) Debug.Log($"[ClickToMove] Pathfinder built with bounds {b}.");
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,191 @@
+        }
+
+
+        private void TryCollectResource(ResourceNodeDescriptor descriptor)
+        {
+            if (!descriptor.IsValid)
+                return;
+
+            ClearResourceHintCache();
+
+            if (descriptor.Resource != null && descriptor.BaseYield != 0)
+            {
+                if (_resourceWallet != null)
+                {
+                    _resourceWallet.Add(descriptor.Resource.ResourceId, descriptor.BaseYield);
+                }
+                else if (_debugLogs)
+                {
+                    Debug.LogWarning("[ClickToMove] No resource wallet service assigned. Collection will not update totals.", this);
+                }
+            }
+            else if (descriptor.BaseYield != 0 && _resourceWallet == null && _debugLogs)
+            {
+                Debug.LogWarning("[ClickToMove] No resource wallet service assigned. Collection will not update totals.");
+            }
+
+            bool nodeFound = false;
+            if (!string.IsNullOrEmpty(descriptor.NodeId) && ResourceNodeAuthoring.TryGetNode(descriptor.NodeId, out var authoring))
+            {
+                nodeFound = true;
+                authoring.Collect();
+            }
+
+            if (nodeFound && descriptor.Resource != null)
+            {
+                var amountText = descriptor.BaseYield.ToString("+#;-#;0");
+                Debug.Log($"[ClickToMove] Collected resource '{descriptor.Resource.ResourceId}' ({amountText}).", this);
+            }
+
+            if (!nodeFound && _debugLogs)
+            {
+                Debug.LogWarning($"[ClickToMove] Resource node '{descriptor.NodeId}' not found for collection.", this);
+            }
+
+            _preview?.Clear();
+            _hasPreview = false;
+            _pendingResourceNodeId = null;
+            ResetHoveredResource();
+        }
+
+        private void ClearResourceHintCache()
+        {
+            _resourceHintCached = false;
+            _resourceHintHeroCoord = default;
+            _resourceHintNodeId = null;
+            _resourceHintReachable = false;
+            _resourceHintApproach = default;
+            _resourceHintPathLength = 0;
+        }
+
+        private void ResetHoveredResource()
+        {
+            _hoveredResourceAvailable = false;
+            _hoveredResourceReachable = false;
+            _hoveredResourceDescriptor = default;
+            _hoveredResourceCoord = default;
+            _hoveredResourceApproach = default;
+            _hoveredResourcePathLength = 0;
+        }
+
+        private int ComputePayableSteps(System.Collections.Generic.IReadOnlyList<GridCoord> path)
+        {
+            // Build per-step costs (4-way)
+            _costBuffer.Clear();
+            for (int i = 1; i < path.Count; i++)
+            {
+                var to = path[i];
+                if (_provider.TryGet(to, out var td))
+                {
+                    _costBuffer.Add(td.GetMoveCost(false));
+                }
+                else
+                {
+                    _costBuffer.Add(int.MaxValue / 4);
+                }
+            }
+            int payable;
+            _hero.Movement.PreviewSequenceCost(_costBuffer, out payable);
+            return payable;
+        }
+
+        // --- Debug helpers ---
+        private void DebugLogTile(string label, GridCoord c)
+        {
+            if (_provider.TryGet(c, out var td))
+            {
+                Debug.Log($"[ClickToMove][{label}] {c} -> type={td.terrainType} passable={td.IsPassable} mask={td.enterMask}");
+            }
+            else
+            {
+                Debug.Log($"[ClickToMove][{label}] {c} -> no TileData");
+            }
+        }
+
+        private void DebugLogNeighbors(string label, GridCoord c)
+        {
+            var north = new GridCoord(c.X, c.Y + 1);
+            var east  = new GridCoord(c.X + 1, c.Y);
+            var south = new GridCoord(c.X, c.Y - 1);
+            var west  = new GridCoord(c.X - 1, c.Y);
+            DebugLogTile(label + ":N", north);
+            DebugLogTile(label + ":E", east);
+            DebugLogTile(label + ":S", south);
+            DebugLogTile(label + ":W", west);
+        }
+
+        private void DebugProbeLine(GridCoord start, GridCoord goal)
+        {
+            int sx = start.X, sy = start.Y;
+            int gx = goal.X, gy = goal.Y;
+            int dx = gx > sx ? 1 : gx < sx ? -1 : 0;
+            int dy = gy > sy ? 1 : gy < sy ? -1 : 0;
+
+            var cur = start;
+            // Move in X until aligned, then Y (4-way like our pathfinder config)
+            while (cur.X != gx)
+            {
+                var next = new GridCoord(cur.X + dx, cur.Y);
+                var enter = (dx > 0) ? EnterMask8.E : EnterMask8.W;
+                if (!_provider.TryGet(next, out var td) || !td.IsPassable || !td.CanEnterFrom(enter))
+                {
+                    Debug.Log($"[ClickToMove][Probe] Blocked at {next} passable={(td!=null && td.IsPassable)} mask={(td!=null ? td.enterMask.ToString() : "<null>")}, needed={enter}");
+                    return;
+                }
+                cur = next;
+            }
+            while (cur.Y != gy)
+            {
+                var next = new GridCoord(cur.X, cur.Y + dy);
+                var enter = (dy > 0) ? EnterMask8.N : EnterMask8.S;
+                if (!_provider.TryGet(next, out var td) || !td.IsPassable || !td.CanEnterFrom(enter))
+                {
+                    Debug.Log($"[ClickToMove][Probe] Blocked at {next} passable={(td!=null && td.IsPassable)} mask={(td!=null ? td.enterMask.ToString() : "<null>")}, needed={enter}");
+                    return;
+                }
+                cur = next;
+            }
+            Debug.Log("[ClickToMove][Probe] Cardinal line from start to goal has no immediate blockers. Path may be blocked by alternative route or overlay/ground mapping inconsistencies.");
+        }
+
+        private void BuildPathfinderIfNeeded(bool log)
+        {
+            var b = _provider.Bounds;
+            if (b.Width <= 0 || b.Height <= 0)
+            {
+                _pf = null;
+                return;
+            }
+            if (_pf != null && _pfW == b.Width && _pfH == b.Height) return;
+
+            var cfg = new AStarPathfinder.Config
+            {
+                AllowDiagonal = false,
+                DisallowCornerCutting = true,
+                HeuristicCardinalBase = 8,
+                HeuristicDiagonalBase = 11
+            };
+            var providerForPath = (ITileDataProvider)_blockedProvider ?? _provider;
+            _pf = new AStarPathfinder(providerForPath, b, cfg);
+            _pfW = b.Width; _pfH = b.Height;
+            if (log) Debug.Log($"[ClickToMove] Pathfinder built with bounds {b}.");
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
