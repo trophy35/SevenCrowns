@@ -1255,6 +1255,10 @@
       <Project>{62690661-93DF-9120-040A-791C924BBD45}</Project>
       <Name>Unity.2D.Aseprite.Editor</Name>
     </ProjectReference>
+    <ProjectReference Include="SimpleTooltip.csproj">
+      <Project>{9E583D12-C73C-7ECD-45C3-959963921273}</Project>
+      <Name>SimpleTooltip</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.ScriptableBuildPipeline.Editor.csproj">
       <Project>{AD89084F-4101-2547-C996-0DAB0828077E}</Project>
       <Name>Unity.ScriptableBuildPipeline.Editor</Name>

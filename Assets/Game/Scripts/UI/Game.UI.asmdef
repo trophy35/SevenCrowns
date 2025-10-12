@@ -5,7 +5,9 @@
     "Unity.TextMeshPro",
     "Unity.Localization",
     "TankAndHealer.UltimateRadialMenu",
-    "Game.Map"
+    "Game.Map",
+    "SimpleTooltip",
+    "Unity.ResourceManager"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -17,4 +19,3 @@
   "versionDefines": [],
   "noEngineReferences": false
 }
-

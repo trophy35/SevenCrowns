@@ -12,7 +12,7 @@ namespace SevenCrowns.Map
     /// Uses Grid.WorldToCell (no physics) and a cached A* pathfinder.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class ClickToMoveController : MonoBehaviour, IWorldCursorHintSource
+    public sealed class ClickToMoveController : MonoBehaviour, IWorldCursorHintSource, IWorldTooltipHintSource
     {
         [Header("Wiring")]
         [SerializeField] private Camera _camera;
@@ -30,6 +30,9 @@ namespace SevenCrowns.Map
         [Header("Resources")]
         [SerializeField] private MonoBehaviour _resourceProviderBehaviour; // Optional; must implement IResourceNodeProvider
         [SerializeField] private MonoBehaviour _resourceWalletBehaviour;  // Optional; must implement IResourceWallet
+
+        [Header("Tooltip")]
+        [SerializeField, Min(0f)] private float _resourceTooltipDelay = 2f;
 
         private ISelectedHeroAgentProvider _selection;
         private IResourceNodeProvider _resourceProvider;
@@ -87,9 +90,19 @@ namespace SevenCrowns.Map
         private bool _resourceHintReachable;
         private GridCoord _resourceHintApproach;
         private int _resourceHintPathLength;
+        private ResourceTooltipState _resourceTooltipState;
+        private WorldTooltipHint _currentTooltipHint;
         public bool HoveringHero => _lastHoverHero;
         public bool MoveHint => _lastMoveHint;
         public bool CollectHint => _lastCollectHint;
+        public WorldTooltipHint CurrentTooltipHint => _currentTooltipHint;
+
+        public event Action<WorldTooltipHint> TooltipHintChanged;
+
+        private void OnDisable()
+        {
+            HideTooltipImmediate();
+        }
 
         private void Awake()
         {
@@ -97,6 +110,8 @@ namespace SevenCrowns.Map
             if (_camera == null) Debug.LogWarning("ClickToMoveController: No camera assigned and Camera.main was null.");
             if (_grid == null) Debug.LogError("ClickToMoveController requires a Grid reference.");
             if (_provider == null) Debug.LogError("ClickToMoveController requires a TilemapTileDataProvider.");
+
+            _resourceTooltipDelay = Mathf.Max(0f, _resourceTooltipDelay);
 
             MonoBehaviour[] behaviours = null;
 
@@ -272,6 +287,7 @@ namespace SevenCrowns.Map
             _isMoving = true;
             ClearResourceHintCache();
             ResetHoveredResource();
+            HideTooltipImmediate();
         }
 
         private void OnMovementStopped(StopReason reason)
@@ -279,6 +295,7 @@ namespace SevenCrowns.Map
             _isMoving = false;
             ClearResourceHintCache();
             ResetHoveredResource();
+            HideTooltipImmediate();
         }
 
         private void OnMovementPointsChanged(int current, int max)
@@ -305,6 +322,7 @@ namespace SevenCrowns.Map
             {
                 // Report no hints while over UI
                 NotifyCursorHints(false, false, false);
+                HideTooltipImmediate();
                 return;
             }
 
@@ -313,6 +331,7 @@ namespace SevenCrowns.Map
             var hasHoveredCoord = TryGetHoveredCoord(out var hoveredCoord, out var hoveredVisible);
             var collect = EvaluateCollectHint(hasHoveredCoord, hoveredCoord, hoveredVisible);
             var move = EvaluateMoveHint(hasHoveredCoord, hoveredCoord, hoveredVisible);
+            UpdateResourceTooltip(hasHoveredCoord, hoveredCoord);
             NotifyCursorHints(hover, move, collect);
 
             if (Input.GetMouseButtonDown(0))
@@ -584,12 +603,75 @@ namespace SevenCrowns.Map
             _pendingResourceNodeId = null;
             ClearResourceHintCache();
             ResetHoveredResource();
+            HideTooltipImmediate();
         }
 
         /// <summary>
         /// Compute and apply cursor hints based on current hover, movement, and resource states.
         /// Uses CursorManager with priorities so hero hover overrides collect and move hints.
         /// </summary>
+        private void UpdateResourceTooltip(bool hasGoal, GridCoord goal)
+        {
+            var state = EnsureTooltipState();
+            bool changed;
+            WorldTooltipHint hint;
+
+            if (_resourceProvider != null && hasGoal && _resourceProvider.TryGetByCoord(goal, out var descriptor) && descriptor.IsValid)
+            {
+                changed = state.Update(descriptor, Time.unscaledDeltaTime, out hint);
+            }
+            else
+            {
+                changed = state.Update(null, Time.unscaledDeltaTime, out hint);
+            }
+
+            if (changed)
+            {
+                PublishTooltipHint(hint);
+            }
+        }
+
+        private ResourceTooltipState EnsureTooltipState()
+        {
+            if (_resourceTooltipState == null)
+            {
+                _resourceTooltipState = new ResourceTooltipState(_resourceTooltipDelay);
+            }
+
+            return _resourceTooltipState;
+        }
+
+        private void PublishTooltipHint(WorldTooltipHint hint)
+        {
+            if (_currentTooltipHint.Equals(hint))
+                return;
+
+            _currentTooltipHint = hint;
+            TooltipHintChanged?.Invoke(_currentTooltipHint);
+        }
+
+        private void HideTooltipImmediate()
+        {
+            if (_resourceTooltipState == null)
+            {
+                if (_currentTooltipHint.HasTooltip)
+                {
+                    _currentTooltipHint = WorldTooltipHint.None;
+                    TooltipHintChanged?.Invoke(_currentTooltipHint);
+                }
+                return;
+            }
+
+            if (_resourceTooltipState.ForceHide(out var hint))
+            {
+                PublishTooltipHint(hint);
+            }
+            else if (_currentTooltipHint.HasTooltip)
+            {
+                PublishTooltipHint(WorldTooltipHint.None);
+            }
+        }
+
         private void NotifyCursorHints(bool hoverHero, bool moveHint, bool collectHint)
         {
             if (hoverHero == _lastHoverHero && moveHint == _lastMoveHint && collectHint == _lastCollectHint)

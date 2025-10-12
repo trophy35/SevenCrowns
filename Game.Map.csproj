@@ -66,6 +66,7 @@
     <Compile Include="Assets\Game\Scripts\Map\ISelectedHeroAgentProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroIdentity.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ITileDataProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\WorldTooltipHint.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\ResourceNodeService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\UiPointerUtility.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\ResourceDefinition.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\CameraClampUtility.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IWorldCursorHintSource.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\IWorldTooltipHintSource.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IHeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridOccupancyService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TileVisualsSet.cs" />
@@ -85,6 +87,7 @@
     <Compile Include="Assets\Game\Scripts\Map\TilemapTileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TileVisuals.cs" />
     <Compile Include="Assets\Game\Scripts\Map\PathPreviewRenderer.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\ResourceTooltipState.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarState.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarTilemapRenderer.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ResourceNodeAuthoring.cs" />
@@ -93,6 +96,7 @@
     <Compile Include="Assets\Game\Scripts\Map\BlockingOverlayTileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\HeroFogVisionDriver.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\AssemblyInfo.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\IResourceWallet.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\ResourceNodeDescriptor.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MapCameraController.cs" />
