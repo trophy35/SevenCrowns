@@ -15,6 +15,25 @@ namespace SevenCrowns.Systems
     public sealed class ResourceWalletService : MonoBehaviour, IResourceWallet
     {
         [Serializable]
+        private sealed class CollectSfxConfig
+        {
+            [Tooltip("Resource id (e.g., 'resource.wood').")]
+            public string resourceId;
+            [Tooltip("Addressables key of the AudioClip to play when collecting this resource.")]
+            public string clipKey;
+            [Range(0f, 1f)] public float volume = 1f;
+            [Min(0f)] public float warmupTimeout = 2f;
+        }
+
+        private sealed class SfxState
+        {
+            public string Key;
+            public float Volume;
+            public float WarmupTimeout;
+            public AudioClip Clip;
+            public Coroutine Warmup;
+        }
+        [Serializable]
         private struct StartingResource
         {
             public string resourceId;
@@ -34,11 +53,16 @@ namespace SevenCrowns.Systems
         [SerializeField] private float _goldSfxVolume = 1f;
         [SerializeField, Min(0f)] private float _goldSfxWarmupTimeout = 2f;
 
+        [Header("Audio Per Resource (Optional)")]
+        [SerializeField]
+        private List<CollectSfxConfig> _collectSfx = new();
+
         private readonly Dictionary<string, int> _amounts = new(StringComparer.Ordinal);
 
         private IUiAssetProvider _assetProvider;
-        private AudioClip _goldCollectClip;
-        private Coroutine _goldWarmupRoutine;
+        private AudioClip _goldCollectClip; // kept for backward compatibility
+        private Coroutine _goldWarmupRoutine; // kept for backward compatibility
+        private readonly Dictionary<string, SfxState> _sfxByResourceId = new(StringComparer.Ordinal);
 
         public event Action<ResourceChange> ResourceChanged;
 
@@ -47,26 +71,33 @@ namespace SevenCrowns.Systems
             _goldResourceId = NormalizeResourceId(_goldResourceId);
             EnsureAudioSource();
             ResolveAssetProvider();
+            RebuildSfxStates();
             InitializeFromStartingResources();
         }
 
         private void Start()
         {
-            WarmupGoldSfx();
+            WarmupAllSfx();
         }
 
         private void OnEnable()
         {
             ResolveAssetProvider();
-            WarmupGoldSfx();
+            WarmupAllSfx();
         }
 
         private void OnDisable()
         {
-            if (_goldWarmupRoutine != null)
+            if (_goldWarmupRoutine != null) { StopCoroutine(_goldWarmupRoutine); _goldWarmupRoutine = null; }
+            // Stop all active warmups
+            foreach (var kvp in _sfxByResourceId)
             {
-                StopCoroutine(_goldWarmupRoutine);
-                _goldWarmupRoutine = null;
+                var state = kvp.Value;
+                if (state != null && state.Warmup != null)
+                {
+                    StopCoroutine(state.Warmup);
+                    state.Warmup = null;
+                }
             }
         }
 
@@ -90,6 +121,7 @@ namespace SevenCrowns.Systems
             _goldResourceId = NormalizeResourceId(_goldResourceId);
             EnsureAudioSource();
             ResolveAssetProvider();
+            RebuildSfxStates();
         }
 #endif
 
@@ -114,7 +146,7 @@ namespace SevenCrowns.Systems
 
             if (amount > 0)
             {
-                TryPlayCollectSfx(key, amount);
+                TryPlayCollectSfxGeneric(key);
             }
 
             ResourceChanged?.Invoke(new ResourceChange(key, amount, newAmount));
@@ -251,6 +283,131 @@ namespace SevenCrowns.Systems
             {
                 _audioSource.PlayOneShot(_goldCollectClip, Mathf.Clamp01(_goldSfxVolume));
             }
+        }
+
+        private void RebuildSfxStates()
+        {
+            _sfxByResourceId.Clear();
+            if (_collectSfx != null)
+            {
+                for (int i = 0; i < _collectSfx.Count; i++)
+                {
+                    var cfg = _collectSfx[i];
+                    if (cfg == null) continue;
+                    var rid = NormalizeResourceId(cfg.resourceId);
+                    var key = string.IsNullOrWhiteSpace(cfg.clipKey) ? string.Empty : cfg.clipKey.Trim();
+                    if (string.IsNullOrEmpty(rid) || string.IsNullOrEmpty(key)) continue;
+
+                    _sfxByResourceId[rid] = new SfxState
+                    {
+                        Key = key,
+                        Volume = Mathf.Clamp01(cfg.volume),
+                        WarmupTimeout = Mathf.Max(0.1f, cfg.warmupTimeout),
+                        Clip = null,
+                        Warmup = null
+                    };
+                }
+            }
+
+            // Backward compatibility: synthesize a state for gold if configured and not already present
+            if (!string.IsNullOrEmpty(_goldCollectSfxKey))
+            {
+                var rid = NormalizeResourceId(_goldResourceId);
+                if (!string.IsNullOrEmpty(rid) && !_sfxByResourceId.ContainsKey(rid))
+                {
+                    _sfxByResourceId[rid] = new SfxState
+                    {
+                        Key = _goldCollectSfxKey,
+                        Volume = Mathf.Clamp01(_goldSfxVolume),
+                        WarmupTimeout = Mathf.Max(0.1f, _goldSfxWarmupTimeout),
+                        Clip = _goldCollectClip,
+                        Warmup = _goldWarmupRoutine
+                    };
+                }
+            }
+        }
+
+        private void WarmupAllSfx()
+        {
+            // Warmup old gold path
+            WarmupGoldSfx();
+            // Warmup any configured resources
+            foreach (var kvp in _sfxByResourceId)
+            {
+                var rid = kvp.Key;
+                var state = kvp.Value;
+                if (state == null || !isActiveAndEnabled)
+                    continue;
+                if (string.IsNullOrEmpty(state.Key))
+                    continue;
+                if (state.Clip != null || state.Warmup != null)
+                    continue;
+                state.Warmup = StartCoroutine(WarmupSfxRoutine(rid, state));
+            }
+        }
+
+        private System.Collections.IEnumerator WarmupSfxRoutine(string resourceId, SfxState state)
+        {
+            ResolveAssetProvider();
+            if (_assetProvider == null)
+            {
+                state.Warmup = null;
+                yield break;
+            }
+
+            float elapsed = 0f;
+            float timeout = Mathf.Max(0.1f, state.WarmupTimeout);
+            while (elapsed < timeout && state.Clip == null)
+            {
+                if (PreloadRegistry.TryGet<AudioClip>(state.Key, out var preloadClip) && preloadClip != null)
+                {
+                    state.Clip = preloadClip;
+                    state.Warmup = null;
+                    yield break;
+                }
+                if (_assetProvider.TryGetAudioClip(state.Key, out var providerClip) && providerClip != null)
+                {
+                    state.Clip = providerClip;
+                    state.Warmup = null;
+                    yield break;
+                }
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            state.Warmup = null;
+        }
+
+        private void TryPlayCollectSfxGeneric(string resourceId)
+        {
+            // Prefer configured per-resource mapping
+            if (_sfxByResourceId.TryGetValue(resourceId, out var state) && state != null)
+            {
+                EnsureAudioSource();
+                if (state.Clip == null)
+                {
+                    if (PreloadRegistry.TryGet<AudioClip>(state.Key, out var preloadClip) && preloadClip != null)
+                    {
+                        state.Clip = preloadClip;
+                    }
+                    else if (_assetProvider != null && _assetProvider.TryGetAudioClip(state.Key, out var providerClip) && providerClip != null)
+                    {
+                        state.Clip = providerClip;
+                    }
+                    else if (state.Warmup == null && isActiveAndEnabled)
+                    {
+                        state.Warmup = StartCoroutine(WarmupSfxRoutine(resourceId, state));
+                    }
+                }
+
+                if (state.Clip != null)
+                {
+                    _audioSource.PlayOneShot(state.Clip, Mathf.Clamp01(state.Volume));
+                }
+                return;
+            }
+
+            // Fallback to legacy gold behavior
+            TryPlayCollectSfx(resourceId, 1);
         }
 
         private void InitializeFromStartingResources()

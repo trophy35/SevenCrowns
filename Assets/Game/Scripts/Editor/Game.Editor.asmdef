@@ -2,9 +2,12 @@
   "name": "Game.Editor",
   "rootNamespace": "SevenCrowns.Editor",
   "references":  [
+
     "Unity.Addressables",
     "Unity.ResourceManager",
-    "Unity.Addressables.Editor"
+    "Unity.Addressables.Editor",
+    "Game.UI",
+    "Game.Map"
   ],
   "includePlatforms": [ "Editor" ],
   "excludePlatforms": [],

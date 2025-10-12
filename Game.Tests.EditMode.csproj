@@ -74,6 +74,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgent_OccupancyTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\WorldTimeCounterTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FogOfWarServiceTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceWalletService_WoodTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinder_OccupancyTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridBoundsTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceWalletServiceTests.cs" />

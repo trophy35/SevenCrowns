@@ -62,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Game\Scripts\Editor\SetupAddressablesEditor.cs" />
+    <Compile Include="Assets\Game\Scripts\Editor\ResourceNodeAuthoringGizmos.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Game\Scripts\Editor\Game.Editor.asmdef" />
@@ -1116,6 +1117,14 @@
     <ProjectReference Include="Unity.Addressables.Editor.csproj">
       <Project>{6471D92E-DAD6-1DEF-77BE-D467C8199729}</Project>
       <Name>Unity.Addressables.Editor</Name>
+    </ProjectReference>
+    <ProjectReference Include="Game.UI.csproj">
+      <Project>{9B567079-6673-7E94-D2E2-18E9B213FA56}</Project>
+      <Name>Game.UI</Name>
+    </ProjectReference>
+    <ProjectReference Include="Game.Map.csproj">
+      <Project>{D64E9FFC-206D-0D84-3990-398060D0EBC1}</Project>
+      <Name>Game.Map</Name>
     </ProjectReference>
     <ProjectReference Include="UnityEngine.TestRunner.csproj">
       <Project>{C0B8944B-381B-FDE0-EBE8-09C574FE1930}</Project>

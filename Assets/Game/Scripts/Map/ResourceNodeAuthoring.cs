@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using System.Collections.Generic;
 
@@ -616,17 +616,53 @@ namespace SevenCrowns.Map
 
 
 
-            if (_snapToGrid && _grid != null && _tileDataProvider != null)
+            if (_snapToGrid && _grid != null)
 
             {
 
-                var coord = _tileDataProvider.WorldToCoord(_grid, basePosition);
+                // Snap visual to nearest cell center at authored position.
+                var cell = _grid.WorldToCell(basePosition);
 
-                var snapped = _tileDataProvider.CoordToWorld(_grid, coord);
+                var snapped = _grid.GetCellCenterWorld(cell);
 
                 basePosition = new Vector3(snapped.x, snapped.y, basePosition.z);
 
-                _gridCoord = coord;
+                // If a provider is available, map to its local coord only when inside its baked bounds.
+                if (_tileDataProvider != null)
+                {
+#if UNITY_EDITOR
+                    var providerGrid = _tileDataProvider.GroundGrid;
+                    if (providerGrid != null && _grid != null && providerGrid != _grid)
+                    {
+                        Debug.LogWarning($"[ResourceNodeAuthoring] Node '{name}' Grid reference differs from provider's ground Grid. Assign the same Grid as the Tilemap to avoid mapping errors.", this);
+                    }
+#endif
+
+                    bool inBounds;
+
+                    var local = _tileDataProvider.WorldToCoordUnclamped(_grid, basePosition, out inBounds);
+
+                                        if (inBounds)
+                    {
+                        _gridCoord = local;
+                    }
+                    else
+                    {
+                        _gridCoord = null;
+#if UNITY_EDITOR
+                        Debug.LogWarning($"[ResourceNodeAuthoring] Node '{name}' is outside Tilemap provider bounds and will not be discoverable for hover/collect. Expand Tilemap or move the node inside.", this);
+#endif
+                    }
+
+                }
+
+                else
+
+                {
+
+                    _gridCoord = null;
+
+                }
 
             }
 
@@ -677,3 +713,9 @@ namespace SevenCrowns.Map
     }
 
 }
+
+
+
+// Editor diagnostic inserted: ensure Grid matches provider's GroundGrid
+
+

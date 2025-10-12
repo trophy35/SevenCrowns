@@ -17,12 +17,17 @@ namespace SevenCrowns.Map
         [SerializeField] private TilesetBinding _overlayBinding;
         [Tooltip("If true, overlay is ignored on impassable ground (e.g., water/mountain).")]
         [SerializeField] private bool _overlayRequiresGroundPassable = true;
+        [Header("Bounds")]
+        [Tooltip("Expands baked bounds around the painted ground area (in cells) without requiring tiles.")]
+        [Min(0)]
+        [SerializeField] private int _boundsPadding = 0;
 
         private GridBounds _bounds;
         private TileData[] _data;
         private int _w, _h, _ox, _oy;
 
         public GridBounds Bounds => _bounds;
+        public Grid GroundGrid => _groundTilemap != null ? _groundTilemap.layoutGrid : null;
 
         private void Awake()
         {
@@ -36,8 +41,18 @@ namespace SevenCrowns.Map
             if (_binding == null)
                 throw new InvalidOperationException("TilemapTileDataProvider requires a TilesetBinding.");
 
-            var origin = _groundTilemap.origin; // cell coordinates
+            var origin = _groundTilemap.origin; // cell coordinates from painted bounds
             var size = _groundTilemap.size;
+
+            // Expand bounds symmetrically if padding is configured
+            int pad = Mathf.Max(0, _boundsPadding);
+            if (pad > 0)
+            {
+                origin.x -= pad;
+                origin.y -= pad;
+                size.x += pad * 2;
+                size.y += pad * 2;
+            }
             _w = Mathf.Max(0, size.x);
             _h = Mathf.Max(0, size.y);
             _ox = origin.x;
@@ -82,6 +97,42 @@ namespace SevenCrowns.Map
             }
         }
 
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            // Keep bounds in sync in the Editor so authoring tools (e.g., ResourceNodeAuthoring.OnValidate)
+            // get up-to-date in-bounds checks even before a runtime Bake() happens.
+            try
+            {
+                if (_groundTilemap == null)
+                    return;
+
+                var origin = _groundTilemap.origin;
+                var size = _groundTilemap.size;
+
+                int pad = Mathf.Max(0, _boundsPadding);
+                if (pad > 0)
+                {
+                    origin.x -= pad;
+                    origin.y -= pad;
+                    size.x += pad * 2;
+                    size.y += pad * 2;
+                }
+
+                _w = Mathf.Max(0, size.x);
+                _h = Mathf.Max(0, size.y);
+                _ox = origin.x;
+                _oy = origin.y;
+                _bounds = new GridBounds(_w, _h);
+                // Do not allocate or fill _data here; full Bake() will do that at runtime.
+            }
+            catch
+            {
+                // Ignore transient editor errors (domain reloads, prefab stages, etc.).
+            }
+        }
+#endif
+
         public bool TryGet(GridCoord c, out TileData data)
         {
             if (c.X < 0 || c.Y < 0 || c.X >= _w || c.Y >= _h)
@@ -102,6 +153,19 @@ namespace SevenCrowns.Map
             int x = cell.x - _ox;
             int y = cell.y - _oy;
             return _bounds.Clamp(x, y);
+        }
+
+        /// <summary>
+        /// Convert a world position to the provider-local GridCoord without clamping to Bounds.
+        /// Also reports whether the resulting coordinate lies within Bounds.
+        /// </summary>
+        public GridCoord WorldToCoordUnclamped(Grid grid, Vector3 world, out bool inBounds)
+        {
+            var cell = grid.WorldToCell(world);
+            int x = cell.x - _ox;
+            int y = cell.y - _oy;
+            inBounds = _bounds.Contains(x, y);
+            return new GridCoord(x, y);
         }
 
         /// <summary>
