@@ -117,8 +117,8 @@
     <Compile Include="Library\PackageCache\com.unity.inputsystem@ea5ab5b33a26\InputSystem\Actions\Interactions\HoldInteraction.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@ea5ab5b33a26\InputSystem\Plugins\UI\NavigationModel.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@ea5ab5b33a26\InputSystem\Editor\BuildPipeline\LinkFileGenerator.cs" />
-    <Compile Include="Library\PackageCache\com.unity.inputsystem@ea5ab5b33a26\InputSystem\Controls\KeyControl.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@ea5ab5b33a26\InputSystem\Editor\Settings\EditorPlayerSettingHelpers.cs" />
+    <Compile Include="Library\PackageCache\com.unity.inputsystem@ea5ab5b33a26\InputSystem\Controls\KeyControl.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@ea5ab5b33a26\InputSystem\Events\ActionEvent.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@ea5ab5b33a26\InputSystem\Utilities\NameAndParameters.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@ea5ab5b33a26\InputSystem\Editor\UITKAssetEditor\Views\ControlSchemesView.cs" />

@@ -27,9 +27,10 @@ namespace SevenCrowns.Map
         [SerializeField] private MonoBehaviour _selectionBehaviour; // Optional; must implement ISelectedHeroAgentProvider
         [SerializeField] private LayerMask _heroLayer = 0;           // Set to your "Heroes" layer in Inspector
 
-        [Header("Resources")]
+        [Header("Resources & Mines")]
         [SerializeField] private MonoBehaviour _resourceProviderBehaviour; // Optional; must implement IResourceNodeProvider
         [SerializeField] private MonoBehaviour _resourceWalletBehaviour;  // Optional; must implement IResourceWallet
+        [SerializeField] private MonoBehaviour _mineProviderBehaviour;     // Optional; must implement IMineNodeProvider
 
         [Header("Tooltip")]
         [SerializeField, Min(0f)] private float _resourceTooltipDelay = 2f;
@@ -37,6 +38,7 @@ namespace SevenCrowns.Map
         private ISelectedHeroAgentProvider _selection;
         private IResourceNodeProvider _resourceProvider;
         private IResourceWallet _resourceWallet;
+        private SevenCrowns.Map.Mines.IMineNodeProvider _mineProvider;
         private string _currentHeroId;
 
         [Header("Movement")]
@@ -44,6 +46,18 @@ namespace SevenCrowns.Map
 
         [Header("Debug")]
         [SerializeField] private bool _debugLogs = false;
+        [Header("Discovery")]
+        [SerializeField, Tooltip("When enabled, periodically retries binding to providers (mines/resources) if they were not yet present at Awake/Start.")]
+        private bool _autoDiscoverProviders = true;
+        [SerializeField, Tooltip("Seconds between provider discovery attempts when unbound.")]
+        private float _providerDiscoverInterval = 0.5f;
+        private float _providerDiscoverTimer;
+        // Debug logging cache to reduce Player.log spam
+        private bool _hasLastLogHover;
+        private GridCoord _lastLogCoord;
+        private bool _lastLogVisible;
+        private bool _lastLogOverUI;
+        private bool _lastLogMineHere;
         [Header("Input")]
         [SerializeField] private bool _ignoreClicksOverUI = true;
         [Tooltip("When enabled, left-click previews a path and second click confirms movement. When disabled, no path preview is shown.")]
@@ -80,7 +94,14 @@ namespace SevenCrowns.Map
         private GridCoord _hoveredResourceApproach;
         private ResourceNodeDescriptor _hoveredResourceDescriptor;
         private int _hoveredResourcePathLength;
+        private bool _hoveredMineAvailable;
+        private bool _hoveredMineReachable;
+        private GridCoord _hoveredMineCoord;
+        private GridCoord _hoveredMineApproach;
+        private SevenCrowns.Map.Mines.MineNodeDescriptor _hoveredMineDescriptor;
+        private int _hoveredMinePathLength;
         private string _pendingResourceNodeId;
+        private string _pendingMineNodeId;
         private bool _hasCachedGoal;
         private GridCoord _cachedGoalCell;
         private bool _cachedMoveHint;
@@ -90,6 +111,12 @@ namespace SevenCrowns.Map
         private bool _resourceHintReachable;
         private GridCoord _resourceHintApproach;
         private int _resourceHintPathLength;
+        private bool _mineHintCached;
+        private GridCoord _mineHintHeroCoord;
+        private string _mineHintNodeId;
+        private bool _mineHintReachable;
+        private GridCoord _mineHintApproach;
+        private int _mineHintPathLength;
         private ResourceTooltipState _resourceTooltipState;
         private WorldTooltipHint _currentTooltipHint;
         public bool HoveringHero => _lastHoverHero;
@@ -152,6 +179,20 @@ namespace SevenCrowns.Map
                 for (int i = 0; i < behaviours.Length && _resourceProvider == null; i++)
                 {
                     if (behaviours[i] is IResourceNodeProvider provider) _resourceProvider = provider;
+                }
+            }
+
+            // Bind mine provider if supplied or discoverable
+            if (_mineProviderBehaviour != null && _mineProviderBehaviour is SevenCrowns.Map.Mines.IMineNodeProvider mineProvider)
+            {
+                _mineProvider = mineProvider;
+            }
+            else
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _mineProvider == null; i++)
+                {
+                    if (behaviours[i] is SevenCrowns.Map.Mines.IMineNodeProvider mp) _mineProvider = mp;
                 }
             }
 
@@ -317,6 +358,17 @@ namespace SevenCrowns.Map
         {
             if (_camera == null || _grid == null || _provider == null) return;
 
+            // Late discovery for providers that may spawn after Awake/Start (build order differences)
+            if (_autoDiscoverProviders)
+            {
+                _providerDiscoverTimer += Time.unscaledDeltaTime;
+                if (_providerDiscoverTimer >= Mathf.Max(0.1f, _providerDiscoverInterval))
+                {
+                    _providerDiscoverTimer = 0f;
+                    TryDiscoverProviders();
+                }
+            }
+
             // If configured, ignore world clicks when the pointer is over any UI element (robust raycast across input modules).
             if (_ignoreClicksOverUI && UiPointerUtility.IsPointerOverUI(Input.mousePosition))
             {
@@ -334,6 +386,22 @@ namespace SevenCrowns.Map
             UpdateResourceTooltip(hasHoveredCoord, hoveredCoord);
             NotifyCursorHints(hover, move, collect);
 
+            // Log hover diagnostics in development when enabled
+            if (_debugLogs && hasHoveredCoord)
+            {
+                bool overUI = _ignoreClicksOverUI && UiPointerUtility.IsPointerOverUI(Input.mousePosition);
+                bool mineHere = _mineProvider != null && _mineProvider.TryGetByCoord(hoveredCoord, out var _desc) && _desc.IsValid;
+                if (!_hasLastLogHover || !_lastLogCoord.Equals(hoveredCoord) || _lastLogVisible != hoveredVisible || _lastLogOverUI != overUI || _lastLogMineHere != mineHere)
+                {
+                    _hasLastLogHover = true;
+                    _lastLogCoord = hoveredCoord;
+                    _lastLogVisible = hoveredVisible;
+                    _lastLogOverUI = overUI;
+                    _lastLogMineHere = mineHere;
+                    Debug.Log($"[ClickToMove][Hover] coord={hoveredCoord} visible={hoveredVisible} overUI={overUI} mineHere={mineHere}");
+                }
+            }
+
             if (Input.GetMouseButtonDown(0))
             {
                 // Try selecting a hero first if a selection service is present
@@ -344,7 +412,22 @@ namespace SevenCrowns.Map
                 }
 
                 if (_hero == null || _isMoving) return;
-                if (!_moveModeEnabled) return; // Do not preview/move when move mode is disabled
+
+                // Allow immediate interaction (collect/claim) even when move mode is disabled
+                if (!_moveModeEnabled)
+                {
+                    if (_hoveredResourceAvailable && _hoveredResourceReachable && _hero.Agent.Position.Equals(_hoveredResourceApproach))
+                    {
+                        TryCollectResource(_hoveredResourceDescriptor);
+                        return;
+                    }
+                    if (_hoveredMineAvailable && _hoveredMineReachable && _hero.Agent.Position.Equals(_hoveredMineApproach))
+                    {
+                        TryClaimMine(_hoveredMineDescriptor);
+                        return;
+                    }
+                    return; // move/preview disabled otherwise
+                }
 
                 BuildPathfinderIfNeeded(log: _debugLogs);
                 if (_pf == null)
@@ -454,19 +537,14 @@ namespace SevenCrowns.Map
                     return true;
                 }
             }
-            if (_debugLogs) Debug.Log("[ClickToMove] No hero detected under cursor.");
+            //if (_debugLogs) Debug.Log("[ClickToMove] No hero detected under cursor.");
             return false;
         }
 
         private bool IsGoalVisible(GridCoord goal)
         {
             if (_fog == null) return true;
-            if (_fog.Bounds.IsEmpty)
-            {
-                if (_hero != null && _hero.Agent != null && goal.Equals(_hero.Agent.Position))
-                    return true;
-                return false;
-            }
+            if (_fog.Bounds.IsEmpty) return true; // Treat uninitialized/empty fog as fully visible
             return _fog.IsVisible(goal) || _fog.IsExplored(goal);
         }
 
@@ -480,8 +558,14 @@ namespace SevenCrowns.Map
             var start = _hero.Agent.Position;
 
             bool clickedResource = _hoveredResourceAvailable && rawGoal.Equals(_hoveredResourceCoord);
+            bool clickedMine = _hoveredMineAvailable && rawGoal.Equals(_hoveredMineCoord);
             bool resourceReachable = clickedResource && _hoveredResourceReachable;
-            var effectiveGoal = clickedResource ? _hoveredResourceApproach : rawGoal;
+            bool mineReachable = clickedMine && _hoveredMineReachable;
+            GridCoord effectiveGoal = rawGoal;
+            if (clickedMine)
+                effectiveGoal = _hoveredMineApproach;
+            else if (clickedResource)
+                effectiveGoal = _hoveredResourceApproach;
 
             if (_debugLogs)
             {
@@ -492,9 +576,9 @@ namespace SevenCrowns.Map
                 DebugLogNeighbors("GoalNbrs", effectiveGoal);
             }
 
-            if (clickedResource)
+            if (clickedResource || clickedMine)
             {
-                if (!resourceReachable)
+                if ((clickedResource && !resourceReachable) || (clickedMine && !mineReachable))
                 {
                     if (_debugLogs) Debug.Log("[ClickToMove] Resource goal is not currently reachable.");
                     return;
@@ -508,7 +592,8 @@ namespace SevenCrowns.Map
 
                 if (_hero != null && _hero.Agent != null && _hero.Agent.Position.Equals(effectiveGoal))
                 {
-                    TryCollectResource(_hoveredResourceDescriptor);
+                    if (clickedMine) TryClaimMine(_hoveredMineDescriptor);
+                    else TryCollectResource(_hoveredResourceDescriptor);
                     return;
                 }
             }
@@ -577,11 +662,35 @@ namespace SevenCrowns.Map
                 _pendingStart = start;
                 _hasPreview = true;
                 _pendingResourceNodeId = clickedResource ? _hoveredResourceDescriptor.NodeId : null;
+                _pendingMineNodeId = clickedMine ? _hoveredMineDescriptor.NodeId : null;
                 if (!string.IsNullOrEmpty(_currentHeroId))
                 {
                     _lastGoalByHeroId[_currentHeroId] = effectiveGoal;
                 }
                 if (_debugLogs) Debug.Log($"[ClickToMove] Preview shown. PayableSteps={payableSteps}");
+            }
+        }
+
+        private void TryDiscoverProviders()
+        {
+            MonoBehaviour[] behaviours = null;
+            if (_mineProvider == null)
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _mineProvider == null; i++)
+                {
+                    if (behaviours[i] is SevenCrowns.Map.Mines.IMineNodeProvider mp) _mineProvider = mp;
+                }
+                if (_debugLogs && _mineProvider != null) Debug.Log("[ClickToMove] Late-bound IMineNodeProvider.");
+            }
+            if (_resourceProvider == null)
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _resourceProvider == null; i++)
+                {
+                    if (behaviours[i] is IResourceNodeProvider rp) _resourceProvider = rp;
+                }
+                if (_debugLogs && _resourceProvider != null) Debug.Log("[ClickToMove] Late-bound IResourceNodeProvider.");
             }
         }
 
@@ -601,6 +710,7 @@ namespace SevenCrowns.Map
             _preview?.Clear();
             _hasPreview = false;
             _pendingResourceNodeId = null;
+            _pendingMineNodeId = null;
             ClearResourceHintCache();
             ResetHoveredResource();
             HideTooltipImmediate();
@@ -713,73 +823,161 @@ namespace SevenCrowns.Map
         /// </summary>
         private bool EvaluateCollectHint(bool hasGoal, GridCoord goal, bool goalVisible)
         {
-            if (_resourceProvider == null || !_moveModeEnabled || _hero == null || _hero.Agent == null || _isMoving)
+            if (_hero == null || _hero.Agent == null || _isMoving)
             {
                 ResetHoveredResource();
+                ResetHoveredMine();
                 return false;
             }
 
-            if (!hasGoal || !_resourceProvider.TryGetByCoord(goal, out var descriptor) || !descriptor.IsValid || !descriptor.GridCoord.HasValue)
+            bool anyHint = false;
+
+            // Resource hover
+            if (_resourceProvider != null && hasGoal && _resourceProvider.TryGetByCoord(goal, out var descriptor) && descriptor.IsValid && descriptor.GridCoord.HasValue)
             {
-                ResetHoveredResource();
-                return false;
-            }
+                var resourceCoord = descriptor.GridCoord.Value;
+                _hoveredResourceAvailable = true;
+                _hoveredResourceDescriptor = descriptor;
+                _hoveredResourceCoord = resourceCoord;
 
-            var resourceCoord = descriptor.GridCoord.Value;
-            _hoveredResourceAvailable = true;
-            _hoveredResourceDescriptor = descriptor;
-            _hoveredResourceCoord = resourceCoord;
+                var heroPosition = _hero.Agent.Position;
+                bool needsRecompute = !_resourceHintCached
+                                       || !string.Equals(_resourceHintNodeId, descriptor.NodeId, StringComparison.Ordinal)
+                                       || !_resourceHintHeroCoord.Equals(heroPosition);
 
-            var heroPosition = _hero.Agent.Position;
-            bool needsRecompute = !_resourceHintCached
-                                   || !string.Equals(_resourceHintNodeId, descriptor.NodeId, StringComparison.Ordinal)
-                                   || !_resourceHintHeroCoord.Equals(heroPosition);
-
-            if (needsRecompute)
-            {
-                if (TryResolveResourceApproach(resourceCoord, out var approach, out var pathLength))
+                if (needsRecompute)
                 {
-                    _hoveredResourceReachable = true;
-                    _hoveredResourceApproach = approach;
-                    _hoveredResourcePathLength = pathLength;
+                    if (TryResolveApproach(resourceCoord, out var approach, out var pathLength))
+                    {
+                        _hoveredResourceReachable = true;
+                        _hoveredResourceApproach = approach;
+                        _hoveredResourcePathLength = pathLength;
 
-                    _resourceHintReachable = true;
-                    _resourceHintApproach = approach;
-                    _resourceHintPathLength = pathLength;
+                        _resourceHintReachable = true;
+                        _resourceHintApproach = approach;
+                        _resourceHintPathLength = pathLength;
+                    }
+                    else
+                    {
+                        _hoveredResourceReachable = false;
+                        _hoveredResourceApproach = default;
+                        _hoveredResourcePathLength = 0;
+
+                        _resourceHintReachable = false;
+                        _resourceHintApproach = default;
+                        _resourceHintPathLength = 0;
+                    }
+
+                    _resourceHintCached = true;
+                    _resourceHintHeroCoord = heroPosition;
+                    _resourceHintNodeId = descriptor.NodeId;
                 }
                 else
                 {
-                    _hoveredResourceReachable = false;
-                    _hoveredResourceApproach = default;
-                    _hoveredResourcePathLength = 0;
-
-                    _resourceHintReachable = false;
-                    _resourceHintApproach = default;
-                    _resourceHintPathLength = 0;
+                    _hoveredResourceReachable = _resourceHintReachable;
+                    _hoveredResourceApproach = _resourceHintApproach;
+                    _hoveredResourcePathLength = _resourceHintPathLength;
                 }
-
-                _resourceHintCached = true;
-                _resourceHintHeroCoord = heroPosition;
-                _resourceHintNodeId = descriptor.NodeId;
+                if (_hoveredResourceReachable && (_hoveredResourceApproach.Equals(heroPosition) || IsGoalVisible(_hoveredResourceApproach)))
+                    anyHint = true;
             }
             else
             {
-                _hoveredResourceReachable = _resourceHintReachable;
-                _hoveredResourceApproach = _resourceHintApproach;
-                _hoveredResourcePathLength = _resourceHintPathLength;
+                ResetHoveredResource();
             }
 
-            if (!_hoveredResourceReachable)
+            // Mine hover
+            if (_mineProvider != null && hasGoal && _mineProvider.TryGetByCoord(goal, out var mineDesc) && mineDesc.IsValid && mineDesc.EntryCoord.HasValue && !mineDesc.IsOwned)
             {
-                return false;
-            }
+                var mineCoord = mineDesc.EntryCoord.Value;
+                _hoveredMineAvailable = true;
+                _hoveredMineDescriptor = mineDesc;
+                _hoveredMineCoord = mineCoord;
 
-            if (!_hoveredResourceApproach.Equals(heroPosition) && !IsGoalVisible(_hoveredResourceApproach))
+                var heroPos = _hero.Agent.Position;
+                bool needsRecompute = !_mineHintCached
+                                       || !string.Equals(_mineHintNodeId, mineDesc.NodeId, StringComparison.Ordinal)
+                                       || !_mineHintHeroCoord.Equals(heroPos);
+                if (needsRecompute)
+                {
+                    if (TryResolveApproach(mineCoord, out var approach, out var pathLength))
+                    {
+                        _hoveredMineReachable = true;
+                        _hoveredMineApproach = approach;
+                        _hoveredMinePathLength = pathLength;
+
+                        _mineHintReachable = true;
+                        _mineHintApproach = approach;
+                        _mineHintPathLength = pathLength;
+                        if (_debugLogs)
+                        {
+                            Debug.Log($"[ClickToMove][Mine] goal={goal} entry={mineCoord} reachable=true approach={approach} pathLen={pathLength}");
+                        }
+                    }
+                    else
+                    {
+                        _hoveredMineReachable = false;
+                        _hoveredMineApproach = default;
+                        _hoveredMinePathLength = 0;
+
+                        _mineHintReachable = false;
+                        _mineHintApproach = default;
+                        _mineHintPathLength = 0;
+                        if (_debugLogs)
+                        {
+                            Debug.Log($"[ClickToMove][Mine] goal={goal} entry={mineCoord} reachable=false");
+                        }
+                    }
+                    _mineHintCached = true;
+                    _mineHintHeroCoord = heroPos;
+                    _mineHintNodeId = mineDesc.NodeId;
+                }
+                else
+                {
+                    _hoveredMineReachable = _mineHintReachable;
+                    _hoveredMineApproach = _mineHintApproach;
+                    _hoveredMinePathLength = _mineHintPathLength;
+                }
+
+                if (_hoveredMineReachable && (_hoveredMineApproach.Equals(_hero.Agent.Position) || IsGoalVisible(_hoveredMineApproach)))
+                    anyHint = true;
+            }
+            else
             {
-                return false;
+                ResetHoveredMine();
+                if (_debugLogs && hasGoal)
+                {
+                    if (_mineProvider == null)
+                    {
+                        Debug.Log("[ClickToMove][Mine] No IMineNodeProvider bound.");
+                    }
+                    else
+                    {
+                        var nodes = _mineProvider.Nodes;
+                        int count = nodes != null ? nodes.Count : 0;
+                        string sample = string.Empty;
+                        if (count > 0)
+                        {
+                            int max = Mathf.Min(4, count);
+                            System.Text.StringBuilder sb = new System.Text.StringBuilder(128);
+                            for (int i = 0; i < max; i++)
+                            {
+                                var d = nodes[i];
+                                if (d.EntryCoord.HasValue)
+                                {
+                                    sb.Append(d.EntryCoord.Value.ToString());
+                                }
+                                else sb.Append("<null>");
+                                if (i < max - 1) sb.Append(", ");
+                            }
+                            sample = sb.ToString();
+                        }
+                        Debug.Log($"[ClickToMove][Mine] No mine at goal={goal}. Registered={count} entries. Sample=[{sample}]");
+                    }
+                }
             }
 
-            return true;
+            return anyHint;
         }
 
         private bool EvaluateMoveHint(bool hasGoal, GridCoord goal, bool goalVisible)
@@ -790,9 +988,15 @@ namespace SevenCrowns.Map
                 return false;
 
             bool targetingResource = _hoveredResourceReachable && goal.Equals(_hoveredResourceCoord);
+            bool targetingMine = _hoveredMineReachable && goal.Equals(_hoveredMineCoord);
             GridCoord effectiveGoal = goal;
             bool effectiveVisible = goalVisible;
-            if (targetingResource)
+            if (targetingMine)
+            {
+                effectiveGoal = _hoveredMineApproach;
+                effectiveVisible = IsGoalVisible(effectiveGoal);
+            }
+            else if (targetingResource)
             {
                 effectiveGoal = _hoveredResourceApproach;
                 effectiveVisible = IsGoalVisible(effectiveGoal);
@@ -827,7 +1031,7 @@ namespace SevenCrowns.Map
             return hint;
         }
 
-        private bool TryResolveResourceApproach(GridCoord resourceCoord, out GridCoord approach, out int pathLength)
+        private bool TryResolveApproach(GridCoord interactCoord, out GridCoord approach, out int pathLength)
         {
             approach = default;
             pathLength = 0;
@@ -847,7 +1051,7 @@ namespace SevenCrowns.Map
             for (int i = 0; i < s_CardinalDirections.Length; i++)
             {
                 var offset = s_CardinalDirections[i];
-                var candidate = new GridCoord(resourceCoord.X + offset.X, resourceCoord.Y + offset.Y);
+                var candidate = new GridCoord(interactCoord.X + offset.X, interactCoord.Y + offset.Y);
 
                 bool passable = _provider.TryGet(candidate, out var tile) && tile.IsPassable;
                 if (!passable && !candidate.Equals(start))
@@ -925,7 +1129,54 @@ namespace SevenCrowns.Map
             _preview?.Clear();
             _hasPreview = false;
             _pendingResourceNodeId = null;
+            _pendingMineNodeId = null;
             ResetHoveredResource();
+            ResetHoveredMine();
+        }
+
+        private void TryClaimMine(SevenCrowns.Map.Mines.MineNodeDescriptor descriptor)
+        {
+            if (!descriptor.IsValid || descriptor.IsOwned)
+                return;
+
+            ClearMineHintCache();
+
+            bool nodeFound = false;
+            if (!string.IsNullOrEmpty(descriptor.NodeId) && SevenCrowns.Map.Mines.MineAuthoring.TryGetNode(descriptor.NodeId, out var authoring))
+            {
+                nodeFound = true;
+                authoring.Claim();
+            }
+
+            if (!nodeFound && _debugLogs)
+            {
+                Debug.LogWarning($"[ClickToMove] Mine node '{descriptor.NodeId}' not found for claim.", this);
+            }
+
+            _preview?.Clear();
+            _hasPreview = false;
+            _pendingMineNodeId = null;
+            ResetHoveredMine();
+        }
+
+        private void ClearMineHintCache()
+        {
+            _mineHintCached = false;
+            _mineHintHeroCoord = default;
+            _mineHintNodeId = null;
+            _mineHintReachable = false;
+            _mineHintApproach = default;
+            _mineHintPathLength = 0;
+        }
+
+        private void ResetHoveredMine()
+        {
+            _hoveredMineAvailable = false;
+            _hoveredMineReachable = false;
+            _hoveredMineDescriptor = default;
+            _hoveredMineCoord = default;
+            _hoveredMineApproach = default;
+            _hoveredMinePathLength = 0;
         }
 
         private void ClearResourceHintCache()

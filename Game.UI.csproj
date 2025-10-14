@@ -68,6 +68,7 @@
     <Compile Include="Assets\Game\Scripts\UI\VersionLabel.cs" />
     <Compile Include="Assets\Game\Scripts\UI\HeroLevelView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldTimeHudView.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Mines\MineCaptureSfxListener.cs" />
     <Compile Include="Assets\Game\Scripts\UI\ResourceAmountHudView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorManager.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupButtonView.cs" />
