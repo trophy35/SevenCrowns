@@ -73,6 +73,7 @@
     <Compile Include="Assets\Game\Scripts\Systems\CurrentHeroService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\WorldTimeCounter.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\WorldTimeService.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\Mines\MineProductionService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\SceneTransitionFader.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\AddressablesLoadKeysTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Resources\ResourceWalletService.cs" />

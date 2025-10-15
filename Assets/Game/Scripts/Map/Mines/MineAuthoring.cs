@@ -38,6 +38,12 @@ namespace SevenCrowns.Map.Mines
         [SerializeField] private bool _logMissingService;
         [SerializeField] private bool _logRegistration;
 
+        [Header("Production")]
+        [Tooltip("Resource id produced daily by this mine (e.g., 'resource.gold').")]
+        [SerializeField] private string _resourceId = "resource.gold";
+        [Tooltip("Amount of the resource produced each in-game day.")]
+        [SerializeField, Min(0)] private int _dailyYield = 1;
+
         // SFX are handled by a UI listener (Game.UI) to avoid assembly cycles.
 
         private MineNodeService _service;
@@ -96,6 +102,7 @@ namespace SevenCrowns.Map.Mines
         {
             CacheAuthoredPosition();
             EnsureNodeId();
+            _resourceId = string.IsNullOrWhiteSpace(_resourceId) ? string.Empty : _resourceId.Trim();
             if (!Application.isPlaying)
             {
                 ResolveEntryCoord();
@@ -285,7 +292,14 @@ namespace SevenCrowns.Map.Mines
         private void RegisterNode()
         {
             if (_service == null || string.IsNullOrEmpty(_nodeId)) return;
-            var descriptor = new MineNodeDescriptor(_nodeId, transform.position, _entryCoord, _isOwned, _ownerId);
+            var descriptor = new MineNodeDescriptor(
+                _nodeId,
+                transform.position,
+                _entryCoord,
+                _isOwned,
+                _ownerId,
+                _resourceId,
+                Mathf.Max(0, _dailyYield));
             _service.RegisterOrUpdate(descriptor);
             _isRegistered = true;
             if (_logRegistration)
@@ -334,7 +348,14 @@ namespace SevenCrowns.Map.Mines
             Claimed?.Invoke(this);
             if (_service != null && !string.IsNullOrEmpty(_nodeId))
             {
-                var descriptor = new MineNodeDescriptor(_nodeId, transform.position, _entryCoord, _isOwned, _ownerId);
+                var descriptor = new MineNodeDescriptor(
+                    _nodeId,
+                    transform.position,
+                    _entryCoord,
+                    _isOwned,
+                    _ownerId,
+                    _resourceId,
+                    Mathf.Max(0, _dailyYield));
                 _service.RegisterOrUpdate(descriptor);
             }
         }
@@ -350,7 +371,14 @@ namespace SevenCrowns.Map.Mines
             Claimed?.Invoke(this);
             if (_service != null && !string.IsNullOrEmpty(_nodeId))
             {
-                var descriptor = new MineNodeDescriptor(_nodeId, transform.position, _entryCoord, _isOwned, _ownerId);
+                var descriptor = new MineNodeDescriptor(
+                    _nodeId,
+                    transform.position,
+                    _entryCoord,
+                    _isOwned,
+                    _ownerId,
+                    _resourceId,
+                    Mathf.Max(0, _dailyYield));
                 _service.RegisterOrUpdate(descriptor);
             }
         }
