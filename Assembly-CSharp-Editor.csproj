@@ -61,12 +61,21 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.39f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\ModernWater2D\Editor\Obstructor3DEditor.cs" />
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialMenuReadme.cs" />
+    <Compile Include="Assets\ModernWater2D\Editor\ObstructorTilemapEditor.cs" />
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialMenuInputManagerEditor.cs" />
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialMenuEditor.cs" />
+    <Compile Include="Assets\ModernWater2D\Editor\ReflectionsSystemEditor.cs" />
+    <Compile Include="Assets\ModernWater2D\Editor\ModernWater2DEditor.cs" />
+    <Compile Include="Assets\ModernWater2D\Editor\GUIStyleUtils.cs" />
+    <Compile Include="Assets\ModernWater2D\Editor\ReflectorEditor3D.cs" />
+    <Compile Include="Assets\ModernWater2D\Editor\ReflectorEditor.cs" />
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialMenuStyleEditor.cs" />
+    <Compile Include="Assets\ModernWater2D\Editor\ObstructorEditor.cs" />
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialMenuReadmeEditor.cs" />
     <Compile Include="Assets\Tank &amp; Healer Studio\Ultimate Radial Menu\Editor\UltimateRadialButtonInfoPropertyDrawer.cs" />
+    <Compile Include="Assets\ModernWater2D\Editor\ObstructorManagerEditor.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Library\PackageCache\com.unity.collab-proxy@ab839cc7d2ad\Lib\Editor\Localization\commontypes.ko.txt" />
