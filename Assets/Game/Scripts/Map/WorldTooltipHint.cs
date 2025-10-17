@@ -11,7 +11,8 @@ namespace SevenCrowns.Map
     {
         None = 0,
         Resource = 1,
-        Farm = 2
+        Farm = 2,
+        Mine = 3
     }
 
     /// <summary>
@@ -97,6 +98,44 @@ namespace SevenCrowns.Map
     }
 
     /// <summary>
+    /// Mine-specific tooltip content exposed to the UI layer.
+    /// </summary>
+    public readonly struct MineTooltipContent : IEquatable<MineTooltipContent>
+    {
+        public MineTooltipContent(Mines.MineNodeDescriptor descriptor, int dailyYield)
+        {
+            Descriptor = descriptor;
+            DailyYield = dailyYield;
+        }
+
+        public Mines.MineNodeDescriptor Descriptor { get; }
+        public int DailyYield { get; }
+
+        public bool Equals(MineTooltipContent other)
+        {
+            return Descriptor.Equals(other.Descriptor) && DailyYield == other.DailyYield;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is MineTooltipContent other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = Descriptor.GetHashCode();
+                hash = (hash * 397) ^ DailyYield;
+                return hash;
+            }
+        }
+
+        public static bool operator ==(MineTooltipContent left, MineTooltipContent right) => left.Equals(right);
+        public static bool operator !=(MineTooltipContent left, MineTooltipContent right) => !left.Equals(right);
+    }
+
+    /// <summary>
     /// Snapshot of a tooltip request emitted by the map layer.
     /// </summary>
     public readonly struct WorldTooltipHint : IEquatable<WorldTooltipHint>
@@ -108,6 +147,7 @@ namespace SevenCrowns.Map
             Kind = kind;
             Resource = resource;
             Farm = default;
+            Mine = default;
         }
 
         private WorldTooltipHint(WorldTooltipKind kind, FarmTooltipContent farm)
@@ -115,11 +155,21 @@ namespace SevenCrowns.Map
             Kind = kind;
             Resource = default;
             Farm = farm;
+            Mine = default;
+        }
+
+        private WorldTooltipHint(WorldTooltipKind kind, MineTooltipContent mine)
+        {
+            Kind = kind;
+            Resource = default;
+            Farm = default;
+            Mine = mine;
         }
 
         public WorldTooltipKind Kind { get; }
         public ResourceTooltipContent Resource { get; }
         public FarmTooltipContent Farm { get; }
+        public MineTooltipContent Mine { get; }
         public bool HasTooltip => Kind != WorldTooltipKind.None;
 
         public static WorldTooltipHint ForResource(ResourceTooltipContent content)
@@ -132,9 +182,14 @@ namespace SevenCrowns.Map
             return new WorldTooltipHint(WorldTooltipKind.Farm, content);
         }
 
+        public static WorldTooltipHint ForMine(MineTooltipContent content)
+        {
+            return new WorldTooltipHint(WorldTooltipKind.Mine, content);
+        }
+
         public bool Equals(WorldTooltipHint other)
         {
-            return Kind == other.Kind && Resource.Equals(other.Resource) && Farm.Equals(other.Farm);
+            return Kind == other.Kind && Resource.Equals(other.Resource) && Farm.Equals(other.Farm) && Mine.Equals(other.Mine);
         }
 
         public override bool Equals(object obj)
@@ -149,6 +204,7 @@ namespace SevenCrowns.Map
                 int hash = (int)Kind;
                 hash = (hash * 397) ^ Resource.GetHashCode();
                 hash = (hash * 397) ^ Farm.GetHashCode();
+                hash = (hash * 397) ^ Mine.GetHashCode();
                 return hash;
             }
         }

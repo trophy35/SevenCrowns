@@ -135,6 +135,7 @@ namespace SevenCrowns.Map
         private int _farmHintPathLength;
         private ResourceTooltipState _resourceTooltipState;
         private FarmTooltipState _farmTooltipState;
+        private MineTooltipState _mineTooltipState;
         private WorldTooltipHint _currentTooltipHint;
         public bool HoveringHero => _lastHoverHero;
         public bool MoveHint => _lastMoveHint;
@@ -797,6 +798,20 @@ namespace SevenCrowns.Map
                 }
             }
 
+            // Try mine tooltip next if none shown yet
+            if (!hint.HasTooltip)
+            {
+                var mineStateLocal = EnsureMineTooltipState();
+                if (_mineProvider != null && hasGoal && _mineProvider.TryGetByCoord(goal, out var mineDesc) && mineDesc.IsValid)
+                {
+                    changedAny = mineStateLocal.Update(mineDesc, Time.unscaledDeltaTime, out hint) || changedAny;
+                }
+                else
+                {
+                    changedAny = mineStateLocal.Update(null, Time.unscaledDeltaTime, out hint) || changedAny;
+                }
+            }
+
             if (!hint.HasTooltip)
             {
                 var state = EnsureResourceTooltipState();
@@ -835,6 +850,15 @@ namespace SevenCrowns.Map
             return _farmTooltipState;
         }
 
+        private MineTooltipState EnsureMineTooltipState()
+        {
+            if (_mineTooltipState == null)
+            {
+                _mineTooltipState = new MineTooltipState(_resourceTooltipDelay);
+            }
+            return _mineTooltipState;
+        }
+
         private void PublishTooltipHint(WorldTooltipHint hint)
         {
             if (_currentTooltipHint.Equals(hint))
@@ -846,7 +870,7 @@ namespace SevenCrowns.Map
 
         private void HideTooltipImmediate()
         {
-            if (_resourceTooltipState == null && _farmTooltipState == null)
+            if (_resourceTooltipState == null && _farmTooltipState == null && _mineTooltipState == null)
             {
                 if (_currentTooltipHint.HasTooltip)
                 {
@@ -867,6 +891,11 @@ namespace SevenCrowns.Map
             {
                 changed = true;
                 hint = h2;
+            }
+            if (_mineTooltipState != null && _mineTooltipState.ForceHide(out var h3))
+            {
+                changed = true;
+                hint = h3;
             }
 
             if (changed)

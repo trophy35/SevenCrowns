@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Globalization;
 using TMPro;
@@ -43,6 +43,11 @@ namespace SevenCrowns.UI.Tooltips
         {
             TableReference = "UI.Common",
             TableEntryReference = "Tooltip.FarmPopulation" // Expected: "{0} people/week"
+        };
+        [SerializeField] private LocalizedString _mineFormat = new LocalizedString
+        {
+            TableReference = "UI.Common",
+            TableEntryReference = "Tooltip.MineProduction" // Expected: "{0} / day" (amount already styled)
         };
 
         private IWorldTooltipHintSource _source;
@@ -153,6 +158,10 @@ namespace SevenCrowns.UI.Tooltips
             {
                 _applyRoutine = StartCoroutine(ApplyFarmHintRoutine(hint, _requestId));
             }
+            else if (hint.Kind == WorldTooltipKind.Mine)
+            {
+                _applyRoutine = StartCoroutine(ApplyMineHintRoutine(hint, _requestId));
+            }
         }
 
         private IEnumerator ApplyResourceHintRoutine(WorldTooltipHint hint, int requestId)
@@ -223,6 +232,31 @@ namespace SevenCrowns.UI.Tooltips
 
             _formatHandle = null;
             _farmFormat.Arguments = null;
+
+            ApplyTooltipText(body);
+        }
+
+        private IEnumerator ApplyMineHintRoutine(WorldTooltipHint hint, int requestId)
+        {
+            string amountRaw = FormatAmount(Mathf.Max(0, hint.Mine.DailyYield));
+            string amountText = string.Concat("<b><color=#", ColorUtility.ToHtmlStringRGB(_amountColor), ">", amountRaw, "</color></b>");
+
+            _mineFormat.Arguments = new object[] { amountText };
+            _formatHandle = _mineFormat.GetLocalizedStringAsync();
+            yield return _formatHandle.Value;
+
+            if (requestId != _requestId)
+            {
+                ReleaseHandles();
+                yield break;
+            }
+
+            string body = _formatHandle.Value.Status == AsyncOperationStatus.Succeeded
+                ? _formatHandle.Value.Result
+                : string.Concat(amountText, " / day");
+
+            _formatHandle = null;
+            _mineFormat.Arguments = null;
 
             ApplyTooltipText(body);
         }
@@ -308,3 +342,4 @@ namespace SevenCrowns.UI.Tooltips
         }
     }
 }
+
