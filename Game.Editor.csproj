@@ -66,6 +66,7 @@
     <Compile Include="Assets\Game\Scripts\Editor\SetupAddressablesEditor.cs" />
     <Compile Include="Assets\Game\Scripts\Editor\ResourceNodeAuthoringGizmos.cs" />
     <Compile Include="Assets\Game\Scripts\Editor\AddressablesBuildMenu.cs" />
+    <Compile Include="Assets\Game\Scripts\Editor\FarmAuthoringGizmos.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Game\Scripts\Editor\Game.Editor.asmdef" />

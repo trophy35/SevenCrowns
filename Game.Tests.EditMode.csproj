@@ -68,6 +68,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\ResourceAmountHudViewTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinderTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ResourceTooltipStateTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Farms\FarmNodeServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgentTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ClickToMoveControllerCursorHintsTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ClickToMoveControllerCollectTests.cs" />
@@ -81,7 +82,9 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Mines\MineNodeServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Mines\MineProductionServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\CameraClampUtilityTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FarmTooltipStateTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceNodeServiceTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Farms\FarmProductionServiceTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Game\Scripts\Tests\EditMode\Game.Tests.EditMode.asmdef" />

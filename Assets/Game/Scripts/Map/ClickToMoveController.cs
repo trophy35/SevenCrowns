@@ -27,10 +27,11 @@ namespace SevenCrowns.Map
         [SerializeField] private MonoBehaviour _selectionBehaviour; // Optional; must implement ISelectedHeroAgentProvider
         [SerializeField] private LayerMask _heroLayer = 0;           // Set to your "Heroes" layer in Inspector
 
-        [Header("Resources & Mines")]
+        [Header("Resources & Mines & Farms")]
         [SerializeField] private MonoBehaviour _resourceProviderBehaviour; // Optional; must implement IResourceNodeProvider
         [SerializeField] private MonoBehaviour _resourceWalletBehaviour;  // Optional; must implement IResourceWallet
         [SerializeField] private MonoBehaviour _mineProviderBehaviour;     // Optional; must implement IMineNodeProvider
+        [SerializeField] private MonoBehaviour _farmProviderBehaviour;     // Optional; must implement IFarmNodeProvider
 
         [Header("Tooltip")]
         [SerializeField, Min(0f)] private float _resourceTooltipDelay = 2f;
@@ -39,6 +40,7 @@ namespace SevenCrowns.Map
         private IResourceNodeProvider _resourceProvider;
         private IResourceWallet _resourceWallet;
         private SevenCrowns.Map.Mines.IMineNodeProvider _mineProvider;
+        private SevenCrowns.Map.Farms.IFarmNodeProvider _farmProvider;
         private string _currentHeroId;
 
         [Header("Movement")]
@@ -58,6 +60,7 @@ namespace SevenCrowns.Map
         private bool _lastLogVisible;
         private bool _lastLogOverUI;
         private bool _lastLogMineHere;
+        private bool _lastLogFarmHere;
         [Header("Input")]
         [SerializeField] private bool _ignoreClicksOverUI = true;
         [Tooltip("When enabled, left-click previews a path and second click confirms movement. When disabled, no path preview is shown.")]
@@ -100,8 +103,15 @@ namespace SevenCrowns.Map
         private GridCoord _hoveredMineApproach;
         private SevenCrowns.Map.Mines.MineNodeDescriptor _hoveredMineDescriptor;
         private int _hoveredMinePathLength;
+        private bool _hoveredFarmAvailable;
+        private bool _hoveredFarmReachable;
+        private GridCoord _hoveredFarmCoord;
+        private GridCoord _hoveredFarmApproach;
+        private SevenCrowns.Map.Farms.FarmNodeDescriptor _hoveredFarmDescriptor;
+        private int _hoveredFarmPathLength;
         private string _pendingResourceNodeId;
         private string _pendingMineNodeId;
+        private string _pendingFarmNodeId;
         private bool _hasCachedGoal;
         private GridCoord _cachedGoalCell;
         private bool _cachedMoveHint;
@@ -117,7 +127,14 @@ namespace SevenCrowns.Map
         private bool _mineHintReachable;
         private GridCoord _mineHintApproach;
         private int _mineHintPathLength;
+        private bool _farmHintCached;
+        private GridCoord _farmHintHeroCoord;
+        private string _farmHintNodeId;
+        private bool _farmHintReachable;
+        private GridCoord _farmHintApproach;
+        private int _farmHintPathLength;
         private ResourceTooltipState _resourceTooltipState;
+        private FarmTooltipState _farmTooltipState;
         private WorldTooltipHint _currentTooltipHint;
         public bool HoveringHero => _lastHoverHero;
         public bool MoveHint => _lastMoveHint;
@@ -193,6 +210,20 @@ namespace SevenCrowns.Map
                 for (int i = 0; i < behaviours.Length && _mineProvider == null; i++)
                 {
                     if (behaviours[i] is SevenCrowns.Map.Mines.IMineNodeProvider mp) _mineProvider = mp;
+                }
+            }
+
+            // Bind farm provider if supplied or discoverable
+            if (_farmProviderBehaviour != null && _farmProviderBehaviour is SevenCrowns.Map.Farms.IFarmNodeProvider farmProvider)
+            {
+                _farmProvider = farmProvider;
+            }
+            else
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _farmProvider == null; i++)
+                {
+                    if (behaviours[i] is SevenCrowns.Map.Farms.IFarmNodeProvider fp) _farmProvider = fp;
                 }
             }
 
@@ -383,7 +414,7 @@ namespace SevenCrowns.Map
             var hasHoveredCoord = TryGetHoveredCoord(out var hoveredCoord, out var hoveredVisible);
             var collect = EvaluateCollectHint(hasHoveredCoord, hoveredCoord, hoveredVisible);
             var move = EvaluateMoveHint(hasHoveredCoord, hoveredCoord, hoveredVisible);
-            UpdateResourceTooltip(hasHoveredCoord, hoveredCoord);
+            UpdateTooltip(hasHoveredCoord, hoveredCoord);
             NotifyCursorHints(hover, move, collect);
 
             // Log hover diagnostics in development when enabled
@@ -424,6 +455,11 @@ namespace SevenCrowns.Map
                     if (_hoveredMineAvailable && _hoveredMineReachable && _hero.Agent.Position.Equals(_hoveredMineApproach))
                     {
                         TryClaimMine(_hoveredMineDescriptor);
+                        return;
+                    }
+                    if (_hoveredFarmAvailable && _hoveredFarmReachable && _hero.Agent.Position.Equals(_hoveredFarmApproach))
+                    {
+                        TryClaimFarm(_hoveredFarmDescriptor);
                         return;
                     }
                     return; // move/preview disabled otherwise
@@ -576,9 +612,18 @@ namespace SevenCrowns.Map
                 DebugLogNeighbors("GoalNbrs", effectiveGoal);
             }
 
-            if (clickedResource || clickedMine)
+            bool clickedFarm = _hoveredFarmAvailable && rawGoal.Equals(_hoveredFarmCoord);
+            bool farmReachable = clickedFarm && _hoveredFarmReachable;
+            if (clickedFarm)
+                effectiveGoal = _hoveredFarmApproach;
+            else if (clickedMine)
+                effectiveGoal = _hoveredMineApproach;
+            else if (clickedResource)
+                effectiveGoal = _hoveredResourceApproach;
+
+            if (clickedResource || clickedMine || clickedFarm)
             {
-                if ((clickedResource && !resourceReachable) || (clickedMine && !mineReachable))
+                if ((clickedResource && !resourceReachable) || (clickedMine && !mineReachable) || (clickedFarm && !farmReachable))
                 {
                     if (_debugLogs) Debug.Log("[ClickToMove] Resource goal is not currently reachable.");
                     return;
@@ -593,6 +638,7 @@ namespace SevenCrowns.Map
                 if (_hero != null && _hero.Agent != null && _hero.Agent.Position.Equals(effectiveGoal))
                 {
                     if (clickedMine) TryClaimMine(_hoveredMineDescriptor);
+                    else if (clickedFarm) TryClaimFarm(_hoveredFarmDescriptor);
                     else TryCollectResource(_hoveredResourceDescriptor);
                     return;
                 }
@@ -663,6 +709,8 @@ namespace SevenCrowns.Map
                 _hasPreview = true;
                 _pendingResourceNodeId = clickedResource ? _hoveredResourceDescriptor.NodeId : null;
                 _pendingMineNodeId = clickedMine ? _hoveredMineDescriptor.NodeId : null;
+                _pendingFarmNodeId = clickedFarm ? _hoveredFarmDescriptor.NodeId : null;
+                _pendingFarmNodeId = clickedFarm ? _hoveredFarmDescriptor.NodeId : null;
                 if (!string.IsNullOrEmpty(_currentHeroId))
                 {
                     _lastGoalByHeroId[_currentHeroId] = effectiveGoal;
@@ -682,6 +730,15 @@ namespace SevenCrowns.Map
                     if (behaviours[i] is SevenCrowns.Map.Mines.IMineNodeProvider mp) _mineProvider = mp;
                 }
                 if (_debugLogs && _mineProvider != null) Debug.Log("[ClickToMove] Late-bound IMineNodeProvider.");
+            }
+            if (_farmProvider == null)
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _farmProvider == null; i++)
+                {
+                    if (behaviours[i] is SevenCrowns.Map.Farms.IFarmNodeProvider fp) _farmProvider = fp;
+                }
+                if (_debugLogs && _farmProvider != null) Debug.Log("[ClickToMove] Late-bound IFarmNodeProvider.");
             }
             if (_resourceProvider == null)
             {
@@ -720,28 +777,46 @@ namespace SevenCrowns.Map
         /// Compute and apply cursor hints based on current hover, movement, and resource states.
         /// Uses CursorManager with priorities so hero hover overrides collect and move hints.
         /// </summary>
-        private void UpdateResourceTooltip(bool hasGoal, GridCoord goal)
+        private void UpdateTooltip(bool hasGoal, GridCoord goal)
         {
-            var state = EnsureTooltipState();
-            bool changed;
-            WorldTooltipHint hint;
+            bool changedAny = false;
+            WorldTooltipHint hint = WorldTooltipHint.None;
 
-            if (_resourceProvider != null && hasGoal && _resourceProvider.TryGetByCoord(goal, out var descriptor) && descriptor.IsValid)
+            // Prefer farm tooltip over resource when both exist
+            var farmState = EnsureFarmTooltipState();
+            if (_farmProvider != null && hasGoal && _farmProvider.TryGetByCoord(goal, out var farmDesc) && farmDesc.IsValid)
             {
-                changed = state.Update(descriptor, Time.unscaledDeltaTime, out hint);
+                changedAny = farmState.Update(farmDesc, Time.unscaledDeltaTime, out hint) || changedAny;
             }
             else
             {
-                changed = state.Update(null, Time.unscaledDeltaTime, out hint);
+                changedAny = farmState.Update(null, Time.unscaledDeltaTime, out var farmNone) || changedAny;
+                if (hint.HasTooltip && farmNone.HasTooltip == false)
+                {
+                    // keep existing hint if still valid
+                }
             }
 
-            if (changed)
+            if (!hint.HasTooltip)
+            {
+                var state = EnsureResourceTooltipState();
+                if (_resourceProvider != null && hasGoal && _resourceProvider.TryGetByCoord(goal, out var descriptor) && descriptor.IsValid)
+                {
+                    changedAny = state.Update(descriptor, Time.unscaledDeltaTime, out hint) || changedAny;
+                }
+                else
+                {
+                    changedAny = state.Update(null, Time.unscaledDeltaTime, out hint) || changedAny;
+                }
+            }
+
+            if (changedAny)
             {
                 PublishTooltipHint(hint);
             }
         }
 
-        private ResourceTooltipState EnsureTooltipState()
+        private ResourceTooltipState EnsureResourceTooltipState()
         {
             if (_resourceTooltipState == null)
             {
@@ -749,6 +824,15 @@ namespace SevenCrowns.Map
             }
 
             return _resourceTooltipState;
+        }
+
+        private FarmTooltipState EnsureFarmTooltipState()
+        {
+            if (_farmTooltipState == null)
+            {
+                _farmTooltipState = new FarmTooltipState(_resourceTooltipDelay);
+            }
+            return _farmTooltipState;
         }
 
         private void PublishTooltipHint(WorldTooltipHint hint)
@@ -762,7 +846,7 @@ namespace SevenCrowns.Map
 
         private void HideTooltipImmediate()
         {
-            if (_resourceTooltipState == null)
+            if (_resourceTooltipState == null && _farmTooltipState == null)
             {
                 if (_currentTooltipHint.HasTooltip)
                 {
@@ -772,7 +856,20 @@ namespace SevenCrowns.Map
                 return;
             }
 
-            if (_resourceTooltipState.ForceHide(out var hint))
+            bool changed = false;
+            WorldTooltipHint hint = WorldTooltipHint.None;
+            if (_resourceTooltipState != null && _resourceTooltipState.ForceHide(out var h1))
+            {
+                changed = true;
+                hint = h1;
+            }
+            if (_farmTooltipState != null && _farmTooltipState.ForceHide(out var h2))
+            {
+                changed = true;
+                hint = h2;
+            }
+
+            if (changed)
             {
                 PublishTooltipHint(hint);
             }
@@ -977,6 +1074,59 @@ namespace SevenCrowns.Map
                 }
             }
 
+            // Farm hover
+            if (_farmProvider != null && hasGoal && _farmProvider.TryGetByCoord(goal, out var farmDesc) && farmDesc.IsValid && farmDesc.EntryCoord.HasValue && !farmDesc.IsOwned)
+            {
+                var farmCoord = farmDesc.EntryCoord.Value;
+                _hoveredFarmAvailable = true;
+                _hoveredFarmDescriptor = farmDesc;
+                _hoveredFarmCoord = farmCoord;
+
+                var heroPos = _hero.Agent.Position;
+                bool needsRecompute = !_farmHintCached
+                                       || !string.Equals(_farmHintNodeId, farmDesc.NodeId, StringComparison.Ordinal)
+                                       || !_farmHintHeroCoord.Equals(heroPos);
+                if (needsRecompute)
+                {
+                    if (TryResolveApproach(farmCoord, out var approach, out var pathLength))
+                    {
+                        _hoveredFarmReachable = true;
+                        _hoveredFarmApproach = approach;
+                        _hoveredFarmPathLength = pathLength;
+
+                        _farmHintReachable = true;
+                        _farmHintApproach = approach;
+                        _farmHintPathLength = pathLength;
+                    }
+                    else
+                    {
+                        _hoveredFarmReachable = false;
+                        _hoveredFarmApproach = default;
+                        _hoveredFarmPathLength = 0;
+
+                        _farmHintReachable = false;
+                        _farmHintApproach = default;
+                        _farmHintPathLength = 0;
+                    }
+                    _farmHintCached = true;
+                    _farmHintHeroCoord = heroPos;
+                    _farmHintNodeId = farmDesc.NodeId;
+                }
+                else
+                {
+                    _hoveredFarmReachable = _farmHintReachable;
+                    _hoveredFarmApproach = _farmHintApproach;
+                    _hoveredFarmPathLength = _farmHintPathLength;
+                }
+
+                if (_hoveredFarmReachable && (_hoveredFarmApproach.Equals(_hero.Agent.Position) || IsGoalVisible(_hoveredFarmApproach)))
+                    anyHint = true;
+            }
+            else
+            {
+                ResetHoveredFarm();
+            }
+
             return anyHint;
         }
 
@@ -1130,8 +1280,10 @@ namespace SevenCrowns.Map
             _hasPreview = false;
             _pendingResourceNodeId = null;
             _pendingMineNodeId = null;
+            _pendingFarmNodeId = null;
             ResetHoveredResource();
             ResetHoveredMine();
+            ResetHoveredFarm();
         }
 
         private void TryClaimMine(SevenCrowns.Map.Mines.MineNodeDescriptor descriptor)
@@ -1159,6 +1311,31 @@ namespace SevenCrowns.Map
             ResetHoveredMine();
         }
 
+        private void TryClaimFarm(SevenCrowns.Map.Farms.FarmNodeDescriptor descriptor)
+        {
+            if (!descriptor.IsValid || descriptor.IsOwned)
+                return;
+
+            ClearFarmHintCache();
+
+            bool nodeFound = false;
+            if (!string.IsNullOrEmpty(descriptor.NodeId) && SevenCrowns.Map.Farms.FarmAuthoring.TryGetNode(descriptor.NodeId, out var authoring))
+            {
+                nodeFound = true;
+                authoring.Claim();
+            }
+
+            if (!nodeFound && _debugLogs)
+            {
+                Debug.LogWarning($"[ClickToMove] Farm node '{descriptor.NodeId}' not found for claim.");
+            }
+
+            _preview?.Clear();
+            _hasPreview = false;
+            _pendingFarmNodeId = null;
+            ResetHoveredFarm();
+        }
+
         private void ClearMineHintCache()
         {
             _mineHintCached = false;
@@ -1169,6 +1346,16 @@ namespace SevenCrowns.Map
             _mineHintPathLength = 0;
         }
 
+        private void ClearFarmHintCache()
+        {
+            _farmHintCached = false;
+            _farmHintHeroCoord = default;
+            _farmHintNodeId = null;
+            _farmHintReachable = false;
+            _farmHintApproach = default;
+            _farmHintPathLength = 0;
+        }
+
         private void ResetHoveredMine()
         {
             _hoveredMineAvailable = false;
@@ -1177,6 +1364,16 @@ namespace SevenCrowns.Map
             _hoveredMineCoord = default;
             _hoveredMineApproach = default;
             _hoveredMinePathLength = 0;
+        }
+
+        private void ResetHoveredFarm()
+        {
+            _hoveredFarmAvailable = false;
+            _hoveredFarmReachable = false;
+            _hoveredFarmDescriptor = default;
+            _hoveredFarmCoord = default;
+            _hoveredFarmApproach = default;
+            _hoveredFarmPathLength = 0;
         }
 
         private void ClearResourceHintCache()

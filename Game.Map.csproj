@@ -61,15 +61,20 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.39f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Game\Scripts\Map\Farms\FarmAuthoring.cs" />
     <Compile Include="Assets\Game\Scripts\Map\TilesetBinding.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Farms\FarmNodeDescriptor.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Authoring\TerrainTile.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ISelectedHeroAgentProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroIdentity.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Farms\FarmNodeService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ITileDataProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\FarmTooltipState.cs" />
     <Compile Include="Assets\Game\Scripts\Map\WorldTooltipHint.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\ResourceNodeService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\UiPointerUtility.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\ResourceDefinition.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Farms\IFarmNodeProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IMapMovementService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\IResourceNodeProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroAgentComponent.cs" />

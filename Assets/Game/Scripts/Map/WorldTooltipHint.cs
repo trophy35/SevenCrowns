@@ -10,7 +10,8 @@ namespace SevenCrowns.Map
     public enum WorldTooltipKind
     {
         None = 0,
-        Resource = 1
+        Resource = 1,
+        Farm = 2
     }
 
     /// <summary>
@@ -58,6 +59,44 @@ namespace SevenCrowns.Map
     }
 
     /// <summary>
+    /// Farm-specific tooltip content exposed to the UI layer.
+    /// </summary>
+    public readonly struct FarmTooltipContent : IEquatable<FarmTooltipContent>
+    {
+        public FarmTooltipContent(Farms.FarmNodeDescriptor descriptor, int weeklyPopulation)
+        {
+            Descriptor = descriptor;
+            WeeklyPopulation = weeklyPopulation;
+        }
+
+        public Farms.FarmNodeDescriptor Descriptor { get; }
+        public int WeeklyPopulation { get; }
+
+        public bool Equals(FarmTooltipContent other)
+        {
+            return Descriptor.Equals(other.Descriptor) && WeeklyPopulation == other.WeeklyPopulation;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is FarmTooltipContent other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = Descriptor.GetHashCode();
+                hash = (hash * 397) ^ WeeklyPopulation;
+                return hash;
+            }
+        }
+
+        public static bool operator ==(FarmTooltipContent left, FarmTooltipContent right) => left.Equals(right);
+        public static bool operator !=(FarmTooltipContent left, FarmTooltipContent right) => !left.Equals(right);
+    }
+
+    /// <summary>
     /// Snapshot of a tooltip request emitted by the map layer.
     /// </summary>
     public readonly struct WorldTooltipHint : IEquatable<WorldTooltipHint>
@@ -68,10 +107,19 @@ namespace SevenCrowns.Map
         {
             Kind = kind;
             Resource = resource;
+            Farm = default;
+        }
+
+        private WorldTooltipHint(WorldTooltipKind kind, FarmTooltipContent farm)
+        {
+            Kind = kind;
+            Resource = default;
+            Farm = farm;
         }
 
         public WorldTooltipKind Kind { get; }
         public ResourceTooltipContent Resource { get; }
+        public FarmTooltipContent Farm { get; }
         public bool HasTooltip => Kind != WorldTooltipKind.None;
 
         public static WorldTooltipHint ForResource(ResourceTooltipContent content)
@@ -79,9 +127,14 @@ namespace SevenCrowns.Map
             return new WorldTooltipHint(WorldTooltipKind.Resource, content);
         }
 
+        public static WorldTooltipHint ForFarm(FarmTooltipContent content)
+        {
+            return new WorldTooltipHint(WorldTooltipKind.Farm, content);
+        }
+
         public bool Equals(WorldTooltipHint other)
         {
-            return Kind == other.Kind && Resource.Equals(other.Resource);
+            return Kind == other.Kind && Resource.Equals(other.Resource) && Farm.Equals(other.Farm);
         }
 
         public override bool Equals(object obj)
@@ -95,6 +148,7 @@ namespace SevenCrowns.Map
             {
                 int hash = (int)Kind;
                 hash = (hash * 397) ^ Resource.GetHashCode();
+                hash = (hash * 397) ^ Farm.GetHashCode();
                 return hash;
             }
         }

@@ -69,7 +69,9 @@
     <Compile Include="Assets\Game\Scripts\Systems\SceneFlowConfig.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\WorldMapTurnController.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\IRuntimeWeightedTask.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\Farms\FarmProductionService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\BootLoaderController.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\Population\PopulationService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\CurrentHeroService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\WorldTimeCounter.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\WorldTimeService.cs" />

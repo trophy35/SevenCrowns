@@ -39,6 +39,11 @@ namespace SevenCrowns.UI.Tooltips
             TableReference = "UI.Common",
             TableEntryReference = "Tooltip.ResourceSimple" // Expected format: "{0} {1}"
         };
+        [SerializeField] private LocalizedString _farmFormat = new LocalizedString
+        {
+            TableReference = "UI.Common",
+            TableEntryReference = "Tooltip.FarmPopulation" // Expected: "{0} people/week"
+        };
 
         private IWorldTooltipHintSource _source;
         private float _discoverTimer;
@@ -140,7 +145,14 @@ namespace SevenCrowns.UI.Tooltips
                 return;
 
             _requestId++;
-            _applyRoutine = StartCoroutine(ApplyResourceHintRoutine(hint, _requestId));
+            if (hint.Kind == WorldTooltipKind.Resource)
+            {
+                _applyRoutine = StartCoroutine(ApplyResourceHintRoutine(hint, _requestId));
+            }
+            else if (hint.Kind == WorldTooltipKind.Farm)
+            {
+                _applyRoutine = StartCoroutine(ApplyFarmHintRoutine(hint, _requestId));
+            }
         }
 
         private IEnumerator ApplyResourceHintRoutine(WorldTooltipHint hint, int requestId)
@@ -186,6 +198,31 @@ namespace SevenCrowns.UI.Tooltips
 
             _formatHandle = null;
             _resourceFormat.Arguments = null;
+
+            ApplyTooltipText(body);
+        }
+
+        private IEnumerator ApplyFarmHintRoutine(WorldTooltipHint hint, int requestId)
+        {
+            string amountRaw = FormatAmount(Mathf.Max(0, hint.Farm.WeeklyPopulation));
+            string amountText = string.Concat("<b><color=#", ColorUtility.ToHtmlStringRGB(_amountColor), ">", amountRaw, "</color></b>");
+
+            _farmFormat.Arguments = new object[] { amountText };
+            _formatHandle = _farmFormat.GetLocalizedStringAsync();
+            yield return _formatHandle.Value;
+
+            if (requestId != _requestId)
+            {
+                ReleaseHandles();
+                yield break;
+            }
+
+            string body = _formatHandle.Value.Status == AsyncOperationStatus.Succeeded
+                ? _formatHandle.Value.Result
+                : string.Concat(amountText, " / week");
+
+            _formatHandle = null;
+            _farmFormat.Arguments = null;
 
             ApplyTooltipText(body);
         }
