@@ -66,6 +66,7 @@
     <Compile Include="Assets\Game\Scripts\Map\Farms\FarmNodeDescriptor.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Authoring\TerrainTile.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ISelectedHeroAgentProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Cities\CityNodeService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroIdentity.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Farms\FarmNodeService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ITileDataProvider.cs" />
@@ -80,6 +81,8 @@
     <Compile Include="Assets\Game\Scripts\Map\HeroAgentComponent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IGridOccupancyProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Cities\CityLevel.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Cities\CityNodeDescriptor.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\CameraClampUtility.cs" />
@@ -95,6 +98,7 @@
     <Compile Include="Assets\Game\Scripts\Map\PathPreviewRenderer.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ResourceTooltipState.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarState.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Cities\ICityNodeProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarTilemapRenderer.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ResourceNodeAuthoring.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\IFogOfWarService.cs" />
@@ -107,6 +111,7 @@
     <Compile Include="Assets\Game\Scripts\Map\Mines\MineNodeDescriptor.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\HeroFogVisionDriver.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\Cities\CityAuthoring.cs" />
     <Compile Include="Assets\Game\Scripts\Map\AssemblyInfo.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\IResourceWallet.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\ResourceNodeDescriptor.cs" />

@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Localization;
 using SevenCrowns.Map.Resources;
 using SevenCrowns.Map.Mines;
+using SevenCrowns.Map.Cities;
 using UnityEngine.EventSystems;
 
 namespace SevenCrowns.UI
@@ -35,6 +36,7 @@ namespace SevenCrowns.UI
 
         [Header("Tooltip (Mines)")]
         [SerializeField] private MonoBehaviour _mineProviderBehaviour; // Optional; must implement IMineNodeProvider
+        [SerializeField] private MonoBehaviour _cityProviderBehaviour; // Optional; must implement ICityNodeProvider
         [SerializeField] private STController _tooltipController; // Optional; will be auto-instantiated if missing
         [SerializeField] private SimpleTooltipStyle _tooltipStyle; // Optional; default style is loaded when null
         [SerializeField, Min(0f)] private float _tooltipDelay = 2f;
@@ -50,6 +52,7 @@ namespace SevenCrowns.UI
         };
 
         private IMineNodeProvider _mineProvider;
+        private ICityNodeProvider _cityProvider;
 
         private void Awake()
         {
@@ -57,6 +60,7 @@ namespace SevenCrowns.UI
             ResolveWallet();
             HookLabel();
             ResolveMineProvider();
+            ResolveCityProvider();
             EnsureTooltipDependencies();
         }
 
@@ -188,11 +192,17 @@ namespace SevenCrowns.UI
         public void OnPointerEnter(PointerEventData eventData)
         {
             ResolveMineProvider();
+            ResolveCityProvider();
             EnsureTooltipDependencies();
             if (_tooltipController == null)
                 return;
 
             CountOwnedMinesAndYieldForResource(_resourceId, out int count, out int totalYield);
+            // Include cities daily gold when this HUD is for gold
+            if (string.Equals(_resourceId, "resource.gold", System.StringComparison.Ordinal))
+            {
+                totalYield += CountOwnedCitiesDailyGold();
+            }
             // Prefer the detailed format when available
             _minesOwnedAndYieldFormat.Arguments = new object[] { count, totalYield };
             string body = _minesOwnedAndYieldFormat.GetLocalizedString();
@@ -254,6 +264,22 @@ namespace SevenCrowns.UI
             }
         }
 
+        private int CountOwnedCitiesDailyGold()
+        {
+            if (_cityProvider == null)
+                return 0;
+            var nodes = _cityProvider.Nodes;
+            int gold = 0;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var n = nodes[i];
+                if (!n.IsOwned) continue;
+                int yield = n.DailyGoldYield;
+                if (yield > 0) gold += yield;
+            }
+            return gold;
+        }
+
         private void HookLabel()
         {
             if (_labelText == null)
@@ -311,6 +337,22 @@ namespace SevenCrowns.UI
         private static string NormalizeId(string id)
         {
             return string.IsNullOrWhiteSpace(id) ? string.Empty : id.Trim();
+        }
+
+        private void ResolveCityProvider()
+        {
+            if (_cityProvider != null)
+                return;
+            if (_cityProviderBehaviour != null && _cityProviderBehaviour is ICityNodeProvider cp)
+            {
+                _cityProvider = cp;
+                return;
+            }
+            var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+            for (int i = 0; i < behaviours.Length && _cityProvider == null; i++)
+            {
+                if (behaviours[i] is ICityNodeProvider candidate) _cityProvider = candidate;
+            }
         }
     }
 }

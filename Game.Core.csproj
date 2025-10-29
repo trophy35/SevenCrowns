@@ -67,6 +67,7 @@
     <Compile Include="Assets\Game\Scripts\Systems\PreloadRegistry.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\LifetimeContentService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\SceneFlowConfig.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\Cities\CityProductionService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\WorldMapTurnController.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\IRuntimeWeightedTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Farms\FarmProductionService.cs" />

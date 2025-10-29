@@ -73,6 +73,7 @@
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorManager.cs" />
     <Compile Include="Assets\Game\Scripts\UI\PeopleAmountHudView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Population\IPopulationService.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\CityCaptureSfxListener.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupButtonView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldMapCursorBinder.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupResult.cs" />
