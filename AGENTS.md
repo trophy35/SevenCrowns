@@ -16,6 +16,8 @@ UNITY/SEVENCROWNS SPECIFICS:
 - All comments must be in English.
 - When it's possible Unity Tests unit are implemented to ensure there is no regressions when we implement new features.
 
+Note: When implementing features that alter persistent world state (heroes, ownership, resources, fog, time, camera, selection, population, etc.), remember to add the corresponding save/restore capture to the WorldMap save system (snapshot + reader apply) and extend tests to cover round‑trip behavior.
+
 OUTPUT FORMAT:
 Sections in order: REUSE SCAN, PLAN, CONTRACTS, CODE.
 
@@ -72,6 +74,113 @@ Pointers & Entry Points
 - Boot controller: `Assets/Game/Scripts/Systems/BootLoaderController.cs`
 - Addressables tasks: `Assets/Game/Scripts/Systems/AddressablesLoadKeysTask.cs`
 - Localization tasks: `Assets/Game/Scripts/Systems/LocalizationPreloadTask.cs`
+
+-------------------------------------
+Save/Load — World Map
+-------------------------------------
+
+Files
+- Contracts/DTOs: `Assets/Game/Scripts/Systems/Save/WorldMapSnapshot.cs`, `IWorldMapStateReader.cs`, `IWorldMapSaveService.cs`, `IWorldMapPersistence.cs`
+- Serializer: `Assets/Game/Scripts/Systems/Save/JsonWorldMapSerializer.cs`
+- Persistence: `Assets/Game/Scripts/Systems/Save/FileWorldMapPersistence.cs` (runtime), `InMemoryWorldMapPersistence.cs` (tests)
+- Orchestrator: `Assets/Game/Scripts/Systems/Save/WorldMapSaveService.cs`
+- Scene bridge: `Assets/Game/Scripts/Systems/Save/SaveGameServiceBehaviour.cs`
+- UI hook: `Assets/Game/Scripts/UI/MainMenu/MainMenuController.cs` (Save button UnityEvent)
+- State reader: `Assets/Game/Scripts/Systems/Save/WorldMapStateReader.cs`
+
+What It Saves
+- Heroes: id, level, grid position
+  - Reads: `HeroIdentity` + `HeroAgentComponent.GridPosition`
+  - Applies: `HeroIdentity.SetLevel(level)`, `HeroAgentComponent.TeleportTo(coord)` (clears path, updates occupancy)
+- Resource Wallet: all resource amounts
+  - Reads via `IResourceWalletSnapshotProvider` implemented by `ResourceWalletService`
+  - Applies by reconciling deltas with `IResourceWallet.Add` / `TrySpend`
+- Ownership: Cities, Mines, Farms
+  - Reads `*NodeService.Nodes` into `CityOwnershipSnapshot`, `MineOwnershipSnapshot`, `FarmOwnershipSnapshot`
+  - Applies by rebuilding descriptors (preserving world position/entry coord) and calling `RegisterOrUpdate`
+- Resource Nodes (collection state)
+  - Snapshot stores either `collectedResourceNodeIds` (explicitly removed) or `remainingResourceNodeIds` (present at save time)
+  - Applies by calling `ResourceNodeAuthoring.TryGetNode(id)?.Collect()` or `ResourceNodeService.Unregister(id)` when authoring not found
+- World Time
+  - Reads from first `WorldTimeService.CurrentDate`
+  - Applies with `WorldTimeService.ResetTo(WorldDate)`
+ - Population
+   - Reads from `IPopulationService.GetAvailable()` (weekly pool available)
+   - Applies with `IPopulationService.ResetTo(populationAvailable)`
+
+Persistence
+- File backend writes to: `Application.persistentDataPath/Saves/{slotId}.json`
+- Helper: `FileWorldMapPersistence.ResolvePath(slotId)` returns absolute file path (used for logging)
+
+UI Wiring
+- Add `SaveGameServiceBehaviour` to a Core object in the world scene; adjust Default Slot if needed
+- In the Main Menu Canvas, assign `MainMenuController._saveButton` and wire `_onSaveRequested` → `SaveGameServiceBehaviour.Save()`
+- `MainMenuController` hides itself after save is requested; `SaveGameServiceBehaviour` logs the saved file path
+
+Extending
+- Add new domains to `WorldMapStateReader` only; keep DTOs simple and version-tolerant
+- Prefer capturing “what exists” (remaining ids) over “what was removed” unless you can guarantee a baseline
+- For additional systems (e.g., fog, quests), expose small reader interfaces rather than using reflection
+
+Testing
+- Unit tests (Edit Mode):
+  - `Assets/Game/Scripts/Tests/EditMode/Systems/Save/WorldMapSaveSkeletonTests.cs` (serializer/persistence/service + wallet)
+  - `Assets/Game/Scripts/Tests/EditMode/Systems/Save/WorldMapOwnershipTests.cs` (cities/mines/farms ownership round-trip)
+  - `Assets/Game/Scripts/Tests/EditMode/Systems/Save/WorldMapResourcesAndTimeTests.cs` (resource nodes remaining set, world time round‑trip)
+- Prefer `InMemoryWorldMapPersistence` in tests; avoid file IO
+
+Pitfalls
+- Ensure only one active `WorldTimeService` in scene; the reader uses the first it finds
+- Resource node collection: authoring objects may be destroyed at runtime; apply code unregisters when authoring is missing
+- Keep resource ids normalized (e.g., `resource.gold`); wallet snapshot provider uses raw dictionary keys
+- When spawning/despawning heroes or nodes at runtime, ensure the related services are in sync before calling Save
+
+-------------------------------------
+Save/Load — Advanced Domains
+-------------------------------------
+
+Overview
+- Advanced domains extend the base snapshot to fully restore the player view and exploration state.
+- Implementations use small provider interfaces to keep dependencies inverted and avoid reflection.
+
+Fog of War
+- Provider: `Assets/Game/Scripts/Map/FogOfWar/IFogOfWarSnapshotProvider.cs`
+- Implementation: `FogOfWarService` implements capture/apply of per-cell states (Unknown/Explored/Visible).
+- Snapshot fields: `fogWidth`, `fogHeight`, `fogStates` (row-major byte[]).
+- Apply order: apply fog before camera/selection dependent visuals to avoid flicker.
+- Bounds mismatch: loader clamps to min(width,height) when target map is smaller/larger.
+
+Camera
+- Provider: `Assets/Game/Scripts/Map/ICameraSnapshotProvider.cs`
+- Implementation: `MapCameraController` implements get/apply; state clamped to tilemap bounds.
+- Snapshot fields: `camX`, `camY`, `camZ`, `camSize`.
+- Apply order: after fog and hero positions so clamping can account for bounds.
+
+Hero Movement Points (MP)
+- Snapshot: `HeroSnapshot` extended with `mpCurrent`, `mpMax`.
+- Apply: `SetMax(mpMax, refill:false)` then adjust to `mpCurrent` using `Refund` or `SpendUpTo` (no hard reset calls).
+- Notes: if `mpCurrent` is 0, no refund occurs; service remains at its current unless explicitly adjusted later.
+
+Selection (Current Hero)
+- Service: `CurrentHeroService` (mirrors to `SelectedHeroService`).
+- Snapshot field: `selectedHeroId`.
+- Apply: `CurrentHeroService.SetCurrentHeroById(selectedHeroId)`; selection propagates automatically.
+
+Population
+- Provider: `IPopulationService` (Systems/Population/PopulationService)
+- Snapshot fields: `populationHasSnapshot`, `populationAvailable` (guards older saves)
+- Apply: `IPopulationService.ResetTo(populationAvailable)` to restore mid‑week value exactly
+
+Reader Integration & Order
+- Capture (in `WorldMapStateReader`): heroes (pos/level/mp) → wallet → nodes → ownership → world time → fog → camera → selection.
+- Apply (in `WorldMapStateReader`): heroes (teleport/mp) → fog (grid) → resources/nodes/ownership → world time → camera → selection.
+
+Tests
+- `Assets/Game/Scripts/Tests/EditMode/Systems/Save/WorldMapCameraSelectionFogTests.cs` validates camera/selection/fog capture/apply.
+
+Gotchas
+- World time and production: City/Mine/Farm production services process on `DateChanged` (and may tick once in Update). After load, ensure world time is applied before resuming gameplay to avoid double-awards.
+- Multiple fog services/cameras: the reader targets the first provider found; keep a single authoritative instance per scene.
 
 -------------------------------------
 Main Menu — Reuse & Wiring

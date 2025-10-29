@@ -12,7 +12,7 @@ namespace SevenCrowns.Map
     /// - Profile Update loop to confirm no per-frame allocations.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class MapCameraController : MonoBehaviour
+    public sealed class MapCameraController : MonoBehaviour, ICameraSnapshotProvider
     {
         [Header("Wiring")]
         [SerializeField] private Camera _camera;
@@ -379,6 +379,18 @@ namespace SevenCrowns.Map
             Vector2 halfExtents = GetHalfExtents(size);
             _targetPosition = CameraClampUtility.ClampOrthographic(_worldRect, halfExtents, _targetPosition);
             _camera.transform.position = _targetPosition;
+        }
+
+        // ICameraSnapshotProvider
+        public Vector3 GetCameraPosition() => _camera != null ? _camera.transform.position : Vector3.zero;
+        public float GetCameraOrthographicSize() => _camera != null ? Mathf.Max(0.01f, _camera.orthographicSize) : 5f;
+        public void ApplyCameraState(Vector3 position, float orthographicSize)
+        {
+            if (_camera == null) return;
+            _targetPosition = new Vector3(position.x, position.y, _camera.transform.position.z);
+            _targetZoom = Mathf.Max(0.01f, orthographicSize);
+            _camera.orthographicSize = _targetZoom;
+            ApplyImmediateClamp();
         }
 
         [System.Serializable]

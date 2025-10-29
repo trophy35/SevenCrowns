@@ -86,6 +86,7 @@
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroMapAgent.cs" />
     <Compile Include="Assets\Game\Scripts\Map\CameraClampUtility.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\ICameraSnapshotProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IWorldCursorHintSource.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IWorldTooltipHintSource.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IHeroMapAgent.cs" />
@@ -111,6 +112,7 @@
     <Compile Include="Assets\Game\Scripts\Map\Mines\MineNodeDescriptor.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\HeroFogVisionDriver.cs" />
     <Compile Include="Assets\Game\Scripts\Map\GridBounds.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\FogOfWar\IFogOfWarSnapshotProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Cities\CityAuthoring.cs" />
     <Compile Include="Assets\Game\Scripts\Map\AssemblyInfo.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\IResourceWallet.cs" />

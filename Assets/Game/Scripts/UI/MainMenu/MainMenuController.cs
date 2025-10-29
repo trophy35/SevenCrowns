@@ -19,6 +19,12 @@ namespace SevenCrowns.UI
         [Header("Buttons")]
         [Tooltip("UI Button that hides the menu (TextMeshPro Button uses standard Button component).")]
         [SerializeField] private Button _cancelButton;
+        [Tooltip("UI Button that triggers a save request.")]
+        [SerializeField] private Button _saveButton;
+
+        [Header("Events")]
+        [Tooltip("Invoked when the Save button is clicked. Wire a Core save service here.")]
+        [SerializeField] private UnityEngine.Events.UnityEvent _onSaveRequested;
 
         [Header("Behavior")]
         [SerializeField] private bool _startHidden = true;
@@ -42,6 +48,10 @@ namespace SevenCrowns.UI
         private void OnEnable()
         {
             EnsureWired();
+            if (_saveButton != null)
+            {
+                _saveButton.onClick.AddListener(OnSaveClicked);
+            }
         }
 
         private void OnDisable()
@@ -50,6 +60,10 @@ namespace SevenCrowns.UI
             {
                 _cancelButton.onClick.RemoveListener(Hide);
                 _wired = false;
+            }
+            if (_saveButton != null)
+            {
+                _saveButton.onClick.RemoveListener(OnSaveClicked);
             }
         }
 
@@ -102,6 +116,14 @@ namespace SevenCrowns.UI
             SetVisible(!_isVisible);
         }
 
+        /// <summary>
+        /// Public entry to trigger save from inspector or other scripts.
+        /// </summary>
+        public void RequestSave()
+        {
+            OnSaveClicked();
+        }
+
         private void SetVisible(bool visible)
         {
             _isVisible = visible;
@@ -118,6 +140,13 @@ namespace SevenCrowns.UI
                 _cancelButton.onClick.AddListener(Hide);
                 _wired = true;
             }
+        }
+
+        private void OnSaveClicked()
+        {
+            _onSaveRequested?.Invoke();
+            // Close the menu after saving completes
+            Hide();
         }
     }
 }

@@ -8,7 +8,7 @@ namespace SevenCrowns.Map.FogOfWar
     /// Stores and mutates fog of war state for the strategic grid. Uses the baked TileData grid for vision blocking.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class FogOfWarService : MonoBehaviour, IFogOfWarService
+    public sealed class FogOfWarService : MonoBehaviour, IFogOfWarService, IFogOfWarSnapshotProvider
     {
         private static readonly GridCoord[] NeighborOffsets =
         {
@@ -248,6 +248,44 @@ namespace SevenCrowns.Map.FogOfWar
                     _states[idx] = FogOfWarState.Unknown;
                     CellChanged?.Invoke(coord, FogOfWarState.Unknown);
                     break;
+            }
+        }
+
+        // IFogOfWarSnapshotProvider
+        (int width, int height, byte[] states) IFogOfWarSnapshotProvider.Capture()
+        {
+            EnsureInitialized();
+            int w = _bounds.Width;
+            int h = _bounds.Height;
+            var data = new byte[w * h];
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    int idx = x + y * w;
+                    data[idx] = (byte)_states[idx];
+                }
+            }
+            return (w, h, data);
+        }
+
+        void IFogOfWarSnapshotProvider.Apply(int width, int height, byte[] states)
+        {
+            if (!EnsureInitialized()) return;
+            if (width <= 0 || height <= 0 || states == null) return;
+
+            int w = _bounds.Width;
+            int h = _bounds.Height;
+            int minW = Mathf.Min(w, width);
+            int minH = Mathf.Min(h, height);
+            for (int y = 0; y < minH; y++)
+            {
+                for (int x = 0; x < minW; x++)
+                {
+                    int idx = x + y * width;
+                    var state = (FogOfWarState)states[idx];
+                    SetState(new GridCoord(x, y), state);
+                }
             }
         }
 

@@ -97,28 +97,16 @@ namespace SevenCrowns.Map
 
         private void Start()
         {
-            _movement = new MapMovementService(_maxDailyMp);
             var start = _provider.WorldToCoord(_grid, transform.position);
-            _previousPosition = start;
-            System.Func<GridCoord, bool> isBlocked = null;
-            if (_occupancy != null)
-            {
-                var self = _identity; // capture
-                isBlocked = c => _occupancy.IsOccupiedByOther(c, self);
-            }
-            var agent = new HeroMapAgent(_provider, _movement, start, _allowedMoves, _validateSteps, isBlocked);
-            agent.PositionChanged += OnAgentPositionChanged;
-            agent.Started += OnMovementStarted;
-            agent.Stopped += OnMovementStopped;
+            InitializeAgentAt(start);
 
-            if (_debugLogs)
+            if (_debugLogs && _agent != null)
             {
-                agent.Started += () => Debug.Log("[HeroAgent] Movement started.");
-                agent.StepCommitted += (from, to, cost) => Debug.Log($"[HeroAgent] Step {from}->{to} cost={cost}");
-                agent.Stopped += reason => Debug.Log($"[HeroAgent] Stopped: {reason}");
+                _agent.Started += () => Debug.Log("[HeroAgent] Movement started.");
+                _agent.StepCommitted += (from, to, cost) => Debug.Log($"[HeroAgent] Step {from}->{to} cost={cost}");
+                _agent.Stopped += reason => Debug.Log($"[HeroAgent] Stopped: {reason}");
                 _movement.Changed += (cur, max) => Debug.Log($"[HeroAgent] MP changed: {cur}/{max}");
             }
-            _agent = agent;
 
             _character4D.SetDirection(Vector2.down);
             _currentFacingDirection = Vector2.down;
@@ -342,6 +330,51 @@ namespace SevenCrowns.Map
             }
 
             return new Vector3(world.x, world.y, transform.position.z) + finalOffset;
+        }
+
+        /// <summary>
+        /// Teleports the hero to the specified grid coordinate, rebuilding the internal agent and updating occupancy.
+        /// </summary>
+        public void TeleportTo(GridCoord target)
+        {
+            var from = _previousPosition;
+
+            // Unsubscribe from previous agent events if any
+            if (_agent != null)
+            {
+                _agent.PositionChanged -= OnAgentPositionChanged;
+                _agent.Started -= OnMovementStarted;
+                _agent.Stopped -= OnMovementStopped;
+                _agent.ClearPath();
+            }
+
+            InitializeAgentAt(target);
+
+            // Snap visuals immediately
+            MoveTransformToCell(target, true);
+
+            // Update occupancy immediately
+            if (_occupancy is GridOccupancyService service && _identity != null)
+            {
+                service.UpdateHeroPosition(_identity, from, target);
+            }
+        }
+
+        private void InitializeAgentAt(GridCoord start)
+        {
+            _movement = new MapMovementService(_maxDailyMp);
+            _previousPosition = start;
+            System.Func<GridCoord, bool> isBlocked = null;
+            if (_occupancy != null)
+            {
+                var self = _identity; // capture
+                isBlocked = c => _occupancy.IsOccupiedByOther(c, self);
+            }
+            var agent = new HeroMapAgent(_provider, _movement, start, _allowedMoves, _validateSteps, isBlocked);
+            agent.PositionChanged += OnAgentPositionChanged;
+            agent.Started += OnMovementStarted;
+            agent.Stopped += OnMovementStopped;
+            _agent = agent;
         }
     }
 }

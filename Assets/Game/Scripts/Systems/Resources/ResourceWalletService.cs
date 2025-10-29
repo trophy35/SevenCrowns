@@ -12,7 +12,7 @@ namespace SevenCrowns.Systems
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(AudioSource))]
-    public sealed class ResourceWalletService : MonoBehaviour, IResourceWallet
+    public sealed class ResourceWalletService : MonoBehaviour, IResourceWallet, SevenCrowns.Systems.Save.IResourceWalletSnapshotProvider
     {
         [Serializable]
         private sealed class CollectSfxConfig
@@ -166,6 +166,12 @@ namespace SevenCrowns.Systems
             _amounts[key] = newAmount;
             ResourceChanged?.Invoke(new ResourceChange(key, -amount, newAmount));
             return true;
+        }
+
+        // IResourceWalletSnapshotProvider
+        System.Collections.Generic.IReadOnlyDictionary<string, int> SevenCrowns.Systems.Save.IResourceWalletSnapshotProvider.GetAllAmountsSnapshot()
+        {
+            return new System.Collections.Generic.Dictionary<string, int>(_amounts, System.StringComparer.Ordinal);
         }
 
         private void EnsureAudioSource()

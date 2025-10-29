@@ -66,11 +66,13 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridCoordTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityProductionServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\MainMenuControllerTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Save\WorldMapOwnershipTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\CurrentHeroServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\ResourceAmountHudViewTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinderTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ResourceTooltipStateTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Farms\FarmNodeServiceTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Save\WorldMapCameraSelectionFogTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgentTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ClickToMoveControllerCursorHintsTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ClickToMoveControllerCollectTests.cs" />
@@ -80,6 +82,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FogOfWarServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceWalletService_WoodTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinder_OccupancyTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Save\WorldMapResourcesAndTimeTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridBoundsTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceWalletServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Mines\MineNodeServiceTests.cs" />
@@ -88,6 +91,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FarmTooltipStateTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceNodeServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Farms\FarmProductionServiceTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Save\WorldMapSaveSkeletonTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Game\Scripts\Tests\EditMode\Game.Tests.EditMode.asmdef" />
