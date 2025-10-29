@@ -77,6 +77,7 @@
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupButtonView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldMapCursorBinder.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupResult.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\MainMenu\MainMenuController.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorSet.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\IPopupService.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldMapRadialMenuController.cs" />
@@ -1132,6 +1133,10 @@
     <ProjectReference Include="SimpleTooltip.csproj">
       <Project>{9E583D12-C73C-7ECD-45C3-959963921273}</Project>
       <Name>SimpleTooltip</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.InputSystem.csproj">
+      <Project>{3820DFFE-3BB3-BD2F-6959-428DAECE19C2}</Project>
+      <Name>Unity.InputSystem</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.ResourceManager.csproj">
       <Project>{14973E7D-610C-1E18-92D8-5FE64EB51B1F}</Project>

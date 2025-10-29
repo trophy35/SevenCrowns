@@ -73,6 +73,57 @@ Pointers & Entry Points
 - Addressables tasks: `Assets/Game/Scripts/Systems/AddressablesLoadKeysTask.cs`
 - Localization tasks: `Assets/Game/Scripts/Systems/LocalizationPreloadTask.cs`
 
+-------------------------------------
+Main Menu — Reuse & Wiring
+-------------------------------------
+
+Files
+- Controller: `Assets/Game/Scripts/UI/MainMenu/MainMenuController.cs` (Game.UI)
+- Input Actions: `Assets/InputSystem_Actions.inputactions` (uses standard `Cancel` binding)
+- Localization: `Assets/Game/Content/Localization/StringTables/UI/UI.Common_*` (reuses `Popup.Cancel`)
+
+Goal
+- Display the Main Menu Canvas when the player presses ESC/Cancel during gameplay.
+- Hide the menu when the "Cancel" button is clicked (TextMeshPro button using Unity UI `Button`).
+
+Behavior
+- ESC toggles the menu: show if hidden, hide if visible.
+- Clicking the Cancel button hides the menu.
+- Supports both Unity Input System (keyboard ESC, gamepad East/B) and legacy `Input.GetKeyDown(KeyCode.Escape)` fallback.
+
+Scene Wiring
+1) Place the Main Menu UI (Canvas or top-level panel) in the scene. Keep it hidden by default.
+2) Add `MainMenuController` to either the Canvas root or a parent controller object.
+3) Assign fields on `MainMenuController`:
+   - `_root`: the menu Canvas or top-level panel GameObject (hidden by default).
+   - `_cancelButton`: the Cancel button’s `Button` component (TextMeshPro button has a standard `Button`).
+   - `_startHidden`: true (default) to start the scene with the menu hidden.
+   - `_listenForCancel`: true to let ESC toggle visibility automatically.
+4) Localization: the Cancel button label should use `UI.Common/Popup.Cancel` (EN/FR already provided). Ensure `LocalizationPreloadTask` includes `UI.Common`.
+
+Extending & Integration
+- External systems can call `Show()`, `Hide()`, or `Toggle()` on `MainMenuController` (e.g., from a Pause/Flow service) instead of duplicating input logic.
+- If you introduce a dedicated Pause service later, keep `MainMenuController` UI-only and have the service call its public API (SRP & DIP).
+
+Input System Notes
+- With the Input System enabled, ESC and gamepad East/B are supported via direct device checks. The project also defines a `Cancel` action; you can optionally wire that action to call `Toggle()` if centralizing input.
+- Legacy Input Manager fallback uses `Input.GetKeyDown(KeyCode.Escape)`.
+
+Testing
+- Edit Mode tests live at `Assets/Game/Scripts/Tests/EditMode/UI/MainMenuControllerTests.cs`:
+  - `ShowHideToggle_ControlsRootActiveState` verifies visibility changes.
+  - `CancelButton_Click_HidesMenu` verifies the Cancel button hides the menu.
+- Keep tests focused, engine-light, and avoid scene loads; invoke `Show/Hide/Toggle` programmatically.
+
+Best Practices
+- One menu instance per scene; avoid multiple active menus.
+- Do not hardcode UI strings; reuse `UI.Common` entries. Add new keys (EN/FR) as needed for future buttons.
+- Keep the controller free of gameplay logic (UI only). Route gameplay effects to core services via events or injected interfaces.
+
+Pitfalls
+- Ensure the Cancel button has a `Button` component (TextMeshPro provides text; you must still add `Button`).
+- If references are assigned dynamically (e.g., via code), make sure the controller is enabled or call `Show()` once to ensure listeners are wired.
+
 ---------------------------------------------
 SevenCrows respects strictly SOLID Principles
 ---------------------------------------------

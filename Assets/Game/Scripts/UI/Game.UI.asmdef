@@ -7,6 +7,7 @@
     "TankAndHealer.UltimateRadialMenu",
     "Game.Map",
     "SimpleTooltip",
+    "Unity.InputSystem",
     "Unity.ResourceManager"
   ],
   "includePlatforms": [],
