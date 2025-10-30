@@ -380,26 +380,9 @@ namespace SevenCrowns.Systems.Save
             // Apply resource nodes collected/remaining
             {
                 var resourceServices = UnityEngine.Object.FindObjectsOfType<ResourceNodeService>(true);
-                if (snapshot.collectedResourceNodeIds != null && snapshot.collectedResourceNodeIds.Count > 0)
-                {
-                    for (int i = 0; i < snapshot.collectedResourceNodeIds.Count; i++)
-                    {
-                        var id = snapshot.collectedResourceNodeIds[i];
-                        if (string.IsNullOrWhiteSpace(id)) continue;
-                        if (SevenCrowns.Map.ResourceNodeAuthoring.TryGetNode(id, out var node))
-                        {
-                            node.Collect();
-                        }
-                        else
-                        {
-                            for (int s = 0; s < resourceServices.Length; s++)
-                            {
-                                resourceServices[s]?.Unregister(id);
-                            }
-                        }
-                    }
-                }
-                else if (snapshot.remainingResourceNodeIds != null && snapshot.remainingResourceNodeIds.Count > 0)
+
+                // If remainingResourceNodeIds is present (even empty), treat it as authoritative set
+                if (snapshot.remainingResourceNodeIds != null)
                 {
                     var remaining = new System.Collections.Generic.HashSet<string>(snapshot.remainingResourceNodeIds, System.StringComparer.Ordinal);
                     for (int s = 0; s < resourceServices.Length; s++)
@@ -422,6 +405,25 @@ namespace SevenCrowns.Systems.Save
                                 {
                                     svc.Unregister(nodeId);
                                 }
+                            }
+                        }
+                    }
+                }
+                else if (snapshot.collectedResourceNodeIds != null)
+                {
+                    for (int i = 0; i < snapshot.collectedResourceNodeIds.Count; i++)
+                    {
+                        var id = snapshot.collectedResourceNodeIds[i];
+                        if (string.IsNullOrWhiteSpace(id)) continue;
+                        if (SevenCrowns.Map.ResourceNodeAuthoring.TryGetNode(id, out var node))
+                        {
+                            node.Collect();
+                        }
+                        else
+                        {
+                            for (int s = 0; s < resourceServices.Length; s++)
+                            {
+                                resourceServices[s]?.Unregister(id);
                             }
                         }
                     }
@@ -463,6 +465,11 @@ namespace SevenCrowns.Systems.Save
                             break;
                         }
                     }
+                    // Update flag visuals via authoring if owned
+                    if (cs.owned && SevenCrowns.Map.Cities.CityAuthoring.TryGetNode(cs.nodeId, out var cityAuth))
+                    {
+                        cityAuth.Claim(cs.ownerId ?? string.Empty);
+                    }
                 }
             }
 
@@ -492,6 +499,11 @@ namespace SevenCrowns.Systems.Save
                             break;
                         }
                     }
+                    // Update flag visuals via authoring if owned
+                    if (ms.owned && SevenCrowns.Map.Mines.MineAuthoring.TryGetNode(ms.nodeId, out var mineAuth))
+                    {
+                        mineAuth.Claim(ms.ownerId ?? string.Empty);
+                    }
                 }
             }
 
@@ -519,6 +531,11 @@ namespace SevenCrowns.Systems.Save
                             svc.RegisterOrUpdate(updated);
                             break;
                         }
+                    }
+                    // Update flag visuals via authoring if owned
+                    if (fs.owned && SevenCrowns.Map.Farms.FarmAuthoring.TryGetNode(fs.nodeId, out var farmAuth))
+                    {
+                        farmAuth.Claim(fs.ownerId ?? string.Empty);
                     }
                 }
             }

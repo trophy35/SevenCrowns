@@ -21,10 +21,14 @@ namespace SevenCrowns.UI
         [SerializeField] private Button _cancelButton;
         [Tooltip("UI Button that triggers a save request.")]
         [SerializeField] private Button _saveButton;
+        [Tooltip("UI Button that triggers a load request.")]
+        [SerializeField] private Button _loadButton;
 
         [Header("Events")]
         [Tooltip("Invoked when the Save button is clicked. Wire a Core save service here.")]
         [SerializeField] private UnityEngine.Events.UnityEvent _onSaveRequested;
+        [Tooltip("Invoked when the Load button is clicked. Wire a Core load service here.")]
+        [SerializeField] private UnityEngine.Events.UnityEvent _onLoadRequested;
 
         [Header("Behavior")]
         [SerializeField] private bool _startHidden = true;
@@ -52,6 +56,10 @@ namespace SevenCrowns.UI
             {
                 _saveButton.onClick.AddListener(OnSaveClicked);
             }
+            if (_loadButton != null)
+            {
+                _loadButton.onClick.AddListener(OnLoadClicked);
+            }
         }
 
         private void OnDisable()
@@ -64,6 +72,10 @@ namespace SevenCrowns.UI
             if (_saveButton != null)
             {
                 _saveButton.onClick.RemoveListener(OnSaveClicked);
+            }
+            if (_loadButton != null)
+            {
+                _loadButton.onClick.RemoveListener(OnLoadClicked);
             }
         }
 
@@ -124,6 +136,14 @@ namespace SevenCrowns.UI
             OnSaveClicked();
         }
 
+        /// <summary>
+        /// Public entry to trigger load from inspector or other scripts.
+        /// </summary>
+        public void RequestLoad()
+        {
+            OnLoadClicked();
+        }
+
         private void SetVisible(bool visible)
         {
             _isVisible = visible;
@@ -146,6 +166,13 @@ namespace SevenCrowns.UI
         {
             _onSaveRequested?.Invoke();
             // Close the menu after saving completes
+            Hide();
+        }
+
+        private void OnLoadClicked()
+        {
+            _onLoadRequested?.Invoke();
+            // Close the menu after loading completes
             Hide();
         }
     }

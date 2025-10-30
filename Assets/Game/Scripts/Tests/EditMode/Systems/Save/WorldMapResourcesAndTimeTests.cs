@@ -36,6 +36,30 @@ namespace SevenCrowns.Tests.EditMode.Systems.Save
         }
 
         [Test]
+        public void Apply_RemainingResourceIds_Empty_RemovesAllNodes()
+        {
+            var root = new GameObject("ResourceRoot_All");
+            var svc = root.AddComponent<ResourceNodeService>();
+
+            var def = ScriptableObject.CreateInstance<ResourceDefinition>();
+            svc.RegisterOrUpdate(new ResourceNodeDescriptor("res.a", def, default, Vector3.zero, new GridCoord(2,0), 5));
+            svc.RegisterOrUpdate(new ResourceNodeDescriptor("res.b", def, default, Vector3.zero, new GridCoord(3,0), 7));
+
+            var reader = new WorldMapStateReader();
+            var snap = WorldMapSnapshot.CreateEmpty();
+            // Authoritative empty set -> remove all
+            // remainingResourceNodeIds list exists but has no items
+
+            reader.Apply(snap);
+
+            Assert.That(svc.TryGetById("res.a", out _), Is.False);
+            Assert.That(svc.TryGetById("res.b", out _), Is.False);
+
+            Object.DestroyImmediate(def);
+            Object.DestroyImmediate(root);
+        }
+
+        [Test]
         public void CaptureAndApply_WorldTime_RoundTrip()
         {
             var root = new GameObject("TimeRoot");

@@ -46,7 +46,13 @@ namespace SevenCrowns.Systems.Save
         public void Load()
         {
             if (_service == null) Awake();
-            _service.LoadAsync(_defaultSlotId).GetAwaiter().GetResult();
+            bool ok = _service.LoadAsync(_defaultSlotId).GetAwaiter().GetResult();
+            if (_file != null)
+            {
+                var path = _file.ResolvePath(_defaultSlotId);
+                if (ok) Debug.Log($"[SaveGame] Loaded from: {path}", this);
+                else Debug.LogWarning($"[SaveGame] Load failed. Expected file: {path}", this);
+            }
         }
 
         /// <summary>
@@ -71,7 +77,13 @@ namespace SevenCrowns.Systems.Save
         {
             if (string.IsNullOrWhiteSpace(slotId)) slotId = _defaultSlotId;
             if (_service == null) Awake();
-            _service.LoadAsync(slotId).GetAwaiter().GetResult();
+            bool ok = _service.LoadAsync(slotId).GetAwaiter().GetResult();
+            if (_file != null)
+            {
+                var path = _file.ResolvePath(slotId);
+                if (ok) Debug.Log($"[SaveGame] Loaded from: {path}", this);
+                else Debug.LogWarning($"[SaveGame] Load failed. Expected file: {path}", this);
+            }
         }
     }
 }
