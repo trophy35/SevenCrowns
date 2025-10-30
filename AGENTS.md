@@ -52,7 +52,14 @@ UI/UX
 Testing
 - Unit tests live in `Assets/Game/Scripts/Tests/EditMode`; prefer focused tests near the changed code.
 - Always create unit tests when it's possible with nominal cases and edge cases
-- Don’t add a new test framework; mirror existing patterns.
+- Don't add a new test framework; mirror existing patterns.
+
+Unit Test Requirement for New Work
+- When adding new public APIs, features, or changing behavior, add Edit Mode unit tests in the same PR.
+- Cover nominal paths and at least one edge/failure path; follow AAA and naming conventions.
+- Co-locate tests under the relevant domain folder (e.g., Systems/Save, Map/*, UI/*) using `{SUT}Tests.cs` naming.
+- For engine-heavy behavior (MonoBehaviour visuals), prefer lightweight fakes or authoring stubs; use Play Mode tests only if lifecycle/frame timing is required.
+- Tests are part of the Definition of Done for new/changed functionality.
 
 Definition of Done
 - Project compiles; boot flow loads without errors; tests for changed areas pass.
