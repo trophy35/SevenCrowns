@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using UnityEngine.Localization;
 
 namespace SevenCrowns.UI
 {
@@ -15,6 +17,7 @@ namespace SevenCrowns.UI
         /// </summary>
         void Quit();
     }
+
     /// <summary>
     /// Controls visibility of the Main Menu (Canvas root) and handles Cancel (ESC) behavior.
     /// - Shows the menu when ESC/Cancel is pressed.
@@ -58,6 +61,34 @@ namespace SevenCrowns.UI
         private bool _quitWired;
         private IApplicationQuitter _quitter;
 
+        [Header("Localization")]
+        [Tooltip("String table name holding UI common strings (e.g., 'UI.Common').")]
+        [SerializeField] private string _uiStringTable = "UI.Common";
+        [Tooltip("Localization entry key for the Cancel button label.")]
+        [SerializeField] private string _cancelEntry = "Popup.Cancel";
+        [Tooltip("Localization entry key for the Save button label.")]
+        [SerializeField] private string _saveEntry = "MainMenu.Save";
+        [Tooltip("Localization entry key for the Load button label.")]
+        [SerializeField] private string _loadEntry = "MainMenu.Load";
+        [Tooltip("Localization entry key for the Quit button label.")]
+        [SerializeField] private string _quitEntry = "MainMenu.Quit";
+
+        [Header("Labels (optional overrides)")]
+        [SerializeField] private TextMeshProUGUI _cancelLabel;
+        [SerializeField] private TextMeshProUGUI _saveLabel;
+        [SerializeField] private TextMeshProUGUI _loadLabel;
+        [SerializeField] private TextMeshProUGUI _quitLabel;
+
+        private LocalizedString _cancelLocalized;
+        private LocalizedString _saveLocalized;
+        private LocalizedString _loadLocalized;
+        private LocalizedString _quitLocalized;
+
+        private LocalizedString.ChangeHandler _cancelHandler;
+        private LocalizedString.ChangeHandler _saveHandler;
+        private LocalizedString.ChangeHandler _loadHandler;
+        private LocalizedString.ChangeHandler _quitHandler;
+
         private void Awake()
         {
             if (_root == null)
@@ -80,10 +111,17 @@ namespace SevenCrowns.UI
             {
                 _loadButton.onClick.AddListener(OnLoadClicked);
             }
-            if (_quitButton != null) {
+            if (_quitButton != null && !_quitWired)
+            {
                 _quitButton.onClick.AddListener(OnQuitClicked);
                 _quitWired = true;
             }
+
+            // Bind localized labels
+            BindLocalizedButton(_cancelButton, ref _cancelLabel, ref _cancelLocalized, ref _cancelHandler, _cancelEntry);
+            BindLocalizedButton(_saveButton, ref _saveLabel, ref _saveLocalized, ref _saveHandler, _saveEntry);
+            BindLocalizedButton(_loadButton, ref _loadLabel, ref _loadLocalized, ref _loadHandler, _loadEntry);
+            BindLocalizedButton(_quitButton, ref _quitLabel, ref _quitLocalized, ref _quitHandler, _quitEntry);
         }
 
         private void OnDisable()
@@ -101,10 +139,17 @@ namespace SevenCrowns.UI
             {
                 _loadButton.onClick.RemoveListener(OnLoadClicked);
             }
-            if (_quitButton != null) {
+            if (_quitButton != null)
+            {
                 _quitButton.onClick.RemoveListener(OnQuitClicked);
                 _quitWired = false;
             }
+
+            // Unbind localized labels
+            UnbindLocalizedButton(ref _cancelLocalized, ref _cancelHandler, _cancelLabel);
+            UnbindLocalizedButton(ref _saveLocalized, ref _saveHandler, _saveLabel);
+            UnbindLocalizedButton(ref _loadLocalized, ref _loadHandler, _loadLabel);
+            UnbindLocalizedButton(ref _quitLocalized, ref _quitHandler, _quitLabel);
         }
 
         private void Update()
@@ -131,50 +176,32 @@ namespace SevenCrowns.UI
 #endif
         }
 
-        /// <summary>
-        /// Shows the main menu.
-        /// </summary>
         public void Show()
         {
             EnsureWired();
             SetVisible(true);
         }
 
-        /// <summary>
-        /// Hides the main menu.
-        /// </summary>
         public void Hide()
         {
             SetVisible(false);
         }
 
-        /// <summary>
-        /// Toggles the main menu visibility.
-        /// </summary>
         public void Toggle()
         {
             SetVisible(!_isVisible);
         }
 
-        /// <summary>
-        /// Public entry to trigger save from inspector or other scripts.
-        /// </summary>
         public void RequestSave()
         {
             OnSaveClicked();
         }
 
-        /// <summary>
-        /// Public entry to trigger load from inspector or other scripts.
-        /// </summary>
         public void RequestLoad()
         {
             OnLoadClicked();
         }
 
-        /// <summary>
-        /// Public entry to quit the application from inspector or other scripts.
-        /// </summary>
         public void RequestQuit()
         {
             OnQuitClicked();
@@ -196,8 +223,12 @@ namespace SevenCrowns.UI
                 _cancelButton.onClick.AddListener(Hide);
                 _wired = true;
             }
-            if (_quitButton != null && !_quitWired) { _quitButton.onClick.AddListener(OnQuitClicked); _quitWired = true; }
-            
+            if (_quitButton != null && !_quitWired)
+            {
+                _quitButton.onClick.AddListener(OnQuitClicked);
+                _quitWired = true;
+            }
+
             if (_quitter == null)
             {
                 if (_quitterBehaviour is IApplicationQuitter asQuitter)
@@ -214,27 +245,69 @@ namespace SevenCrowns.UI
         private void OnSaveClicked()
         {
             _onSaveRequested?.Invoke();
-            // Close the menu after saving completes
             Hide();
         }
 
         private void OnLoadClicked()
         {
             _onLoadRequested?.Invoke();
-            // Close the menu after loading completes
             Hide();
         }
 
         private void OnQuitClicked()
         {
-            // Hide first to avoid flicker while quitting (harmless in Editor)
             Hide();
             _quitter?.Quit();
         }
 
-        /// <summary>
-        /// Default quitter implementation that calls Application.Quit, and stops play mode in Editor.
-        /// </summary>
+        // Localization helpers
+        private void BindLocalizedButton(Button button, ref TextMeshProUGUI labelField, ref LocalizedString localized, ref LocalizedString.ChangeHandler handler, string entry)
+        {
+            if (button == null)
+                return;
+
+            if (labelField == null)
+            {
+                labelField = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            }
+
+            var lbl = labelField;
+
+            if (localized == null)
+            {
+                localized = new LocalizedString
+                {
+                    TableReference = string.IsNullOrEmpty(_uiStringTable) ? "UI.Common" : _uiStringTable,
+                    TableEntryReference = entry
+                };
+            }
+
+            handler = value =>
+            {
+                if (lbl != null)
+                {
+                    lbl.text = value ?? string.Empty;
+                }
+            };
+            localized.StringChanged += handler;
+            localized.RefreshString();
+        }
+
+        private void UnbindLocalizedButton(ref LocalizedString localized, ref LocalizedString.ChangeHandler handler, TextMeshProUGUI label)
+        {
+            if (localized != null && handler != null)
+            {
+                localized.StringChanged -= handler;
+            }
+            if (label != null)
+            {
+                label.text = string.Empty;
+            }
+            localized = null;
+            handler = null;
+        }
+
+        // Default quitter implementation
         private sealed class DefaultApplicationQuitter : IApplicationQuitter
         {
             public void Quit()
