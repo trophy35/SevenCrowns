@@ -85,6 +85,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Save\WorldMapResourcesAndTimeTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridBoundsTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceWalletServiceTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\MainMenuControllerQuitTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Mines\MineNodeServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Mines\MineProductionServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\CameraClampUtilityTests.cs" />

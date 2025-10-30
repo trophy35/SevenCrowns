@@ -4,6 +4,18 @@ using UnityEngine.UI;
 namespace SevenCrowns.UI
 {
     /// <summary>
+    /// Abstraction for quitting the application to keep UI decoupled and testable.
+    /// Defined here to guarantee availability within the Game.UI assembly.
+    /// </summary>
+    public interface IApplicationQuitter
+    {
+        /// <summary>
+        /// Requests the application to quit.
+        /// In Editor, implementations may stop play mode instead.
+        /// </summary>
+        void Quit();
+    }
+    /// <summary>
     /// Controls visibility of the Main Menu (Canvas root) and handles Cancel (ESC) behavior.
     /// - Shows the menu when ESC/Cancel is pressed.
     /// - Hides the menu when the Cancel button is clicked or ESC pressed again.
@@ -23,6 +35,8 @@ namespace SevenCrowns.UI
         [SerializeField] private Button _saveButton;
         [Tooltip("UI Button that triggers a load request.")]
         [SerializeField] private Button _loadButton;
+        [Tooltip("UI Button that quits the application.")]
+        [SerializeField] private Button _quitButton;
 
         [Header("Events")]
         [Tooltip("Invoked when the Save button is clicked. Wire a Core save service here.")]
@@ -35,8 +49,14 @@ namespace SevenCrowns.UI
         [Tooltip("Listen for ESC/Cancel in Update to toggle visibility.")]
         [SerializeField] private bool _listenForCancel = true;
 
+        [Header("Quit Wiring")]
+        [Tooltip("Optional behaviour implementing IApplicationQuitter. If null, a default quitter using Application.Quit is used.")]
+        [SerializeField] private MonoBehaviour _quitterBehaviour;
+
         private bool _isVisible;
         private bool _wired;
+        private bool _quitWired;
+        private IApplicationQuitter _quitter;
 
         private void Awake()
         {
@@ -60,6 +80,10 @@ namespace SevenCrowns.UI
             {
                 _loadButton.onClick.AddListener(OnLoadClicked);
             }
+            if (_quitButton != null) {
+                _quitButton.onClick.AddListener(OnQuitClicked);
+                _quitWired = true;
+            }
         }
 
         private void OnDisable()
@@ -76,6 +100,10 @@ namespace SevenCrowns.UI
             if (_loadButton != null)
             {
                 _loadButton.onClick.RemoveListener(OnLoadClicked);
+            }
+            if (_quitButton != null) {
+                _quitButton.onClick.RemoveListener(OnQuitClicked);
+                _quitWired = false;
             }
         }
 
@@ -144,6 +172,14 @@ namespace SevenCrowns.UI
             OnLoadClicked();
         }
 
+        /// <summary>
+        /// Public entry to quit the application from inspector or other scripts.
+        /// </summary>
+        public void RequestQuit()
+        {
+            OnQuitClicked();
+        }
+
         private void SetVisible(bool visible)
         {
             _isVisible = visible;
@@ -160,6 +196,19 @@ namespace SevenCrowns.UI
                 _cancelButton.onClick.AddListener(Hide);
                 _wired = true;
             }
+            if (_quitButton != null && !_quitWired) { _quitButton.onClick.AddListener(OnQuitClicked); _quitWired = true; }
+            
+            if (_quitter == null)
+            {
+                if (_quitterBehaviour is IApplicationQuitter asQuitter)
+                {
+                    _quitter = asQuitter;
+                }
+                else
+                {
+                    _quitter = new DefaultApplicationQuitter();
+                }
+            }
         }
 
         private void OnSaveClicked()
@@ -174,6 +223,28 @@ namespace SevenCrowns.UI
             _onLoadRequested?.Invoke();
             // Close the menu after loading completes
             Hide();
+        }
+
+        private void OnQuitClicked()
+        {
+            // Hide first to avoid flicker while quitting (harmless in Editor)
+            Hide();
+            _quitter?.Quit();
+        }
+
+        /// <summary>
+        /// Default quitter implementation that calls Application.Quit, and stops play mode in Editor.
+        /// </summary>
+        private sealed class DefaultApplicationQuitter : IApplicationQuitter
+        {
+            public void Quit()
+            {
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+#else
+                Application.Quit();
+#endif
+            }
         }
     }
 }
