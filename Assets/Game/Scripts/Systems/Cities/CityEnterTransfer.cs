@@ -14,6 +14,9 @@ namespace SevenCrowns.Systems.Cities
         private static bool s_HasPopulation;
         private static WorldDate s_Date;
         private static bool s_HasDate;
+        private static string s_CityId;
+        private static string s_FactionId;
+        private static bool s_HasCity;
 
         public static void SetWalletSnapshot(Dictionary<string, int> amounts)
         {
@@ -30,6 +33,13 @@ namespace SevenCrowns.Systems.Cities
         {
             s_Date = date;
             s_HasDate = true;
+        }
+
+        public static void SetCityContext(string cityId, string factionId)
+        {
+            s_CityId = string.IsNullOrWhiteSpace(cityId) ? string.Empty : cityId.Trim();
+            s_FactionId = string.IsNullOrWhiteSpace(factionId) ? string.Empty : factionId.Trim();
+            s_HasCity = true;
         }
 
         public static bool TryConsumeWallet(out Dictionary<string, int> amounts)
@@ -54,6 +64,16 @@ namespace SevenCrowns.Systems.Cities
             s_HasDate = false;
             return had;
         }
+
+        public static bool TryConsumeCityContext(out string cityId, out string factionId)
+        {
+            cityId = s_CityId;
+            factionId = s_FactionId;
+            bool had = s_HasCity;
+            s_HasCity = false;
+            s_CityId = null;
+            s_FactionId = null;
+            return had;
+        }
     }
 }
-

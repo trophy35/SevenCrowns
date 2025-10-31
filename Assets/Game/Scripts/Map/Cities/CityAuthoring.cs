@@ -25,6 +25,8 @@ namespace SevenCrowns.Map.Cities
 
         [Header("City Data")]
         [SerializeField] private CityLevel _level = CityLevel.City;
+        [Tooltip("Faction identifier this city belongs to (e.g., 'faction.knight').")]
+        [SerializeField] private string _factionId = "faction.knight";
 
         [Header("Flag Visuals")] 
         [Tooltip("Optional parent transform for the spawned flag GameObject. When null, parent is this transform.")]
@@ -93,6 +95,7 @@ namespace SevenCrowns.Map.Cities
         {
             CacheAuthoredPosition();
             EnsureNodeId();
+            _factionId = NormalizeId(_factionId);
             if (!Application.isPlaying)
             {
                 ResolveEntryCoord();
@@ -119,6 +122,13 @@ namespace SevenCrowns.Map.Cities
             {
                 _nodeId = _nodeId.Trim();
             }
+        }
+
+        private static string NormalizeId(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return string.Empty;
+            id = id.Trim();
+            return id.Replace(' ', '.');
         }
 
         private void RegisterSelf()
@@ -421,6 +431,10 @@ namespace SevenCrowns.Map.Cities
         }
 
         public event Action<CityAuthoring> Claimed;
+
+        /// <summary>
+        /// Gets the faction id this city belongs to (normalized, case-sensitive compare by Ordinal).
+        /// </summary>
+        public string FactionId => _factionId;
     }
 }
-

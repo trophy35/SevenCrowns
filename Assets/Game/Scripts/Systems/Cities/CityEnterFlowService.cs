@@ -20,6 +20,31 @@ namespace SevenCrowns.Systems.Cities
             // Capture current wallet, time, and population to seed the City scene HUD
             try
             {
+                // Determine city faction id (optional)
+                string factionId = string.Empty;
+                if (!string.IsNullOrWhiteSpace(cityId))
+                {
+                    if (SevenCrowns.Map.Cities.CityAuthoring.TryGetNode(cityId, out var authoring) && authoring != null)
+                    {
+                        factionId = authoring.FactionId;
+                    }
+                    else
+                    {
+                        // Fallback: try provider -> authoring lookup by coord (best-effort)
+                        SevenCrowns.Map.Cities.ICityNodeProvider cities = null;
+                        var behavioursForCity = FindObjectsOfType<MonoBehaviour>(true);
+                        for (int i = 0; i < behavioursForCity.Length && cities == null; i++)
+                        {
+                            if (behavioursForCity[i] is SevenCrowns.Map.Cities.ICityNodeProvider p) cities = p;
+                        }
+                        if (cities != null && cities.TryGetById(cityId, out var desc) && SevenCrowns.Map.Cities.CityAuthoring.TryGetNode(desc.NodeId, out var auth2) && auth2 != null)
+                        {
+                            factionId = auth2.FactionId;
+                        }
+                    }
+                }
+                CityEnterTransfer.SetCityContext(cityId ?? string.Empty, factionId ?? string.Empty);
+
                 var behaviours = FindObjectsOfType<MonoBehaviour>(true);
                 // Wallet snapshot
                 SevenCrowns.Systems.Save.IResourceWalletSnapshotProvider walletSnap = null;

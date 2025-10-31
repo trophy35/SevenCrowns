@@ -332,6 +332,57 @@ MonoBehaviour:
   _createTimeIfMissing: 1
   _createPopulationIfMissing: 1
   _debugLogs: 0
+--- !u!1 &1551163250
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1551163252}
+  - component: {fileID: 1551163251}
+  m_Layer: 0
+  m_Name: CityRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1551163251
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1551163250}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fa504f487810b5428c811ea5e2ff4f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _mappings:
+  - factionId: faction.knight
+    prefab: {fileID: 8417322845898764570, guid: 7db9a0dfda6edcf43ae1df1e22b6b1df, type: 3}
+  - factionId: faction.dead
+    prefab: {fileID: 4144708053543435640, guid: 4cb8342421ec92c408f258b3e6473daf, type: 3}
+  _parent: {fileID: 0}
+  _debugLogs: 0
+--- !u!4 &1551163252
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1551163250}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1711531492
 GameObject:
   m_ObjectHideFlags: 0
@@ -677,3 +728,4 @@ SceneRoots:
   - {fileID: 1889751200}
   - {fileID: 1711531495}
   - {fileID: 368486976}
+  - {fileID: 1551163252}
