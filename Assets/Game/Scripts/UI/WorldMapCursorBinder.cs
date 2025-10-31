@@ -27,11 +27,14 @@ namespace SevenCrowns.UI.CursorSystem
         [SerializeField] private int _hoverPriority = 100;
         [SerializeField] private int _movePriority = 10;
         [SerializeField] private int _collectPriority = 60;
+        [SerializeField] private int _enterPriority = 65;
 
         private IWorldCursorHintSource _source;
+        private IWorldCursorEnterHintSource _enterSource;
         private const string TagHover = "map-hover-hero";
         private const string TagMove = "map-move-hint";
         private const string TagCollect = "map-collect-hint";
+        private const string TagEnter = "map-enter-hint";
 
         [Header("Discovery")]
         [SerializeField, Tooltip("Auto-discover a hint source if none assigned.")]
@@ -67,6 +70,11 @@ namespace SevenCrowns.UI.CursorSystem
                 _source.CursorHintsChanged -= OnHintsChanged;
                 _source = null;
             }
+            if (_enterSource != null)
+            {
+                _enterSource.EnterHintChanged -= OnEnterChanged;
+                _enterSource = null;
+            }
             // Clear any overrides we may have set
             var cm = CursorManager.Instance;
             if (cm != null)
@@ -74,6 +82,7 @@ namespace SevenCrowns.UI.CursorSystem
                 cm.Clear(TagHover);
                 cm.Clear(TagMove);
                 cm.Clear(TagCollect);
+                cm.Clear(TagEnter);
             }
         }
 
@@ -111,6 +120,28 @@ namespace SevenCrowns.UI.CursorSystem
                 _source.CursorHintsChanged += OnHintsChanged;
                 OnHintsChanged(_source.HoveringHero, _source.MoveHint, _source.CollectHint);
             }
+            // Bind optional enter-hint source (implemented by ClickToMoveController)
+            if (_enterSource == null)
+            {
+                if (_hintSourceBehaviour != null && _hintSourceBehaviour is IWorldCursorEnterHintSource es)
+                {
+                    _enterSource = es;
+                }
+                else
+                {
+                    var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+                    for (int i = 0; i < behaviours.Length && _enterSource == null; i++)
+                    {
+                        if (behaviours[i] is IWorldCursorEnterHintSource es2)
+                            _enterSource = es2;
+                    }
+                }
+                if (_enterSource != null)
+                {
+                    _enterSource.EnterHintChanged += OnEnterChanged;
+                    OnEnterChanged(_enterSource.EnterHint);
+                }
+            }
         }
 
         private void OnHintsChanged(bool hoverHero, bool moveHint, bool collectHint)
@@ -121,6 +152,13 @@ namespace SevenCrowns.UI.CursorSystem
             if (hoverHero) cm.Set(CursorState.Hover, _hoverPriority, TagHover); else cm.Clear(TagHover);
             if (collectHint) cm.Set(CursorState.Collect, _collectPriority, TagCollect); else cm.Clear(TagCollect);
             if (moveHint) cm.Set(CursorState.Move, _movePriority, TagMove); else cm.Clear(TagMove);
+        }
+
+        private void OnEnterChanged(bool enterHint)
+        {
+            var cm = CursorManager.Instance;
+            if (cm == null) return;
+            if (enterHint) cm.Set(CursorState.Enter, _enterPriority, TagEnter); else cm.Clear(TagEnter);
         }
     }
 }

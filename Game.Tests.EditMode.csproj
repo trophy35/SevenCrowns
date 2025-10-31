@@ -71,6 +71,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\ResourceAmountHudViewTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinderTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ResourceTooltipStateTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityOccupancyServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Farms\FarmNodeServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Save\WorldMapCameraSelectionFogTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgentTests.cs" />

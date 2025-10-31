@@ -12,7 +12,7 @@ namespace SevenCrowns.Map
     /// Uses Grid.WorldToCell (no physics) and a cached A* pathfinder.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class ClickToMoveController : MonoBehaviour, IWorldCursorHintSource, IWorldTooltipHintSource
+    public sealed class ClickToMoveController : MonoBehaviour, IWorldCursorHintSource, IWorldTooltipHintSource, IWorldCursorEnterHintSource
     {
         [Header("Wiring")]
         [SerializeField] private Camera _camera;
@@ -33,6 +33,8 @@ namespace SevenCrowns.Map
         [SerializeField] private MonoBehaviour _mineProviderBehaviour;     // Optional; must implement IMineNodeProvider
         [SerializeField] private MonoBehaviour _farmProviderBehaviour;     // Optional; must implement IFarmNodeProvider
         [SerializeField] private MonoBehaviour _cityProviderBehaviour;     // Optional; must implement ICityNodeProvider
+        [SerializeField] private MonoBehaviour _cityOccupancyBehaviour;    // Optional; must implement ICityOccupancyProvider
+        [SerializeField] private MonoBehaviour _cityEnterFlowBehaviour;    // Optional; must implement ICityEnterFlow
 
         [Header("Tooltip")]
         [SerializeField, Min(0f)] private float _resourceTooltipDelay = 2f;
@@ -43,6 +45,8 @@ namespace SevenCrowns.Map
         private SevenCrowns.Map.Mines.IMineNodeProvider _mineProvider;
         private SevenCrowns.Map.Farms.IFarmNodeProvider _farmProvider;
         private SevenCrowns.Map.Cities.ICityNodeProvider _cityProvider;
+        private ICityOccupancyProvider _cityOccupancy;
+        private ICityEnterFlow _cityEnterFlow;
         private string _currentHeroId;
 
         [Header("Movement")]
@@ -112,6 +116,12 @@ namespace SevenCrowns.Map
         private GridCoord _hoveredCityApproach;
         private SevenCrowns.Map.Cities.CityNodeDescriptor _hoveredCityDescriptor;
         private int _hoveredCityPathLength;
+        private bool _hoveredCityEnterAvailable;
+        private bool _hoveredCityEnterReachable;
+        private GridCoord _hoveredCityEnterCoord;
+        private GridCoord _hoveredCityEnterApproach;
+        private SevenCrowns.Map.Cities.CityNodeDescriptor _hoveredCityEnterDescriptor;
+        private int _hoveredCityEnterPathLength;
         private bool _hoveredFarmAvailable;
         private bool _hoveredFarmReachable;
         private GridCoord _hoveredFarmCoord;
@@ -122,6 +132,7 @@ namespace SevenCrowns.Map
         private string _pendingMineNodeId;
         private string _pendingFarmNodeId;
         private string _pendingCityNodeId;
+        private string _pendingEnterCityNodeId;
         private bool _hasCachedGoal;
         private GridCoord _cachedGoalCell;
         private bool _cachedMoveHint;
@@ -153,9 +164,12 @@ namespace SevenCrowns.Map
         private FarmTooltipState _farmTooltipState;
         private MineTooltipState _mineTooltipState;
         private WorldTooltipHint _currentTooltipHint;
+        private bool _lastEnterHint;
         public bool HoveringHero => _lastHoverHero;
         public bool MoveHint => _lastMoveHint;
         public bool CollectHint => _lastCollectHint;
+        public bool EnterHint => _lastEnterHint;
+        public event Action<bool> EnterHintChanged;
         public WorldTooltipHint CurrentTooltipHint => _currentTooltipHint;
 
         public event Action<WorldTooltipHint> TooltipHintChanged;
@@ -258,6 +272,34 @@ namespace SevenCrowns.Map
                 }
             }
 
+            // Bind city occupancy if supplied or discoverable
+            if (_cityOccupancyBehaviour != null && _cityOccupancyBehaviour is ICityOccupancyProvider cityOcc)
+            {
+                _cityOccupancy = cityOcc;
+            }
+            else
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _cityOccupancy == null; i++)
+                {
+                    if (behaviours[i] is ICityOccupancyProvider occ2) _cityOccupancy = occ2;
+                }
+            }
+
+            // Bind city enter flow if supplied or discoverable
+            if (_cityEnterFlowBehaviour != null && _cityEnterFlowBehaviour is ICityEnterFlow flow)
+            {
+                _cityEnterFlow = flow;
+            }
+            else
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _cityEnterFlow == null; i++)
+                {
+                    if (behaviours[i] is ICityEnterFlow f) _cityEnterFlow = f;
+                }
+            }
+
             // Bind resource wallet if supplied or discoverable
             if (_resourceWalletBehaviour != null && _resourceWalletBehaviour is IResourceWallet walletBehaviour)
             {
@@ -273,9 +315,9 @@ namespace SevenCrowns.Map
             }
 
             // Bind occupancy provider if supplied or discoverable
-            if (_occupancyBehaviour != null && _occupancyBehaviour is IGridOccupancyProvider occ)
+            if (_occupancyBehaviour != null && _occupancyBehaviour is IGridOccupancyProvider gridOcc)
             {
-                _occupancy = occ;
+                _occupancy = gridOcc;
             }
             else
             {
@@ -500,6 +542,11 @@ namespace SevenCrowns.Map
                         TryClaimCity(_hoveredCityDescriptor);
                         return;
                     }
+                    if (_hoveredCityEnterAvailable && _hoveredCityEnterReachable && _hero.Agent.Position.Equals(_hoveredCityEnterApproach))
+                    {
+                        TryEnterCity(_hoveredCityEnterDescriptor);
+                        return;
+                    }
                     return; // move/preview disabled otherwise
                 }
 
@@ -635,10 +682,12 @@ namespace SevenCrowns.Map
             bool clickedMine = _hoveredMineAvailable && rawGoal.Equals(_hoveredMineCoord);
             bool clickedFarm = _hoveredFarmAvailable && rawGoal.Equals(_hoveredFarmCoord);
             bool clickedCity = _hoveredCityAvailable && rawGoal.Equals(_hoveredCityCoord);
+            bool clickedEnterCity = _hoveredCityEnterAvailable && rawGoal.Equals(_hoveredCityEnterCoord);
             bool resourceReachable = clickedResource && _hoveredResourceReachable;
             bool mineReachable = clickedMine && _hoveredMineReachable;
             bool farmReachable = clickedFarm && _hoveredFarmReachable;
             bool cityReachable = clickedCity && _hoveredCityReachable;
+            bool enterReachable = clickedEnterCity && _hoveredCityEnterReachable;
             GridCoord effectiveGoal = rawGoal;
             if (clickedMine)
                 effectiveGoal = _hoveredMineApproach;
@@ -646,6 +695,8 @@ namespace SevenCrowns.Map
                 effectiveGoal = _hoveredFarmApproach;
             else if (clickedCity)
                 effectiveGoal = _hoveredCityApproach;
+            else if (clickedEnterCity)
+                effectiveGoal = _hoveredCityEnterApproach;
             else if (clickedResource)
                 effectiveGoal = _hoveredResourceApproach;
 
@@ -658,9 +709,9 @@ namespace SevenCrowns.Map
                 DebugLogNeighbors("GoalNbrs", effectiveGoal);
             }
 
-            if (clickedResource || clickedMine || clickedFarm || clickedCity)
+            if (clickedResource || clickedMine || clickedFarm || clickedCity || clickedEnterCity)
             {
-                if ((clickedResource && !resourceReachable) || (clickedMine && !mineReachable) || (clickedFarm && !farmReachable) || (clickedCity && !cityReachable))
+                if ((clickedResource && !resourceReachable) || (clickedMine && !mineReachable) || (clickedFarm && !farmReachable) || (clickedCity && !cityReachable) || (clickedEnterCity && !enterReachable))
                 {
                     if (_debugLogs) Debug.Log("[ClickToMove] Resource goal is not currently reachable.");
                     return;
@@ -677,6 +728,7 @@ namespace SevenCrowns.Map
                     if (clickedMine) TryClaimMine(_hoveredMineDescriptor);
                     else if (clickedFarm) TryClaimFarm(_hoveredFarmDescriptor);
                     else if (clickedCity) TryClaimCity(_hoveredCityDescriptor);
+                    else if (clickedEnterCity) TryEnterCity(_hoveredCityEnterDescriptor);
                     else TryCollectResource(_hoveredResourceDescriptor);
                     return;
                 }
@@ -749,6 +801,7 @@ namespace SevenCrowns.Map
                 _pendingMineNodeId = clickedMine ? _hoveredMineDescriptor.NodeId : null;
                 _pendingFarmNodeId = clickedFarm ? _hoveredFarmDescriptor.NodeId : null;
                 _pendingCityNodeId = clickedCity ? _hoveredCityDescriptor.NodeId : null;
+                _pendingEnterCityNodeId = clickedEnterCity ? _hoveredCityEnterDescriptor.NodeId : null;
                 if (!string.IsNullOrEmpty(_currentHeroId))
                 {
                     _lastGoalByHeroId[_currentHeroId] = effectiveGoal;
@@ -787,6 +840,15 @@ namespace SevenCrowns.Map
                 }
                 if (_debugLogs && _cityProvider != null) Debug.Log("[ClickToMove] Late-bound ICityNodeProvider.");
             }
+            if (_cityOccupancy == null)
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _cityOccupancy == null; i++)
+                {
+                    if (behaviours[i] is ICityOccupancyProvider occ) _cityOccupancy = occ;
+                }
+                if (_debugLogs && _cityOccupancy != null) Debug.Log("[ClickToMove] Late-bound ICityOccupancyProvider.");
+            }
             if (_resourceProvider == null)
             {
                 behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
@@ -816,6 +878,7 @@ namespace SevenCrowns.Map
             _pendingResourceNodeId = null;
             _pendingMineNodeId = null;
             _pendingCityNodeId = null;
+            _pendingEnterCityNodeId = null;
             ClearResourceHintCache();
             ResetHoveredResource();
             HideTooltipImmediate();
@@ -963,6 +1026,13 @@ namespace SevenCrowns.Map
             _lastMoveHint = moveHint;
             _lastCollectHint = collectHint;
             CursorHintsChanged?.Invoke(_lastHoverHero, _lastMoveHint, _lastCollectHint);
+        }
+
+        private void SetEnterHint(bool enter)
+        {
+            if (_lastEnterHint == enter) return;
+            _lastEnterHint = enter;
+            EnterHintChanged?.Invoke(_lastEnterHint);
         }
 
         public event System.Action<bool, bool, bool> CursorHintsChanged;
@@ -1204,7 +1274,7 @@ namespace SevenCrowns.Map
             ResetHoveredCity();
             }
 
-            // City hover
+            // City hover - claim
             if (_cityProvider != null && hasGoal && _cityProvider.TryGetByCoord(goal, out var cityDesc) && cityDesc.IsValid && cityDesc.EntryCoord.HasValue && !cityDesc.IsOwned)
             {
                 var cityCoord = cityDesc.EntryCoord.Value;
@@ -1255,6 +1325,64 @@ namespace SevenCrowns.Map
             else
             {
                 ResetHoveredCity();
+            }
+
+            
+
+            // City hover - enter (owned + free)
+            if (_cityProvider != null && _cityOccupancy != null && hasGoal && _cityProvider.TryGetByCoord(goal, out var cityEnterDesc) && cityEnterDesc.IsValid && cityEnterDesc.EntryCoord.HasValue && cityEnterDesc.IsOwned && !_cityOccupancy.IsOccupied(cityEnterDesc.NodeId))
+            {
+                var entryCoord = cityEnterDesc.EntryCoord.Value;
+                _hoveredCityEnterAvailable = true;
+                _hoveredCityEnterDescriptor = cityEnterDesc;
+                _hoveredCityEnterCoord = entryCoord;
+
+                var heroPos3 = _hero.Agent.Position;
+                bool needsRecomputeEnter = !_cityHintCached
+                                           || !string.Equals(_cityHintNodeId, cityEnterDesc.NodeId, System.StringComparison.Ordinal)
+                                           || !_cityHintHeroCoord.Equals(heroPos3);
+                if (needsRecomputeEnter)
+                {
+                    if (TryResolveApproach(entryCoord, out var approachEnter, out var pathLenEnter))
+                    {
+                        _hoveredCityEnterReachable = true;
+                        _hoveredCityEnterApproach = approachEnter;
+                        _hoveredCityEnterPathLength = pathLenEnter;
+
+                        _cityHintReachable = true;
+                        _cityHintApproach = approachEnter;
+                        _cityHintPathLength = pathLenEnter;
+                    }
+                    else
+                    {
+                        _hoveredCityEnterReachable = false;
+                        _hoveredCityEnterApproach = default;
+                        _hoveredCityEnterPathLength = 0;
+
+                        _cityHintReachable = false;
+                        _cityHintApproach = default;
+                        _cityHintPathLength = 0;
+                    }
+                    _cityHintCached = true;
+                    _cityHintHeroCoord = heroPos3;
+                    _cityHintNodeId = cityEnterDesc.NodeId;
+                }
+                else
+                {
+                    _hoveredCityEnterReachable = _cityHintReachable;
+                    _hoveredCityEnterApproach = _cityHintApproach;
+                    _hoveredCityEnterPathLength = _cityHintPathLength;
+                }
+
+                bool enterVisible = _hoveredCityEnterReachable && (_hoveredCityEnterApproach.Equals(_hero.Agent.Position) || IsGoalVisible(_hoveredCityEnterApproach));
+                SetEnterHint(enterVisible && goalVisible && goal.Equals(_hoveredCityEnterCoord));
+                if (enterVisible)
+                    anyHint = true;
+            }
+            else
+            {
+                ResetHoveredCityEnter();
+                SetEnterHint(false);
             }
 
             return anyHint;
@@ -1531,6 +1659,16 @@ namespace SevenCrowns.Map
             _hoveredCityPathLength = 0;
         }
 
+        private void ResetHoveredCityEnter()
+        {
+            _hoveredCityEnterAvailable = false;
+            _hoveredCityEnterReachable = false;
+            _hoveredCityEnterDescriptor = default;
+            _hoveredCityEnterCoord = default;
+            _hoveredCityEnterApproach = default;
+            _hoveredCityEnterPathLength = 0;
+        }
+
         private void ClearResourceHintCache()
         {
             _resourceHintCached = false;
@@ -1654,6 +1792,44 @@ namespace SevenCrowns.Map
             _hasPreview = false;
             _pendingCityNodeId = null;
             ResetHoveredCity();
+        }
+
+        private void TryEnterCity(SevenCrowns.Map.Cities.CityNodeDescriptor descriptor)
+        {
+            if (!descriptor.IsValid || !descriptor.IsOwned)
+                return;
+
+            if (_cityOccupancy == null)
+                return;
+
+            // Resolve current hero id
+            var heroId = _currentHeroId;
+            if (string.IsNullOrEmpty(heroId) && _hero != null)
+            {
+                var idComp = _hero.GetComponent<HeroIdentity>();
+                if (idComp != null) heroId = idComp.HeroId;
+            }
+
+            if (string.IsNullOrEmpty(heroId))
+                return;
+
+            if (!_cityOccupancy.TryEnter(descriptor.NodeId, heroId))
+                return;
+
+            _preview?.Clear();
+            _hasPreview = false;
+            _pendingEnterCityNodeId = null;
+            ResetHoveredCityEnter();
+
+            if (_cityEnterFlow != null)
+            {
+                _cityEnterFlow.EnterCity(descriptor.NodeId, heroId);
+            }
+            else
+            {
+                // Fallback when no flow service is available (no fader)
+                UnityEngine.SceneManagement.SceneManager.LoadScene("City");
+            }
         }
 
         private void ClearCityHintCache()

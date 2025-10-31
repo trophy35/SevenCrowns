@@ -69,6 +69,7 @@
     <Compile Include="Assets\Game\Scripts\Map\Cities\CityNodeService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroIdentity.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Farms\FarmNodeService.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\ICityOccupancyProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ITileDataProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FarmTooltipState.cs" />
     <Compile Include="Assets\Game\Scripts\Map\WorldTooltipHint.cs" />
@@ -79,6 +80,7 @@
     <Compile Include="Assets\Game\Scripts\Map\IMapMovementService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Resources\IResourceNodeProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\HeroAgentComponent.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\ICityEnterFlow.cs" />
     <Compile Include="Assets\Game\Scripts\Map\AStarPathfinder.cs" />
     <Compile Include="Assets\Game\Scripts\Map\IGridOccupancyProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Cities\CityLevel.cs" />
@@ -99,6 +101,7 @@
     <Compile Include="Assets\Game\Scripts\Map\PathPreviewRenderer.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ResourceTooltipState.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarState.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\IWorldCursorEnterHintSource.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Cities\ICityNodeProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarTilemapRenderer.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ResourceNodeAuthoring.cs" />
