@@ -53,6 +53,10 @@ namespace SevenCrowns.UI
 
         private void OnEnable()
         {
+            if (_population == null)
+            {
+                ResolvePopulation();
+            }
             if (_population != null)
             {
                 _population.PopulationChanged += OnPopulationChanged;

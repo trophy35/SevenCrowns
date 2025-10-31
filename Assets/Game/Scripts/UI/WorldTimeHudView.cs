@@ -50,6 +50,14 @@ namespace SevenCrowns.UI
         {
             if (_timeService != null)
             {
+                // ok
+            }
+            else
+            {
+                ResolveTimeService();
+            }
+            if (_timeService != null)
+            {
                 _timeService.DateChanged += OnDateChanged;
                 OnDateChanged(_timeService.CurrentDate);
             }

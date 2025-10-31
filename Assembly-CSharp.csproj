@@ -151,7 +151,6 @@
     <None Include="Assets\ModernWater2D\Resources\Shaders\surface sim\simulationSimple.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
     <None Include="Assets\ModernWater2D\Runtime\distance field\Jump Flood.shader" />
-    <None Include="Assets\AddressableAssetsData\link.xml" />
     <None Include="Assets\GUIPackCartoon\Demo\Shaders\GrayTint.shader" />
     <None Include="Assets\ModernWater2D\Runtime\distance field\UV Encoding.shader" />
     <None Include="Assets\ModernWater2D\Resources\Shaders\surface sim\renderOffset.shader" />

@@ -66,6 +66,10 @@ namespace SevenCrowns.UI
 
         private void OnEnable()
         {
+            if (_wallet == null)
+            {
+                ResolveWallet();
+            }
             if (_wallet != null)
             {
                 _wallet.ResourceChanged += OnResourceChanged;

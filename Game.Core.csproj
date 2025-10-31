@@ -66,6 +66,7 @@
     <Compile Include="Assets\Game\Scripts\Systems\PreloadRegistryAssetProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\LocalizationPreloadTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Save\InMemoryWorldMapPersistence.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\Cities\CityHudInitializer.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\PreloadRegistry.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Save\IWorldMapSaveService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\LifetimeContentService.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="Assets\Game\Scripts\Systems\BootLoaderController.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Population\PopulationService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\CurrentHeroService.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\Cities\CityEnterTransfer.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Save\JsonWorldMapSerializer.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\WorldTimeCounter.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\WorldTimeService.cs" />

@@ -79,6 +79,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ClickToMoveControllerCollectTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\HeroMapAgent_OccupancyTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\WorldTimeCounterTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityHudInitializerTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityNodeServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FogOfWarServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceWalletService_WoodTests.cs" />
