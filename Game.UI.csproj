@@ -89,6 +89,7 @@
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupService.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupOptionDefinition.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Utils\ButtonHoverColorTint.cs" />
     <Compile Include="Assets\Game\Scripts\UI\HeroPortraitView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\IUiAssetProvider.cs" />
   </ItemGroup>

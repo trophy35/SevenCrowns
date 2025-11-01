@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using SevenCrowns.Map.Resources;
+using SevenCrowns.Map;
 using SevenCrowns.UI;
 
 namespace SevenCrowns.Systems
@@ -258,6 +259,8 @@ namespace SevenCrowns.Systems
 
         private void TryPlayCollectSfx(string resourceId, int amount)
         {
+            if (WorldMapRestoreScope.IsRestoring)
+                return;
             if (amount <= 0)
                 return;
 
@@ -385,6 +388,8 @@ namespace SevenCrowns.Systems
 
         private void TryPlayCollectSfxGeneric(string resourceId)
         {
+            if (WorldMapRestoreScope.IsRestoring)
+                return;
             // Prefer configured per-resource mapping
             if (_sfxByResourceId.TryGetValue(resourceId, out var state) && state != null)
             {

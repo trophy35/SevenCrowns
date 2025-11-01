@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using SevenCrowns.Map;
+using SevenCrowns.Systems.Save;
 
 namespace SevenCrowns.Systems.Cities
 {
@@ -20,6 +21,22 @@ namespace SevenCrowns.Systems.Cities
             // Capture current wallet, time, and population to seed the City scene HUD
             try
             {
+                // Capture full WorldMap snapshot for exact restoration on return
+                // Serialize to bytes to keep transfer lightweight and version-tolerant.
+                try
+                {
+                    var readerForReturn = new WorldMapStateReader();
+                    var snapshot = readerForReturn.Capture();
+                    var data = JsonWorldMapSerializer.Serialize(snapshot);
+                    WorldMapReturnTransfer.SetSnapshot(data);
+                    if (_debugLogs)
+                        Debug.Log($"[CityEnterFlow] Captured world snapshot: {data?.Length ?? 0} bytes", this);
+                }
+                catch
+                {
+                    if (_debugLogs)
+                        Debug.Log("[CityEnterFlow] Failed to capture world snapshot for return.", this);
+                }
                 // Determine city faction id (optional)
                 string factionId = string.Empty;
                 if (!string.IsNullOrWhiteSpace(cityId))

@@ -61,8 +61,10 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.39f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityExitFlowServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\PopupRequestTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\MapMovementServiceTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\ButtonHoverColorTintTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridCoordTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityProductionServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\MainMenuControllerTests.cs" />
@@ -71,6 +73,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\ResourceAmountHudViewTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinderTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\ResourceTooltipStateTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\WorldMapReturnTransferTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityOccupancyServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Farms\FarmNodeServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Save\WorldMapCameraSelectionFogTests.cs" />

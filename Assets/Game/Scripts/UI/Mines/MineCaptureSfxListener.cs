@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using SevenCrowns.Map.Mines;
+using SevenCrowns.Map;
 
 namespace SevenCrowns.UI
 {
@@ -116,6 +117,8 @@ namespace SevenCrowns.UI
 
         private void OnMineClaimed(MineAuthoring mine)
         {
+            if (WorldMapRestoreScope.IsRestoring)
+                return;
             if (_audio == null) EnsureAudioSource();
             if (_clip == null && _provider != null)
             {
@@ -128,4 +131,3 @@ namespace SevenCrowns.UI
         }
     }
 }
-

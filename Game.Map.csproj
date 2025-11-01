@@ -105,6 +105,7 @@
     <Compile Include="Assets\Game\Scripts\Map\Cities\ICityNodeProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\FogOfWarTilemapRenderer.cs" />
     <Compile Include="Assets\Game\Scripts\Map\ResourceNodeAuthoring.cs" />
+    <Compile Include="Assets\Game\Scripts\Map\WorldMapRestoreScope.cs" />
     <Compile Include="Assets\Game\Scripts\Map\FogOfWar\IFogOfWarService.cs" />
     <Compile Include="Assets\Game\Scripts\Map\Mines\IMineNodeProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Map\MineTooltipState.cs" />
