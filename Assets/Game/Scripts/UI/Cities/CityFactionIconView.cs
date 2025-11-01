@@ -43,10 +43,15 @@ namespace SevenCrowns.UI.Cities
 
         private void OnEnable()
         {
-            TryBind(immediate: false);
-            if ((_assets == null || _provider == null) && _waitProviderRoutine == null && _waitForProviderTimeout > 0f)
+            // In Edit Mode tests, avoid coroutines and bind immediately to prevent editor assertions.
+            bool immediate = !Application.isPlaying;
+            TryBind(immediate: immediate);
+            if (!immediate)
             {
-                _waitProviderRoutine = StartCoroutine(WaitForServicesThenBind());
+                if ((_assets == null || _provider == null) && _waitProviderRoutine == null && _waitForProviderTimeout > 0f)
+                {
+                    _waitProviderRoutine = StartCoroutine(WaitForServicesThenBind());
+                }
             }
         }
 
@@ -136,18 +141,35 @@ namespace SevenCrowns.UI.Cities
             var key = string.Format(string.IsNullOrEmpty(_spriteKeyFormat) ? "{0}" : _spriteKeyFormat, id);
             if (_debugLogs) Debug.Log($"[CityFactionIconView] Resolving sprite key='{key}' (factionId='{factionId}', normalized='{id}')", this);
 
-            if (_assets.TryGetSprite(key, out var sprite) && sprite != null)
+            // In Edit Mode (not playing), prefer local mapping first to avoid cross-test leakage of providers.
+            if (!Application.isPlaying)
             {
-                _image.sprite = sprite;
-                return;
+                if (TryResolveFromLocalMapping(id, out var localSpriteEdit) && localSpriteEdit != null)
+                {
+                    _image.sprite = localSpriteEdit;
+                    if (_debugLogs) Debug.Log($"[CityFactionIconView] (EditMode) Using local fallback mapping for factionId='{id}'.", this);
+                    return;
+                }
+                if (_assets != null && _assets.TryGetSprite(key, out var spriteEdit) && spriteEdit != null)
+                {
+                    _image.sprite = spriteEdit;
+                    return;
+                }
             }
-
-            // Try local mapping as a no-provider/editor-friendly fallback
-            if (TryResolveFromLocalMapping(id, out var localSprite) && localSprite != null)
+            else
             {
-                _image.sprite = localSprite;
-                if (_debugLogs) Debug.Log($"[CityFactionIconView] Using local fallback mapping for factionId='{id}'.", this);
-                return;
+                if (_assets != null && _assets.TryGetSprite(key, out var sprite) && sprite != null)
+                {
+                    _image.sprite = sprite;
+                    return;
+                }
+                // Try local mapping as a no-provider/editor-friendly fallback
+                if (TryResolveFromLocalMapping(id, out var localSprite) && localSprite != null)
+                {
+                    _image.sprite = localSprite;
+                    if (_debugLogs) Debug.Log($"[CityFactionIconView] Using local fallback mapping for factionId='{id}'.", this);
+                    return;
+                }
             }
 
             if (_fallback != null) _image.sprite = _fallback;

@@ -58,15 +58,26 @@ namespace SevenCrowns.Tests.EditMode.UI.Cities
                 var img = root.AddComponent<Image>();
                 var view = root.AddComponent<CityFactionIconView>();
 
-                // Act
-                view.SendMessage("OnEnable");
+                // Act: invoke lifecycle via reflection to avoid Unity editor assertions on SendMessage
+                var awake = typeof(CityFactionIconView).GetMethod("Awake", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                var onEnable = typeof(CityFactionIconView).GetMethod("OnEnable", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                awake!.Invoke(view, null);
+                onEnable!.Invoke(view, null);
 
                 // Assert
                 Assert.That(img.sprite, Is.Not.Null);
             }
             finally
             {
+                // Cleanup all objects created by the test to avoid cross-test leakage
                 Object.DestroyImmediate(root);
+                foreach (var go in Object.FindObjectsOfType<GameObject>())
+                {
+                    if (go.name == "Assets" || go.name == "Provider")
+                    {
+                        Object.DestroyImmediate(go);
+                    }
+                }
             }
         }
 
@@ -99,8 +110,11 @@ namespace SevenCrowns.Tests.EditMode.UI.Cities
                 arr.SetValue(entry, 0);
                 field.SetValue(view, arr);
 
-                // Act
-                view.SendMessage("OnEnable");
+                // Act: invoke lifecycle via reflection to avoid Unity editor assertions on SendMessage
+                var awake = typeof(CityFactionIconView).GetMethod("Awake", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                var onEnable = typeof(CityFactionIconView).GetMethod("OnEnable", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                awake!.Invoke(view, null);
+                onEnable!.Invoke(view, null);
 
                 // Assert: sprite applied from local mapping
                 Assert.That(img.sprite, Is.Not.Null);
@@ -109,6 +123,13 @@ namespace SevenCrowns.Tests.EditMode.UI.Cities
             finally
             {
                 Object.DestroyImmediate(root);
+                foreach (var go in Object.FindObjectsOfType<GameObject>())
+                {
+                    if (go.name == "Assets" || go.name == "Provider")
+                    {
+                        Object.DestroyImmediate(go);
+                    }
+                }
             }
         }
 
