@@ -61,6 +61,15 @@ namespace SevenCrowns.Systems.Cities
                     }
                 }
                 CityEnterTransfer.SetCityContext(cityId ?? string.Empty, factionId ?? string.Empty);
+                // Provide a display name key: prefer explicit mapping if available later; default to city id
+                try
+                {
+                    var nameKey = string.IsNullOrWhiteSpace(cityId) ? string.Empty : cityId.Trim();
+                    CityEnterTransfer.SetCityNameKey(nameKey);
+                    if (_debugLogs)
+                        Debug.Log($"[CityEnterFlow] SetCityContext id='{cityId}' faction='{factionId}' nameKey='{nameKey}'.", this);
+                }
+                catch { /* non-fatal */ }
 
                 var behaviours = FindObjectsOfType<MonoBehaviour>(true);
                 // Wallet snapshot

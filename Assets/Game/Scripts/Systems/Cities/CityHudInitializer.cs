@@ -1,6 +1,7 @@
 using UnityEngine;
 using SevenCrowns.Map.Resources;
 using SevenCrowns.Systems;
+using SevenCrowns.UI.Cities;
 
 namespace SevenCrowns.Systems.Cities
 {
@@ -13,7 +14,7 @@ namespace SevenCrowns.Systems.Cities
     /// Place one instance in the City scene on a Core object.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class CityHudInitializer : MonoBehaviour
+    public sealed class CityHudInitializer : MonoBehaviour, ICityNameKeyProvider
     {
         [Header("Auto-Create")]
         [SerializeField] private bool _createWalletIfMissing = true;
@@ -28,6 +29,25 @@ namespace SevenCrowns.Systems.Cities
             EnsureTimeService();
             EnsurePopulation();
             ApplyTransferIfAvailable();
+            if (_debugLogs)
+            {
+                if (CityEnterTransfer.TryPeekCityContext(out var cid, out var fid))
+                {
+                    Debug.Log($"[CityHudInit] Peek city context: cityId='{cid}' factionId='{fid}'.", this);
+                }
+                else
+                {
+                    Debug.Log("[CityHudInit] No city context available.", this);
+                }
+                if (CityEnterTransfer.TryPeekCityNameKey(out var nameKey))
+                {
+                    Debug.Log($"[CityHudInit] Peek city name key: '{nameKey}'.", this);
+                }
+                else
+                {
+                    Debug.Log("[CityHudInit] No city name key available.", this);
+                }
+            }
         }
 
         private void EnsureWallet()
@@ -166,6 +186,30 @@ namespace SevenCrowns.Systems.Cities
                     Debug.Log("[CityHudInit] No IWorldTimeService found to apply date.", this);
                 }
             }
+        }
+
+        // ICityNameKeyProvider
+        public bool TryGetCityNameKey(out string cityNameKey)
+        {
+            var ok = SevenCrowns.Systems.Cities.CityEnterTransfer.TryPeekCityNameKey(out cityNameKey);
+            if (_debugLogs)
+                Debug.Log($"[CityHudInit] TryGetCityNameKey -> {ok} key='{cityNameKey}'.", this);
+            return ok;
+        }
+
+        public bool TryGetCityId(out string cityId)
+        {
+            if (SevenCrowns.Systems.Cities.CityEnterTransfer.TryPeekCityContext(out var id, out _))
+            {
+                cityId = id;
+                if (_debugLogs)
+                    Debug.Log($"[CityHudInit] TryGetCityId -> true id='{cityId}'.", this);
+                return true;
+            }
+            cityId = null;
+            if (_debugLogs)
+                Debug.Log("[CityHudInit] TryGetCityId -> false (no context).", this);
+            return false;
         }
     }
 }

@@ -35,11 +35,12 @@ namespace SevenCrowns.Systems.Cities
 
         private void TryShowFromTransfer()
         {
-            if (CityEnterTransfer.TryConsumeCityContext(out var cityId, out var factionId))
+            // Use peek to avoid clearing context needed by other UI (e.g., CityNameView)
+            if (CityEnterTransfer.TryPeekCityContext(out var cityId, out var factionId))
             {
                 if (_debugLogs)
                 {
-                    Debug.Log($"[CityFactionUI] City='{cityId}' Faction='{factionId}'", this);
+                    Debug.Log($"[CityFactionUI] (peek) City='{cityId}' Faction='{factionId}'", this);
                 }
                 ShowForFaction(factionId);
             }

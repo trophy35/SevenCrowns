@@ -65,6 +65,7 @@
     <Compile Include="Assets\Game\Scripts\UI\WorldTime\IWorldTimeService.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldTime\WorldDate.cs" />
     <Compile Include="Assets\Game\Scripts\UI\ICurrentHeroPortraitKeyProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\ICityNameKeyProvider.cs" />
     <Compile Include="Assets\Game\Scripts\UI\VersionLabel.cs" />
     <Compile Include="Assets\Game\Scripts\UI\HeroLevelView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldTimeHudView.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorSet.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\IPopupService.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldMapRadialMenuController.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\CityNameView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupRequest.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorState.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupOptionIds.cs" />

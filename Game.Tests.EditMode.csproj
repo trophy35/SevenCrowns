@@ -85,6 +85,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityHudInitializerTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityNodeServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FogOfWarServiceTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\Cities\CityNameViewTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceWalletService_WoodTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\Cities\CityFactionUiControllerTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\AStarPathfinder_OccupancyTests.cs" />
