@@ -1,0 +1,611 @@
+                    Debug.Log($"[ClickToMove][Hover] coord={hoveredCoord} visible={hoveredVisible} overUI={overUI} mineHere={mineHere} cityHere={cityHere}");
+                }
+            }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                // Try selecting a hero first if a selection service is present
+                if (_selection != null && TryPickHeroUnderMouse(out var heroId))
+                {
+                    _selection.SelectById(heroId);
+                    return;
+                }
+
+                if (_hero == null || _isMoving) return;
+
+                // Allow immediate interaction (collect/claim) even when move mode is disabled
+                if (!_moveModeEnabled)
+                {
+                    if (_hoveredResourceAvailable && _hoveredResourceReachable && _hero.Agent.Position.Equals(_hoveredResourceApproach))
+                    {
+                        TryCollectResource(_hoveredResourceDescriptor);
+                        return;
+                    }
+                    if (_hoveredMineAvailable && _hoveredMineReachable && _hero.Agent.Position.Equals(_hoveredMineApproach))
+                    {
+                        TryClaimMine(_hoveredMineDescriptor);
+                        return;
+                    }
+                    if (_hoveredFarmAvailable && _hoveredFarmReachable && _hero.Agent.Position.Equals(_hoveredFarmApproach))
+                    {
+                        TryClaimFarm(_hoveredFarmDescriptor);
+                        return;
+                    }
+                    if (_hoveredCityAvailable && _hoveredCityReachable && _hero.Agent.Position.Equals(_hoveredCityApproach))
+                    {
+                        TryClaimCity(_hoveredCityDescriptor);
+                        return;
+                    }
+                    if (_hoveredCityEnterAvailable && _hoveredCityEnterReachable && _hero.Agent.Position.Equals(_hoveredCityEnterApproach))
+                    {
+                        TryEnterCity(_hoveredCityEnterDescriptor);
+                        return;
+                    }
+                    return; // move/preview disabled otherwise
+                }
+
+                BuildPathfinderIfNeeded(log: _debugLogs);
+                if (_pf == null)
+                {
+                    if (_debugLogs) Debug.Log("[ClickToMove] Pathfinder not ready: provider bounds are empty. Is the ground Tilemap empty?");
+                    return;
+                }
+                HandleLeftClick();
+            }
+            else if (Input.GetMouseButtonDown(1))
+            {
+                if (_hero == null) return;
+                HandleRightClick();
+            }
+        }
+
+        /// <summary>
+        /// Enables move mode. If a previous path preview exists, it will be shown again.
+        /// </summary>
+        public void EnableMoveMode()
+        {
+            _moveModeEnabled = true;
+            // If we have a pending preview from last time, re-show it now.
+            if (_hasPreview && _pendingPath != null && _pendingPath.Count > 1)
+            {
+                int payableSteps = ComputePayableSteps(_pendingPath);
+                _preview?.Show(_pendingPath, payableSteps);
+            }
+            else if (!string.IsNullOrEmpty(_currentHeroId) && _lastGoalByHeroId.TryGetValue(_currentHeroId, out var lastGoal))
+            {
+                BuildPathfinderIfNeeded(log: _debugLogs);
+                if (_pf != null && _hero != null && _hero.Agent != null)
+                {
+                    var start = _hero.Agent.Position;
+                    if (!start.Equals(lastGoal))
+                    {
+                        var path = _pf.GetPath(start, lastGoal, _allowedMoves);
+                        if (path != null && path.Count > 0)
+                        {
+                            int payableSteps = ComputePayableSteps(path);
+                            _preview?.Show(path, payableSteps);
+                            _pendingPath = path;
+                            _pendingGoal = lastGoal;
+                            _pendingStart = start;
+                            _hasPreview = true;
+                            if (_debugLogs) Debug.Log($"[ClickToMove] Restored preview for hero={_currentHeroId} to lastGoal={lastGoal}");
+                        }
+                    }
+                }
+            }
+            if (_debugLogs) Debug.Log("[ClickToMove] Move mode ENABLED");
+        }
+
+        /// <summary>
+        /// Disables move mode and hides any currently rendered preview (but keeps the last preview data in memory).
+        /// </summary>
+        public void DisableMoveMode()
+        {
+            _moveModeEnabled = false;
+            _preview?.Clear();
+            if (_debugLogs) Debug.Log("[ClickToMove] Move mode DISABLED");
+        }
+
+        /// <summary>
+        /// Sets move mode enabled/disabled.
+        /// </summary>
+        public void SetMoveModeEnabled(bool enabled)
+        {
+            if (enabled) EnableMoveMode(); else DisableMoveMode();
+        }
+
+        /// <summary>
+        /// Toggles move mode state.
+        /// </summary>
+        public void ToggleMoveMode()
+        {
+            SetMoveModeEnabled(!_moveModeEnabled);
+        }
+
+        private bool TryPickHeroUnderMouse(out string heroId)
+        {
+            heroId = null;
+
+            var mouse = Input.mousePosition;
+            float depth = Mathf.Abs((_camera.transform.position - _grid.transform.position).z);
+            var world = _camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, depth));
+            var p = new Vector2(world.x, world.y);
+
+            Collider2D[] hits;
+            if (_heroLayer == 0)
+            {
+                // If no layer set, search all layers to be more forgiving in setup.
+                hits = Physics2D.OverlapPointAll(p);
+            }
+            else
+            {
+                hits = Physics2D.OverlapPointAll(p, _heroLayer);
+            }
+            for (int i = 0; i < hits.Length; i++)
+            {
+                var h = hits[i];
+                if (h == null) continue;
+                var id = h.GetComponentInParent<HeroIdentity>();
+                if (id != null && !string.IsNullOrWhiteSpace(id.HeroId))
+                {
+                    heroId = id.HeroId;
+                    return true;
+                }
+            }
+            //if (_debugLogs) Debug.Log("[ClickToMove] No hero detected under cursor.");
+            return false;
+        }
+
+        private bool IsGoalVisible(GridCoord goal)
+        {
+            if (_fog == null) return true;
+            if (_fog.Bounds.IsEmpty) return true; // Treat uninitialized/empty fog as fully visible
+            return _fog.IsVisible(goal) || _fog.IsExplored(goal);
+        }
+
+
+        private void HandleLeftClick()
+        {
+            var mouse = Input.mousePosition;
+            float depth = Mathf.Abs((_camera.transform.position - _grid.transform.position).z);
+            var world = _camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, depth));
+            var rawGoal = _provider.WorldToCoord(_grid, world);
+            var start = _hero.Agent.Position;
+
+            bool clickedResource = _hoveredResourceAvailable && rawGoal.Equals(_hoveredResourceCoord);
+            bool clickedMine = _hoveredMineAvailable && rawGoal.Equals(_hoveredMineCoord);
+            bool clickedFarm = _hoveredFarmAvailable && rawGoal.Equals(_hoveredFarmCoord);
+            bool clickedCity = _hoveredCityAvailable && rawGoal.Equals(_hoveredCityCoord);
+            bool clickedEnterCity = _hoveredCityEnterAvailable && rawGoal.Equals(_hoveredCityEnterCoord);
+            bool resourceReachable = clickedResource && _hoveredResourceReachable;
+            bool mineReachable = clickedMine && _hoveredMineReachable;
+            bool farmReachable = clickedFarm && _hoveredFarmReachable;
+            bool cityReachable = clickedCity && _hoveredCityReachable;
+            bool enterReachable = clickedEnterCity && _hoveredCityEnterReachable;
+            GridCoord effectiveGoal = rawGoal;
+            if (clickedMine)
+                effectiveGoal = _hoveredMineApproach;
+            else if (clickedFarm)
+                effectiveGoal = _hoveredFarmApproach;
+            else if (clickedCity)
+                effectiveGoal = _hoveredCityApproach;
+            else if (clickedEnterCity)
+                effectiveGoal = _hoveredCityEnterApproach;
+            else if (clickedResource)
+                effectiveGoal = _hoveredResourceApproach;
+
+            if (_debugLogs)
+            {
+                Debug.Log($"[ClickToMove] Click at world={world:F2} mouse={mouse} -> start={start} rawGoal={rawGoal} effectiveGoal={effectiveGoal} resource={clickedResource}");
+                DebugLogTile("Start", start);
+                DebugLogTile("Goal", effectiveGoal);
+                DebugLogNeighbors("StartNbrs", start);
+                DebugLogNeighbors("GoalNbrs", effectiveGoal);
+            }
+
+            if (clickedResource || clickedMine || clickedFarm || clickedCity || clickedEnterCity)
+            {
+                if ((clickedResource && !resourceReachable) || (clickedMine && !mineReachable) || (clickedFarm && !farmReachable) || (clickedCity && !cityReachable) || (clickedEnterCity && !enterReachable))
+                {
+                    if (_debugLogs) Debug.Log("[ClickToMove] Resource goal is not currently reachable.");
+                    return;
+                }
+
+                if (_isMoving)
+                {
+                    if (_debugLogs) Debug.Log("[ClickToMove] Hero is already moving; ignoring collect request.");
+                    return;
+                }
+
+                if (_hero != null && _hero.Agent != null && _hero.Agent.Position.Equals(effectiveGoal))
+                {
+                    if (clickedMine) TryClaimMine(_hoveredMineDescriptor);
+                    else if (clickedFarm) TryClaimFarm(_hoveredFarmDescriptor);
+                    else if (clickedCity) TryClaimCity(_hoveredCityDescriptor);
+                    else if (clickedEnterCity) TryEnterCity(_hoveredCityEnterDescriptor);
+                    else TryCollectResource(_hoveredResourceDescriptor);
+                    return;
+                }
+            }
+
+            if (!IsGoalVisible(effectiveGoal))
+            {
+                if (_debugLogs) Debug.Log("[ClickToMove] Goal is not currently visible. Ignored.");
+                _preview?.Clear();
+                _hasPreview = false;
+                return;
+            }
+
+            if (start.Equals(effectiveGoal))
+            {
+                if (_debugLogs) Debug.Log("[ClickToMove] Start == Goal. Ignored.");
+            GridCoord effectiveGoal = rawGoal;
+            if (clickedMine)
+                effectiveGoal = _hoveredMineApproach;
+            else if (clickedFarm)
+                effectiveGoal = _hoveredFarmApproach;
+            else if (clickedCity)
+                effectiveGoal = _hoveredCityApproach;
+            else if (clickedEnterCity)
+                effectiveGoal = _hoveredCityEnterApproach;
+            else if (clickedResource)
+                effectiveGoal = _hoveredResourceApproach;
+
+            if (_debugLogs)
+            {
+                Debug.Log($"[ClickToMove] Click at world={world:F2} mouse={mouse} -> start={start} rawGoal={rawGoal} effectiveGoal={effectiveGoal} resource={clickedResource}");
+                DebugLogTile("Start", start);
+                DebugLogTile("Goal", effectiveGoal);
+                DebugLogNeighbors("StartNbrs", start);
+                DebugLogNeighbors("GoalNbrs", effectiveGoal);
+            }
+
+            if (clickedResource || clickedMine || clickedFarm || clickedCity || clickedEnterCity)
+            {
+                if ((clickedResource && !resourceReachable) || (clickedMine && !mineReachable) || (clickedFarm && !farmReachable) || (clickedCity && !cityReachable) || (clickedEnterCity && !enterReachable))
+                {
+                    if (_debugLogs) Debug.Log("[ClickToMove] Resource goal is not currently reachable.");
+                    return;
+                }
+
+                if (_isMoving)
+                {
+                    if (_debugLogs) Debug.Log("[ClickToMove] Hero is already moving; ignoring collect request.");
+                    return;
+                }
+
+                if (_hero != null && _hero.Agent != null && _hero.Agent.Position.Equals(effectiveGoal))
+                {
+                    if (clickedMine) TryClaimMine(_hoveredMineDescriptor);
+                    else if (clickedFarm) TryClaimFarm(_hoveredFarmDescriptor);
+                    else if (clickedCity) TryClaimCity(_hoveredCityDescriptor);
+                    else if (clickedEnterCity) TryEnterCity(_hoveredCityEnterDescriptor);
+                    else TryCollectResource(_hoveredResourceDescriptor);
+                    return;
+                }
+            }
+
+            if (!IsGoalVisible(effectiveGoal))
+            {
+                if (_debugLogs) Debug.Log("[ClickToMove] Goal is not currently visible. Ignored.");
+                _preview?.Clear();
+                _hasPreview = false;
+                return;
+            }
+
+            if (start.Equals(effectiveGoal))
+            {
+                if (_debugLogs) Debug.Log("[ClickToMove] Start == Goal. Ignored.");
+                return;
+            }
+
+            var path = _pf.GetPath(start, effectiveGoal, _allowedMoves);
+            if (_debugLogs)
+            {
+                Debug.Log($"[ClickToMove] Path length={path.Count}");
+            }
+            if (path.Count == 0)
+            {
+                if (_debugLogs)
+                {
+                    if (_provider.TryGet(effectiveGoal, out var td))
+                    {
+                        Debug.Log($"[ClickToMove] No path. Goal TileData: type={td.terrainType} passable={td.IsPassable} mask={td.enterMask}");
+                    }
+                    else
+                    {
+                        Debug.Log("[ClickToMove] No path. Provider could not resolve goal tile.");
+                    }
+                    DebugProbeLine(start, effectiveGoal);
+                }
+                _preview?.Clear();
+                _hasPreview = false;
+                return;
+            }
+
+            bool confirmMove = _hasPreview && effectiveGoal.Equals(_pendingGoal) && start.Equals(_pendingStart);
+            if (confirmMove)
+            {
+                _hero?.StopAutoTraversal();
+                if (_hero != null && _hero.Agent.SetPath(path))
+                {
+                    if (_debugLogs) Debug.Log("[ClickToMove] Confirmed click. Moving hero.");
+                    _preview?.Clear();
+                    _hasPreview = false;
+                    _pendingResourceNodeId = null;
+                    _hero.BeginAutoTraversal();
+                }
+                else if (_debugLogs)
+                {
+                    Debug.Log("[ClickToMove] Failed to confirm path (invalid start or adjacency).");
+                }
+            }
+            else
+            {
+                int payableSteps = ComputePayableSteps(path);
+                _preview?.Show(path, payableSteps);
+                _pendingPath = path;
+                _pendingGoal = effectiveGoal;
+                _pendingStart = start;
+                _hasPreview = true;
+                _pendingResourceNodeId = clickedResource ? _hoveredResourceDescriptor.NodeId : null;
+                _pendingMineNodeId = clickedMine ? _hoveredMineDescriptor.NodeId : null;
+                _pendingFarmNodeId = clickedFarm ? _hoveredFarmDescriptor.NodeId : null;
+                _pendingCityNodeId = clickedCity ? _hoveredCityDescriptor.NodeId : null;
+                _pendingEnterCityNodeId = clickedEnterCity ? _hoveredCityEnterDescriptor.NodeId : null;
+                if (!string.IsNullOrEmpty(_currentHeroId))
+                {
+                    _lastGoalByHeroId[_currentHeroId] = effectiveGoal;
+                }
+                if (_debugLogs) Debug.Log($"[ClickToMove] Preview shown. PayableSteps={payableSteps}");
+            }
+        }
+
+        private void TryDiscoverProviders()
+        {
+            MonoBehaviour[] behaviours = null;
+            if (_mineProvider == null)
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _mineProvider == null; i++)
+                {
+                    if (behaviours[i] is SevenCrowns.Map.Mines.IMineNodeProvider mp) _mineProvider = mp;
+                }
+                if (_debugLogs && _mineProvider != null) Debug.Log("[ClickToMove] Late-bound IMineNodeProvider.");
+            }
+            if (_farmProvider == null)
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _farmProvider == null; i++)
+                {
+                    if (behaviours[i] is SevenCrowns.Map.Farms.IFarmNodeProvider fp) _farmProvider = fp;
+                }
+                if (_debugLogs && _farmProvider != null) Debug.Log("[ClickToMove] Late-bound IFarmNodeProvider.");
+            }
+            if (_cityProvider == null)
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _cityProvider == null; i++)
+                {
+                    if (behaviours[i] is SevenCrowns.Map.Cities.ICityNodeProvider cp) _cityProvider = cp;
+                }
+                if (_debugLogs && _cityProvider != null) Debug.Log("[ClickToMove] Late-bound ICityNodeProvider.");
+            }
+            if (_cityOccupancy == null)
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _cityOccupancy == null; i++)
+                {
+                    if (behaviours[i] is ICityOccupancyProvider occ) _cityOccupancy = occ;
+                }
+                if (_debugLogs && _cityOccupancy != null) Debug.Log("[ClickToMove] Late-bound ICityOccupancyProvider.");
+            }
+            if (_resourceProvider == null)
+            {
+                behaviours ??= FindObjectsOfType<MonoBehaviour>(true);
+                for (int i = 0; i < behaviours.Length && _resourceProvider == null; i++)
+                {
+                    if (behaviours[i] is IResourceNodeProvider rp) _resourceProvider = rp;
+                }
+                if (_debugLogs && _resourceProvider != null) Debug.Log("[ClickToMove] Late-bound IResourceNodeProvider.");
+            }
+        }
+
+
+        private void HandleRightClick()
+        {
+            if (_hero == null) return;
+
+            _hero.StopAutoTraversal();
+            if (_hero.Agent != null)
+            {
+                _hero.Agent.ClearPath();
+            }
+
+            if (_debugLogs) Debug.Log("[ClickToMove] Cancelled current order.");
+            // optional: clear preview/highlights
+            _preview?.Clear();
+            _hasPreview = false;
+            _pendingResourceNodeId = null;
+            _pendingMineNodeId = null;
+            _pendingCityNodeId = null;
+            _pendingEnterCityNodeId = null;
+            ClearResourceHintCache();
+            ResetHoveredResource();
+            HideTooltipImmediate();
+        }
+
+        /// <summary>
+        /// Compute and apply cursor hints based on current hover, movement, and resource states.
+        /// Uses CursorManager with priorities so hero hover overrides collect and move hints.
+        /// </summary>
+        private void UpdateTooltip(bool hasGoal, GridCoord goal)
+        {
+            bool changedAny = false;
+            WorldTooltipHint hint = WorldTooltipHint.None;
+
+            // Prefer farm tooltip over resource when both exist
+            var farmState = EnsureFarmTooltipState();
+            if (_farmProvider != null && hasGoal && _farmProvider.TryGetByCoord(goal, out var farmDesc) && farmDesc.IsValid)
+            {
+                changedAny = farmState.Update(farmDesc, Time.unscaledDeltaTime, out hint) || changedAny;
+            }
+            else
+            {
+                changedAny = farmState.Update(null, Time.unscaledDeltaTime, out var farmNone) || changedAny;
+                if (hint.HasTooltip && farmNone.HasTooltip == false)
+                {
+                    // keep existing hint if still valid
+                }
+            }
+
+            // Try mine tooltip next if none shown yet
+            if (!hint.HasTooltip)
+            {
+                var mineStateLocal = EnsureMineTooltipState();
+                if (_mineProvider != null && hasGoal && _mineProvider.TryGetByCoord(goal, out var mineDesc) && mineDesc.IsValid)
+                {
+                    changedAny = mineStateLocal.Update(mineDesc, Time.unscaledDeltaTime, out hint) || changedAny;
+                }
+                else
+                {
+                    changedAny = mineStateLocal.Update(null, Time.unscaledDeltaTime, out hint) || changedAny;
+                }
+            }
+
+            if (!hint.HasTooltip)
+            {
+                var state = EnsureResourceTooltipState();
+                if (_resourceProvider != null && hasGoal && _resourceProvider.TryGetByCoord(goal, out var descriptor) && descriptor.IsValid)
+                {
+                    changedAny = state.Update(descriptor, Time.unscaledDeltaTime, out hint) || changedAny;
+                }
+            }
+            while (cur.Y != gy)
+            {
+                var next = new GridCoord(cur.X, cur.Y + dy);
+                var enter = (dy > 0) ? EnterMask8.N : EnterMask8.S;
+                if (!_provider.TryGet(next, out var td) || !td.IsPassable || !td.CanEnterFrom(enter))
+                {
+                    Debug.Log($"[ClickToMove][Probe] Blocked at {next} passable={(td!=null && td.IsPassable)} mask={(td!=null ? td.enterMask.ToString() : "<null>")}, needed={enter}");
+                    return;
+                }
+                cur = next;
+            }
+            Debug.Log("[ClickToMove][Probe] Cardinal line from start to goal has no immediate blockers. Path may be blocked by alternative route or overlay/ground mapping inconsistencies.");
+        }
+
+        private void TryClaimCity(SevenCrowns.Map.Cities.CityNodeDescriptor descriptor)
+        {
+            if (!descriptor.IsValid || descriptor.IsOwned)
+                return;
+
+            ClearCityHintCache();
+
+            bool nodeFound = false;
+            if (!string.IsNullOrEmpty(descriptor.NodeId) && SevenCrowns.Map.Cities.CityAuthoring.TryGetNode(descriptor.NodeId, out var authoring))
+            {
+                nodeFound = true;
+                authoring.Claim();
+            }
+
+            if (!nodeFound && _debugLogs)
+            {
+                Debug.LogWarning($"[ClickToMove] City node '{descriptor.NodeId}' not found for claim.", this);
+            }
+
+            _preview?.Clear();
+            _hasPreview = false;
+            _pendingCityNodeId = null;
+            ResetHoveredCity();
+        }
+
+        private void TryEnterCity(SevenCrowns.Map.Cities.CityNodeDescriptor descriptor)
+        {
+            if (!descriptor.IsValid || !descriptor.IsOwned)
+                return;
+
+            if (_cityOccupancy == null)
+                return;
+
+            // Resolve current hero id
+            var heroId = _currentHeroId;
+            if (string.IsNullOrEmpty(heroId) && _hero != null)
+            {
+                var idComp = _hero.GetComponent<HeroIdentity>();
+                if (idComp != null) heroId = idComp.HeroId;
+            }
+
+            if (string.IsNullOrEmpty(heroId))
+                return;
+
+            if (!_cityOccupancy.TryEnter(descriptor.NodeId, heroId))
+                return;
+
+            _preview?.Clear();
+            _hasPreview = false;
+            _pendingEnterCityNodeId = null;
+            ResetHoveredCityEnter();
+
+            if (_cityEnterFlow != null)
+            {
+                _cityEnterFlow.EnterCity(descriptor.NodeId, heroId);
+            }
+            else
+            {
+                // Fallback when no flow service is available (no fader)
+                UnityEngine.SceneManagement.SceneManager.LoadScene("City");
+            }
+        }
+
+        private void ClearCityHintCache()
+        {
+            _cityHintCached = false;
+            _cityHintHeroCoord = default;
+            _cityHintNodeId = null;
+            _cityHintReachable = false;
+            _cityHintApproach = default;
+            _cityHintPathLength = 0;
+        }
+
+        private void BuildPathfinderIfNeeded(bool log)
+        {
+            var b = _provider.Bounds;
+            if (b.Width <= 0 || b.Height <= 0)
+            {
+                _pf = null;
+                return;
+            }
+            if (_pf != null && _pfW == b.Width && _pfH == b.Height) return;
+
+            var cfg = new AStarPathfinder.Config
+            {
+                AllowDiagonal = false,
+                DisallowCornerCutting = true,
+                HeuristicCardinalBase = 8,
+                HeuristicDiagonalBase = 11
+            };
+            var providerForPath = (ITileDataProvider)_blockedProvider ?? _provider;
+            _pf = new AStarPathfinder(providerForPath, b, cfg);
+            _pfW = b.Width; _pfH = b.Height;
+            if (log) Debug.Log($"[ClickToMove] Pathfinder built with bounds {b}.");
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

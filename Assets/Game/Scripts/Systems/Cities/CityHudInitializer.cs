@@ -14,7 +14,7 @@ namespace SevenCrowns.Systems.Cities
     /// Place one instance in the City scene on a Core object.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class CityHudInitializer : MonoBehaviour, ICityNameKeyProvider, SevenCrowns.UI.Cities.ICityFactionIdProvider
+    public sealed class CityHudInitializer : MonoBehaviour, ICityNameKeyProvider, SevenCrowns.UI.Cities.ICityFactionIdProvider, SevenCrowns.UI.Cities.ICityOccupantHeroProvider
     {
         [Header("Auto-Create")]
         [SerializeField] private bool _createWalletIfMissing = true;
@@ -29,6 +29,8 @@ namespace SevenCrowns.Systems.Cities
             EnsureTimeService();
             EnsurePopulation();
             ApplyTransferIfAvailable();
+            // Capture occupant hero info from transfer for UI
+            ApplyOccupantFromTransfer();
             if (_debugLogs)
             {
                 if (CityEnterTransfer.TryPeekCityContext(out var cid, out var fid))
@@ -48,6 +50,38 @@ namespace SevenCrowns.Systems.Cities
                     Debug.Log("[CityHudInit] No city name key available.", this);
                 }
             }
+        }
+
+        private string _occupantHeroId;
+        private string _occupantPortraitKey;
+
+        private void ApplyOccupantFromTransfer()
+        {
+            if (CityEnterTransfer.TryConsumeOccupantHero(out var heroId, out var portraitKey))
+            {
+                _occupantHeroId = string.IsNullOrWhiteSpace(heroId) ? string.Empty : heroId.Trim();
+                _occupantPortraitKey = string.IsNullOrWhiteSpace(portraitKey) ? string.Empty : portraitKey.Trim();
+                if (_debugLogs)
+                    Debug.Log($"[CityHudInit] Consumed occupant hero: id='{_occupantHeroId}' key='{_occupantPortraitKey}'", this);
+            }
+            else if (CityEnterTransfer.TryPeekOccupantHero(out var heroId2, out var portraitKey2))
+            {
+                _occupantHeroId = string.IsNullOrWhiteSpace(heroId2) ? string.Empty : heroId2.Trim();
+                _occupantPortraitKey = string.IsNullOrWhiteSpace(portraitKey2) ? string.Empty : portraitKey2.Trim();
+                if (_debugLogs)
+                    Debug.Log($"[CityHudInit] Peek occupant hero: id='{_occupantHeroId}' key='{_occupantPortraitKey}'", this);
+            }
+            else if (_debugLogs)
+            {
+                Debug.Log("[CityHudInit] No occupant hero info available in transfer.", this);
+            }
+        }
+
+        public bool TryGetOccupantHero(out string heroId, out string portraitKey)
+        {
+            heroId = _occupantHeroId;
+            portraitKey = _occupantPortraitKey;
+            return !string.IsNullOrEmpty(heroId);
         }
 
         private void EnsureWallet()

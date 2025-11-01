@@ -99,6 +99,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\CameraClampUtilityTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FarmTooltipStateTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceNodeServiceTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\Cities\CityOccupantPortraitViewTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\Cities\CityFactionIconViewTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Save\WorldMapOwnershipFlagsTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Farms\FarmProductionServiceTests.cs" />

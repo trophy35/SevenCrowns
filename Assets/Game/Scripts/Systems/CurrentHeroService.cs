@@ -52,6 +52,22 @@ namespace SevenCrowns.Systems
         public IReadOnlyCollection<string> KnownHeroIds => _map.Keys;
         public bool IsKnownHeroId(string heroId) => !string.IsNullOrWhiteSpace(heroId) && _map.ContainsKey(heroId);
 
+        /// <summary>
+        /// Tries to get the configured portrait Addressables key for a given hero id without changing current selection.
+        /// Returns true when a non-empty key is known for the id.
+        /// </summary>
+        public bool TryGetPortraitKey(string heroId, out string portraitKey)
+        {
+            portraitKey = null;
+            if (string.IsNullOrWhiteSpace(heroId)) return false;
+            if (_map.TryGetValue(heroId, out var record))
+            {
+                portraitKey = record?.PortraitKey;
+                return !string.IsNullOrEmpty(portraitKey);
+            }
+            return false;
+        }
+
         private void Awake()
         {
             _map.Clear();

@@ -61,6 +61,34 @@ namespace SevenCrowns.Systems.Cities
                     }
                 }
                 CityEnterTransfer.SetCityContext(cityId ?? string.Empty, factionId ?? string.Empty);
+                // Occupant hero info (for City scene hero avatar)
+                try
+                {
+                    string portraitKey = string.Empty;
+                    // Try resolve portrait via CurrentHeroService mapping if available
+                    SevenCrowns.Systems.CurrentHeroService cur = null;
+                    var behavioursForHero = FindObjectsOfType<MonoBehaviour>(true);
+                    for (int i = 0; i < behavioursForHero.Length && cur == null; i++)
+                    {
+                        if (behavioursForHero[i] is SevenCrowns.Systems.CurrentHeroService chs) cur = chs;
+                    }
+                    if (cur != null && !string.IsNullOrWhiteSpace(heroId))
+                    {
+                        if (!cur.TryGetPortraitKey(heroId, out portraitKey) && _debugLogs)
+                        {
+                            Debug.Log($"[CityEnterFlow] CurrentHeroService has no portrait key for heroId='{heroId}'.", this);
+                        }
+                    }
+                    else if (_debugLogs)
+                    {
+                        if (cur == null) Debug.Log("[CityEnterFlow] No CurrentHeroService found when resolving occupant portrait key.", this);
+                        if (string.IsNullOrWhiteSpace(heroId)) Debug.Log("[CityEnterFlow] EnterCity called with empty heroId.", this);
+                    }
+                    SevenCrowns.Systems.Cities.CityEnterTransfer.SetOccupantHero(heroId ?? string.Empty, portraitKey ?? string.Empty);
+                    if (_debugLogs)
+                        Debug.Log($"[CityEnterFlow] Occupant hero set: id='{heroId}' key='{portraitKey}'", this);
+                }
+                catch { /* non-fatal */ }
                 // Provide a display name key: prefer explicit mapping if available later; default to city id
                 try
                 {

@@ -19,6 +19,9 @@ namespace SevenCrowns.Systems.Cities
         private static bool s_HasCity;
         private static string s_CityNameKey;
         private static bool s_HasCityNameKey;
+        private static string s_OccupantHeroId;
+        private static string s_OccupantPortraitKey;
+        private static bool s_HasOccupant;
 
         public static void SetWalletSnapshot(Dictionary<string, int> amounts)
         {
@@ -51,6 +54,16 @@ namespace SevenCrowns.Systems.Cities
         {
             SetCityContext(cityId, factionId);
             SetCityNameKey(cityNameKey);
+        }
+
+        /// <summary>
+        /// Sets the occupant hero information for the city being entered. Portrait key can be empty if unknown.
+        /// </summary>
+        public static void SetOccupantHero(string heroId, string portraitKey)
+        {
+            s_OccupantHeroId = string.IsNullOrWhiteSpace(heroId) ? string.Empty : heroId.Trim();
+            s_OccupantPortraitKey = string.IsNullOrWhiteSpace(portraitKey) ? string.Empty : portraitKey.Trim();
+            s_HasOccupant = !string.IsNullOrEmpty(s_OccupantHeroId);
         }
 
         /// <summary>
@@ -126,6 +139,30 @@ namespace SevenCrowns.Systems.Cities
         {
             cityNameKey = s_CityNameKey;
             return s_HasCityNameKey && !string.IsNullOrEmpty(cityNameKey);
+        }
+
+        /// <summary>
+        /// Consumes and clears the occupant hero information if present.
+        /// </summary>
+        public static bool TryConsumeOccupantHero(out string heroId, out string portraitKey)
+        {
+            heroId = s_OccupantHeroId;
+            portraitKey = s_OccupantPortraitKey;
+            bool had = s_HasOccupant;
+            s_OccupantHeroId = null;
+            s_OccupantPortraitKey = null;
+            s_HasOccupant = false;
+            return had;
+        }
+
+        /// <summary>
+        /// Non-destructive peek of the occupant hero information.
+        /// </summary>
+        public static bool TryPeekOccupantHero(out string heroId, out string portraitKey)
+        {
+            heroId = s_OccupantHeroId;
+            portraitKey = s_OccupantPortraitKey;
+            return s_HasOccupant && !string.IsNullOrEmpty(heroId);
         }
     }
 }

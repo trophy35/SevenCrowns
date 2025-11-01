@@ -411,7 +411,7 @@ Pitfalls
 - Multiple occupancy services: ensure there is only one active `GridOccupancyService` per scene.
 
 -----------------------------------------
-Audio SFX — Reuse
+Audio SFX - Reuse
 -------------------------------------
 
 Pattern
@@ -431,7 +431,59 @@ When adding new SFX
 
 -------------------------------------
 
-— World Map Radial Menu: Reuse Patterns —
+UI Tabs — Reuse Patterns
+-------------------------------------
+
+Files
+- Controller: `Assets/Game/Scripts/UI/Tabs/VerticalTabsController.cs` (Game.UI)
+- Item View: `Assets/Game/Scripts/UI/Tabs/VerticalTabItemView.cs` (Game.UI)
+- Tests: `Assets/Game/Scripts/Tests/EditMode/UI/CityTabsControllerTests.cs`
+
+Goal
+- Reusable vertical (top-to-bottom) tabs for City and other scenes.
+- Each tab: left focus line when selected, icon (`Image`), label (`TextMeshProUGUI`).
+- Colors: Focused RGB(246,225,156), Unfocused RGB(190,181,182). Focus line enabled on selected only.
+- Use separator `Image` between items for lines (visual only).
+
+Contracts
+- `VerticalTabsController`
+  - `string SelectedTabId { get; }`
+  - `UnityEvent<string> OnSelectionChanged` (raised on selection change)
+  - `void SelectById(string id)`, `void SelectByIndex(int index)`
+  - Auto-discovers child `VerticalTabItemView` when list is empty; selects `_defaultTabId` or first (when `_selectFirstOnStart`).
+- `VerticalTabItemView`
+  - `string TabId { get; }`
+  - `Button Button`, `Image Icon`, `TextMeshProUGUI Label`
+  - `void SetFocused(bool focused, Color32 focusedColor, Color32 unfocusedColor)` applied by controller
+  - Localization via `LocalizedString`; Edit Mode tests bypass runtime localization.
+
+Localization
+- Add EN/FR keys in `UI.Common`:
+  - `CityTabs.Building` → EN "Building" / FR "Bâtiments"
+  - `CityTabs.Recruit` → EN "Recruit" / FR "Recruter"
+  - `CityTabs.Magic` → EN "Magic" / FR "Magie"
+  - `CityTabs.Research` → EN "Research" / FR "Recherche"
+  - `CityTabs.Defense` → EN "Defense" / FR "Défense"
+- Ensure `LocalizationPreloadTask` includes `UI.Common` (default).
+
+Scene Wiring (City)
+1) Create a panel with `VerticalLayoutGroup`; add `VerticalTabsController`.
+2) For each tab: create a child with `Button`; add children `Image` (icon), `TextMeshProUGUI` (label), left focus line `Image`.
+3) Add `VerticalTabItemView` to each tab root; assign Button/Icon/Label/FocusLine; set `Tab Id` and label entry (`UI.Common/CityTabs.*`).
+4) In `VerticalTabsController.OnSelectionChanged`, wire to City logic to show/hide panels.
+
+Edit Mode & Tests
+- No per-frame work; selection is event-driven.
+- Edit Mode sets label text directly (no LocalizationSettings dependency) to keep tests deterministic.
+- Unit tests: see `CityTabsControllerTests` for selection and color assertions.
+
+Performance & Extensibility
+- Low allocations (cached refs); no coroutines.
+- Layout-agnostic: can be used in horizontal setups; controller logic is independent of layout direction.
+
+-------------------------------------
+
+- World Map Radial Menu: Reuse Patterns -
 ------------------------------------------
 
 Files

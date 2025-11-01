@@ -53,6 +53,38 @@ namespace SevenCrowns.Tests.EditMode.Systems
         }
 
         [Test]
+        public void TryGetPortraitKey_ReturnsMappedKey_WithoutChangingCurrent()
+        {
+            var go = new GameObject(nameof(CurrentHeroServiceTests));
+            var service = go.AddComponent<CurrentHeroService>();
+
+            try
+            {
+                // Seed two heroes via direct set
+                service.SetCurrentHeroDirect("hero.alpha", "portrait.alpha", 2);
+                service.SetCurrentHeroDirect("hero.beta", "portrait.beta", 4);
+
+                // Current is beta now; query alpha
+                bool foundAlpha = service.TryGetPortraitKey("hero.alpha", out var keyAlpha);
+                Assert.That(foundAlpha, Is.True);
+                Assert.That(keyAlpha, Is.EqualTo("portrait.alpha"));
+
+                // Unknown id
+                bool foundUnknown = service.TryGetPortraitKey("hero.unknown", out var keyUnknown);
+                Assert.That(foundUnknown, Is.False);
+                Assert.That(keyUnknown, Is.Null.Or.Empty);
+
+                // Ensure current hero state unchanged by lookups
+                Assert.That(service.CurrentHeroId, Is.EqualTo("hero.beta"));
+                Assert.That(service.CurrentPortraitKey, Is.EqualTo("portrait.beta"));
+                Assert.That(service.CurrentLevel, Is.EqualTo(4));
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+        [Test]
         public void SetCurrentHeroLevel_RaisesOnlyLevelEvent_WhenPortraitUnchanged()
         {
             var go = new GameObject(nameof(CurrentHeroServiceTests));
