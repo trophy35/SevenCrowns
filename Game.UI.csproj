@@ -70,6 +70,7 @@
     <Compile Include="Assets\Game\Scripts\UI\HeroLevelView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldTimeHudView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Mines\MineCaptureSfxListener.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\ICityFactionIdProvider.cs" />
     <Compile Include="Assets\Game\Scripts\UI\ResourceAmountHudView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorManager.cs" />
     <Compile Include="Assets\Game\Scripts\UI\PeopleAmountHudView.cs" />
@@ -89,6 +90,7 @@
     <Compile Include="Assets\Game\Scripts\UI\UiProgressBar.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Farms\FarmCaptureSfxListener.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupView.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\CityFactionIconView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupService.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupOptionDefinition.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Utils\ButtonHoverColorTint.cs" />

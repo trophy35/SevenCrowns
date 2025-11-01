@@ -67,6 +67,7 @@ namespace SevenCrowns.Systems
                 _pendingSpriteLoads.Add(key);
                 AsyncOperationHandle<Sprite> h = Addressables.LoadAssetAsync<Sprite>(key);
                 PreloadRegistry.Register(key, h);
+                Debug.Log($"[UI Assets] Auto-loading Sprite for key='{key}' via Addressables.", this);
             }
             return false;
 #else
@@ -85,6 +86,7 @@ namespace SevenCrowns.Systems
                 _pendingClipLoads.Add(key);
                 AsyncOperationHandle<AudioClip> h = Addressables.LoadAssetAsync<AudioClip>(key);
                 PreloadRegistry.Register(key, h);
+                Debug.Log($"[UI Assets] Auto-loading AudioClip for key='{key}' via Addressables.", this);
             }
             return false;
 #else

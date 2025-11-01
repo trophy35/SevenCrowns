@@ -70,6 +70,7 @@
     <Compile Include="Assets\Game\Scripts\Systems\PreloadRegistry.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Save\IWorldMapSaveService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\LifetimeContentService.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\UiAssetProviderBootstrap.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Save\WorldMapSnapshot.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\SceneFlowConfig.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Cities\CityProductionService.cs" />

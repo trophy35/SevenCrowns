@@ -14,7 +14,7 @@ namespace SevenCrowns.Systems.Cities
     /// Place one instance in the City scene on a Core object.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class CityHudInitializer : MonoBehaviour, ICityNameKeyProvider
+    public sealed class CityHudInitializer : MonoBehaviour, ICityNameKeyProvider, SevenCrowns.UI.Cities.ICityFactionIdProvider
     {
         [Header("Auto-Create")]
         [SerializeField] private bool _createWalletIfMissing = true;
@@ -209,6 +209,21 @@ namespace SevenCrowns.Systems.Cities
             cityId = null;
             if (_debugLogs)
                 Debug.Log("[CityHudInit] TryGetCityId -> false (no context).", this);
+            return false;
+        }
+
+        public bool TryGetFactionId(out string factionId)
+        {
+            if (SevenCrowns.Systems.Cities.CityEnterTransfer.TryPeekCityContext(out _, out var fid))
+            {
+                factionId = fid;
+                if (_debugLogs)
+                    Debug.Log($"[CityHudInit] TryGetFactionId -> true id='{factionId}'.", this);
+                return true;
+            }
+            factionId = null;
+            if (_debugLogs)
+                Debug.Log("[CityHudInit] TryGetFactionId -> false (no context).", this);
             return false;
         }
     }
