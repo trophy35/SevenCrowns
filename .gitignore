@@ -21,12 +21,13 @@
 [Aa]ssets/Tank & Healer Studio
 [Aa]ssets/Simple Tooltip
 [Aa]ssets/ModernWater2D
+[Aa]ssets/Layer Lab
 
 # Never ignore Asset meta data
 !/[Aa]ssets/**/*.meta
 !/[Ww]iki/**
-!/[Aa]ssets/ModernWater2D/Resources/Shaders/reflections/Reflection.shadergraph
-!/[Aa]ssets/ModernWater2D/Resources/Shaders/water/waterg.shadergraph
+![Aa]ssets/ModernWater2D/Resources/Shaders/reflections/Reflection.shadergraph
+![Aa]ssets/ModernWater2D/Resources/Shaders/water/waterg.shadergraph
 
 # Visual Studio / MonoDevelop generated
 .vs/

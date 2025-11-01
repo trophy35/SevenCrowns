@@ -66,6 +66,7 @@
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\InitialPlayerPrefs.cs" />
     <Compile Include="Assets\ModernWater2D\Runtime\abstractors\ManagersParent.cs" />
     <Compile Include="Assets\ModernWater2D\Runtime\modern water 2d\ObstructorSettings.cs" />
+    <Compile Include="Assets\Layer Lab\Scripts\PanelControl.cs" />
     <Compile Include="Assets\ModernWater2D\Runtime\Surface_Simulation\WaterSimulationAdvanced.cs" />
     <Compile Include="Assets\ModernWater2D\Runtime\modern water 2d\WaterPresets.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\MusicManager.cs" />
@@ -133,6 +134,7 @@
     <Compile Include="Assets\ModernWater2D\Runtime\modern water 2d\SimulationType.cs" />
     <Compile Include="Assets\ModernWater2D\Runtime\for demo scenes\duck.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\Transition.cs" />
+    <Compile Include="Assets\Layer Lab\Scripts\PanelView.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\MuteBackgroundMusic.cs" />
     <Compile Include="Assets\ModernWater2D\Runtime\Obstructions\ObstructorManager.cs" />
     <Compile Include="Assets\ModernWater2D\Runtime\Utils\WaterLayoutUtils.cs" />
@@ -142,15 +144,19 @@
     <Compile Include="Assets\ModernWater2D\Runtime\Obstructions3D\Obstructor3DSO.cs" />
     <Compile Include="Assets\GUIPackCartoon\Demo\Scripts\SoundButton.cs" />
     <Compile Include="Assets\ModernWater2D\Runtime\Obstructions\ObstructorSO.cs" />
+    <Compile Include="Assets\Layer Lab\GUI Pro-FantasyRPG\Extensions\UIParticle\UIParticleSystem.cs" />
     <Compile Include="Assets\ModernWater2D\Runtime\modern water 2d\BlurSettings.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile-2-Pass.shader" />
+    <None Include="Assets\Layer Lab\GUI Pro-FantasyRPG\+README+\LayerLab_UserAssetGuide.txt" />
     <None Include="Assets\ModernWater2D\Resources\Shaders\surface sim\simulationSimple.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
+    <None Include="Assets\Game\Content\UI\Fonts\Alata - OFL.txt" />
     <None Include="Assets\ModernWater2D\Runtime\distance field\Jump Flood.shader" />
+    <None Include="Assets\AddressableAssetsData\link.xml" />
     <None Include="Assets\GUIPackCartoon\Demo\Shaders\GrayTint.shader" />
     <None Include="Assets\ModernWater2D\Runtime\distance field\UV Encoding.shader" />
     <None Include="Assets\ModernWater2D\Resources\Shaders\surface sim\renderOffset.shader" />
@@ -158,10 +164,12 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets\AI_Context\BatchTasks.txt" />
+    <None Include="Assets\Layer Lab\GUI Pro-FantasyRPG\Extensions\UIParticle\hidden particle.shader" />
     <None Include="Assets\GUIPackCartoon\Demo\Fonts\BPreplay - OFL.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\SDFFunctions.hlsl" />
     <None Include="Assets\ModernWater2D\Documentation_Online.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface.shader" />
+    <None Include="Assets\Layer Lab\GUI Pro-FantasyRPG\ResourcesData\Fonts\Alata - OFL.txt" />
     <None Include="Assets\TextMesh Pro\Sprites\EmojiOne Attribution.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Custom-Atlas.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF.shader" />
@@ -170,6 +178,7 @@
     <None Include="Assets\ModernWater2D\Resources\Shaders\blur\blurs.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc" />
+    <None Include="Assets\Layer Lab\GUI Pro-FantasyRPG\ResourcesData\Fonts\JosefinSans - OFL.txt" />
     <None Include="Assets\GUIPackCartoon\Demo\Fonts\LilitaOne - OFL.txt" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
@@ -178,6 +187,8 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Mobile.shader" />
     <None Include="Assets\TextMesh Pro\Fonts\LiberationSans - OFL.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile.shader" />
+    <None Include="Assets\Layer Lab\GUI Pro-FantasyRPG\Extensions\UIParticle\UIAdditive.shader" />
+    <None Include="Assets\Layer Lab\GUI Pro-FantasyRPG\ResourcesData\Fonts\Play - OFL.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Sprite.shader" />
   </ItemGroup>
   <ItemGroup>
