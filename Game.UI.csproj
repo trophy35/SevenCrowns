@@ -62,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Game\Scripts\UI\Cities\ICityWalletProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\CityTabsContentController.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldMapTooltipBinder.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldTime\IWorldTimeService.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cities\Buildings\CostPillView.cs" />
