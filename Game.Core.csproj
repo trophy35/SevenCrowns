@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="Assets\Game\Scripts\Systems\Save\IResourceWalletSnapshotProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\WorldMapMoveModeBinder.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\Cities\Buildings\ResearchStateService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\PreloadRegistryAssetProvider.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\LocalizationPreloadTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Save\InMemoryWorldMapPersistence.cs" />
@@ -75,6 +76,7 @@
     <Compile Include="Assets\Game\Scripts\Systems\SceneFlowConfig.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Cities\CityProductionService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\WorldMapTurnController.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\Cities\Buildings\BuildingCatalogService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Save\FileWorldMapPersistence.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Cities\WorldMapReturnInitializer.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\IRuntimeWeightedTask.cs" />
@@ -92,6 +94,7 @@
     <Compile Include="Assets\Game\Scripts\Systems\WorldTimeService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Save\IWorldMapStateReader.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Mines\MineProductionService.cs" />
+    <Compile Include="Assets\Game\Scripts\Systems\Cities\Buildings\CityBuildingStateService.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\SceneTransitionFader.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\AddressablesLoadKeysTask.cs" />
     <Compile Include="Assets\Game\Scripts\Systems\Save\IWorldMapPersistence.cs" />

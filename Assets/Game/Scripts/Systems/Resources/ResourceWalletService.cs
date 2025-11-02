@@ -15,6 +15,8 @@ namespace SevenCrowns.Systems
     [RequireComponent(typeof(AudioSource))]
     public sealed class ResourceWalletService : MonoBehaviour, IResourceWallet, SevenCrowns.Systems.Save.IResourceWalletSnapshotProvider
     {
+        [Header("Debug")]
+        [SerializeField] private bool _debugLogs = false;
         [Serializable]
         private sealed class CollectSfxConfig
         {
@@ -74,6 +76,15 @@ namespace SevenCrowns.Systems
             ResolveAssetProvider();
             RebuildSfxStates();
             InitializeFromStartingResources();
+            if (_debugLogs)
+            {
+                Debug.Log($"[Wallet] Awake initialized. Entries={_amounts.Count}", this);
+                if (_amounts.Count > 0)
+                {
+                    foreach (var kv in _amounts)
+                        Debug.Log($"[Wallet] Init amount {kv.Key}={kv.Value}", this);
+                }
+            }
         }
 
         private void Start()
@@ -132,7 +143,12 @@ namespace SevenCrowns.Systems
                 return 0;
 
             var key = NormalizeResourceId(resourceId);
-            return _amounts.TryGetValue(key, out var value) ? value : 0;
+            int value = _amounts.TryGetValue(key, out var v) ? v : 0;
+            if (_debugLogs)
+            {
+                Debug.Log($"[Wallet] GetAmount('{key}') -> {value}", this);
+            }
+            return value;
         }
 
         public void Add(string resourceId, int amount)
@@ -144,6 +160,11 @@ namespace SevenCrowns.Systems
             int current = GetAmount(key);
             int newAmount = current + amount;
             _amounts[key] = newAmount;
+
+            if (_debugLogs)
+            {
+                Debug.Log($"[Wallet] Add key='{key}' amount={amount} current={current} new={newAmount}", this);
+            }
 
             if (amount > 0)
             {
@@ -423,7 +444,9 @@ namespace SevenCrowns.Systems
 
         private void InitializeFromStartingResources()
         {
-            _amounts.Clear();
+            // Do not clear existing runtime values. In City scene, transfer may have already
+            // populated the wallet before our Awake runs (execution order differences).
+            // Only seed/accumulate configured starting entries.
             if (_startingResources == null)
                 return;
 
@@ -442,6 +465,10 @@ namespace SevenCrowns.Systems
                 {
                     _amounts.Add(key, entry.amount);
                 }
+            }
+            if (_debugLogs)
+            {
+                Debug.Log($"[Wallet] InitializeFromStartingResources completed. Entries={_amounts.Count}", this);
             }
         }
 

@@ -750,3 +750,147 @@ Pitfalls
 - Sprite Addressable keys should target Sprite sub-assets; pointing to Texture2D main assets breaks SpriteRenderer assignment.
 - Forgetting to preload Localization table causes one-frame empty labels when UI first queries resource names.
 
+-------------------------------------
+City — Building List & Cost Pills
+-------------------------------------
+
+Overview
+- The City “Building” tab lists faction-defined buildings loaded from an Addressables JSON catalog.
+- Each row (BuildingListItemView) shows icon, localized name/description, and a horizontal list of cost pills.
+- Each cost pill (CostPillView) shows a resource icon, amount, and a green/red tile depending on affordability (based on IResourceWallet).
+
+Key Scripts (Game.UI)
+- CityBuildingsListController (Assets/Game/Scripts/UI/Cities/Buildings/CityBuildingsListController.cs)
+  - Discovers providers and populates a ScrollView content with BuildingListItemView instances.
+  - Fields: `_content` (Transform), `_itemPrefab` (BuildingListItemView), optional `_scrollRect` + `_scrollSensitivity`.
+  - Debug: `_debugLogs` prints provider discovery, faction id, entries count, and item spawn; late retry for async load.
+
+- BuildingListItemView (Assets/Game/Scripts/UI/Cities/Buildings/BuildingListItemView.cs)
+  - Binds a single UiBuildingEntry: icon (IUiAssetProvider), localized name/description, and costs.
+  - Fields: `_icon`, `_nameText`, `_descriptionText`, `_costContainer` (Transform), `_costPillPrefab` (CostPillView), `_canvasGroup` (dim when dependencies unmet).
+  - Debug: `_debugLogs` prints binding details, icon resolution, costs created, dependency lock state.
+
+- CostPillView (Assets/Game/Scripts/UI/Cities/Buildings/CostPillView.cs)
+  - Binds a `{ resourceId, amount }` pair: resolves resource icon via IUiAssetProvider and amount text.
+  - Affordability: queries IResourceWallet to set a state image sprite.
+  - Fields: `_icon`, `_amountText`, `_stateImage`, `_enoughSprite`, `_notEnoughSprite`, optional `_walletBehaviour` (IResourceWallet), `_resourceIconKeyFormat` (default `UI/Resources/{0}`).
+  - Wallet binding order: ICityWalletProvider (preferred) → explicit `_walletBehaviour` → scene discovery (first IResourceWallet). This avoids mismatches when multiple wallets exist.
+  - Debug: `_debugLogs` logs binding path, wallet selected (GameObject name), have/required values, and icon late-bind success.
+
+Provider Contracts (UI-facing)
+- ICityBuildingCatalogProvider → supplies `IReadOnlyList<UiBuildingEntry>` per faction.
+- ICityBuildingStateProvider → answers `IsBuilt(buildingId)` (for dependency/lock state).
+- IResearchStateProvider → answers `IsCompleted(researchId)` (for dependency/lock state).
+- ICityFactionIdProvider → provides current city’s faction id (CityHudInitializer implements).
+- IUiAssetProvider → resolves Addressables Sprites (PreloadRegistryAssetProvider implements).
+- ICityWalletProvider → exposes the authoritative city wallet (CityHudInitializer implements). UI cost pills bind to this to stay consistent with the HUD.
+
+Core Implementations (Game.Core)
+- BuildingCatalogService: loads per-faction JSON (Addressables TextAsset); auto-loads when missing; parses array or `{ entries: [] }` and caches.
+- CityBuildingStateService: simple in-memory built set (tests/dev scaffolding).
+- ResearchStateService: simple in-memory completed set (tests/dev scaffolding).
+- CityHudInitializer: provides faction/city context, applies transfer snapshot, and implements ICityWalletProvider.
+  - Wallet policy: prefers/creates ResourceWalletService on the same GameObject; caches it in `_walletRef` and applies snapshots to it.
+  - Execution order: marked with DefaultExecutionOrder(-200) so services are ready before UI binds.
+
+Data & Addressables
+- Catalog JSON per faction: Addressables TextAsset with key `Data/Buildings/{factionId}.json`.
+  - UiBuildingEntry fields: buildingId, nameTable/nameEntry, descriptionTable/descriptionEntry, iconKey, costs[{ resourceId, amount }], requiredBuildingIds[], requiredResearchIds[].
+  - Prefer normalized ids: `city.hall`, `resource.gold`, `research.magic1`.
+- Icons (Sprites):
+  - Building icons: `UiBuildingEntry.iconKey` (prefer Sprite sub-asset addresses, e.g., `UI/Buildings/CityHall[CityHall_0]`).
+  - Resource icons: CostPillView builds keys via `_resourceIconKeyFormat` (default `UI/Resources/{resourceId}`), e.g., `UI/Resources/resource.gold`.
+  - If a key points to a Texture2D parent, either fix to a Sprite sub-asset key or temporarily enable “Convert Texture To Sprite” on PreloadRegistryAssetProvider.
+
+Localization
+- Use String Tables (e.g., UI.Common) for name/description entries: `City.Buildings.{Id}.Name`, `City.Buildings.{Id}.Desc`.
+- Ensure `LocalizationPreloadTask` includes the tables used on this screen.
+
+Prefabs & Wiring
+- BuildingListItem prefab (row):
+  - Root: HorizontalLayoutGroup + LayoutElement (Preferred Height ~90–120) + CanvasGroup.
+  - Children: Icon (Image), Texts (Name/Description), Costs (Transform with HorizontalLayoutGroup).
+  - Assign to BuildingListItemView fields accordingly.
+- CostPill prefab:
+  - Children: Icon (Image), Amount (TMP), State (Image) for green/red tile.
+  - Assign `_stateImage`, `_enoughSprite` (green), `_notEnoughSprite` (red). No color fallback is used.
+- ScrollView:
+  - Content: VerticalLayoutGroup + ContentSizeFitter (Vertical Fit = Preferred Size). Assign to CityBuildingsListController._content.
+
+Boot & Preload
+- Optionally add `Data/Buildings/{factionId}.json` and icon keys to the Addressables preload ScriptableObject to avoid first-open delay.
+- CityBuildingsListController has a short late-retry window to populate once auto-load finishes.
+
+Common Pitfalls & Fixes
+- “Spawned items but invisible rows”: ensure BuildingListItem prefab has a LayoutElement Preferred Height and non-empty texts. Missing icons + empty texts can collapse height.
+- “Icons not showing”: use Sprite sub-asset keys or enable conversion on PreloadRegistryAssetProvider; watch for `InvalidKeyException` logs.
+- “Cost pills always red while HUD shows correct amounts”: multiple wallets or wrong wallet binding. CostPillView prefers ICityWalletProvider; ensure CityHudInitializer and ResourceWalletService live on the same GameObject, and that the snapshot applies to that instance. Inspector “Starting Resources” are serialized defaults and do not reflect runtime values.
+- “Catalog returned no entries”: verify Addressables key matches `Data/Buildings/{factionId}.json` and that the JSON is valid. The service logs key resolution and parse results.
+
+Debug Tips
+- Enable `_debugLogs` on:
+  - CityBuildingsListController → providers, faction id, entries, spawn.
+  - BuildingCatalogService → key resolution, auto-load, parse success/failure.
+  - BuildingListItemView → binding, icon resolution, costs, dependency state.
+  - CostPillView → wallet binding path, selected wallet GO name, have/required, sprite applied, and icon late-bind success.
+
+Testing
+- Edit Mode tests live under `Assets/Game/Scripts/Tests/EditMode/UI/Cities/`:
+  - CityBuildingsListControllerTests: verifies population and lock visuals.
+  - CostPillViewTests: verifies state sprite flips when wallet amounts change.
+
+-------------------------------------
+Troubleshooting — City Wallet & Build Icons
+-------------------------------------
+
+Context
+- Some issues appeared in City scene and Player builds:
+  - Cost pills always red despite HUD showing correct resources.
+  - Building/resource icons not visible in Build & Run while OK in Editor.
+
+City Wallet (CostPill always red)
+- Root cause seen before: a wallet instance cleared amounts after City transfer applied the snapshot, or UI was bound to the wrong wallet.
+- Quick checks:
+  - Ensure `CityHudInitializer` and `ResourceWalletService` live on the same GameObject in the City scene. This is the authoritative wallet.
+  - Do not rely on “Starting Resources” in Inspector during gameplay; transfer applies runtime values (e.g., gold=1200). Inspector shows serialized defaults only.
+  - If pills are red:
+    1) Enable “Debug Logs” on `CityHudInitializer` and on a `CostPillView` instance.
+    2) Enter a city and check logs:
+       - `[CityHudInit] Applying wallet snapshot ... after=XXXX` confirms transfer success.
+       - `[CostPill] ResolveWallet: bound via ICityWalletProvider go='CityHudInitializer' ...` confirms correct binding.
+       - `[CostPill] RefreshAffordability ... have=... required=...` shows the read value.
+       - If have=0 while after=XXXX, search for duplicate wallets; CostPill logs a list `AffordabilityDiag: wallet[i] ...` — remove stray wallets.
+- Implementation detail (to avoid regressions):
+  - `ResourceWalletService.InitializeFromStartingResources()` MUST NOT clear existing amounts (transfer runs before/around Awake). The code is additive; do not reintroduce clearing.
+  - Tests covering this: `ResourceWalletService_TransferInitTests` in `Assets/Game/Scripts/Tests/EditMode/Systems/Resources`.
+
+Build & Run — Missing Icons (Sprites)
+- Symptoms: UI icons (buildings/resources) visible in Editor but not in Player.
+- Causes and fixes:
+  1) Addressables content not built for the current profile.
+     - Fix: Window → Asset Management → Addressables → Build → New Build (Default Build Script). Ensure the runtime profile matches.
+  2) Provider not loading assets in Player.
+     - `PreloadRegistryAssetProvider` auto-loads and caches icons via Addressables and is Player-safe. Ensure exactly one instance exists in the scene (logs: `[UiAssetProviderBootstrap] Found ...`).
+  3) Keys point to Texture2D (main asset) rather than Sprite sub-asset.
+     - Preferred: use Sprite sub-asset keys (e.g., `UI/Icons/MySprite[MySprite_0]`).
+     - Fast path: in Player, the provider enables Texture2D→Sprite conversion automatically. In Editor, enable `Convert Texture To Sprite` on the provider to match Player behavior.
+  4) Keys mismatched:
+     - Verify data uses exactly these keys:
+       - Buildings: `UI/Buildings/CityHall`, `UI/Buildings/MageTower`, etc.
+       - Resources: `UI/Resources/resource.gold`, `UI/Resources/resource.wood`.
+     - Logs you should see when missing: `[UI Assets] Auto-loading (generic) for key='...' via Addressables.` followed by `LateBind icon success ...` from the view.
+
+Recommended Preload (optional)
+- You can add icons to `AddressablesLoadKeysTask` via explicit keys or labels to warm up first-use.
+- This is optional; on-demand loading in `PreloadRegistryAssetProvider` already caches and late-binds views.
+
+Diagnostics Switches
+- `CityHudInitializer` → Debug Logs: snapshot apply details (wallet target, after values).
+- `CostPillView` → Debug Logs: chosen wallet, have/required values, list of all wallets and amounts for the bound resource, applied tint color.
+- `ResourceWalletService` → Debug Logs: Awake initialization summary, Add/GetAmount traces.
+
+Do/Do Not
+- Do: keep one authoritative wallet in City; bind UI via `ICityWalletProvider`.
+- Do: build Addressables before testing Player builds; keep keys consistent.
+- Don’t: re-introduce wallet dictionary clearing in initialization; it will wipe transfer values.
+- Don’t: duplicate wallets in the City scene; UI may bind to the wrong instance.

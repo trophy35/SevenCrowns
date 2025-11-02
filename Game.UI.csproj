@@ -61,10 +61,14 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.39f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Game\Scripts\UI\Cities\ICityWalletProvider.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldMapTooltipBinder.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldTime\IWorldTimeService.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\Buildings\CostPillView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\WorldTime\WorldDate.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\Buildings\ICityBuildingCatalogProvider.cs" />
     <Compile Include="Assets\Game\Scripts\UI\ICurrentHeroPortraitKeyProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\Buildings\CityBuildingsListController.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cities\ICityNameKeyProvider.cs" />
     <Compile Include="Assets\Game\Scripts\UI\VersionLabel.cs" />
     <Compile Include="Assets\Game\Scripts\UI\HeroLevelView.cs" />
@@ -81,6 +85,7 @@
     <Compile Include="Assets\Game\Scripts\UI\Cities\CityOccupantPortraitView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Tabs\VerticalTabsController.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupResult.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\Buildings\BuildingListItemView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\MainMenu\MainMenuController.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorSet.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\IPopupService.cs" />
@@ -89,16 +94,19 @@
     <Compile Include="Assets\Game\Scripts\UI\Cities\CityNameView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupRequest.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cursor\CursorState.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\Buildings\IResearchStateProvider.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupOptionIds.cs" />
     <Compile Include="Assets\Game\Scripts\UI\UiProgressBar.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Farms\FarmCaptureSfxListener.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cities\CityFactionIconView.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Cities\ICityOccupantHeroProvider.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\Buildings\UiBuildingEntry.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupService.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Popups\PopupOptionDefinition.cs" />
     <Compile Include="Assets\Game\Scripts\UI\Utils\ButtonHoverColorTint.cs" />
     <Compile Include="Assets\Game\Scripts\UI\HeroPortraitView.cs" />
+    <Compile Include="Assets\Game\Scripts\UI\Cities\Buildings\ICityBuildingStateProvider.cs" />
     <Compile Include="Assets\Game\Scripts\UI\IUiAssetProvider.cs" />
   </ItemGroup>
   <ItemGroup>

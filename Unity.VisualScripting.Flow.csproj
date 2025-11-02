@@ -457,8 +457,8 @@
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Runtime\VisualScripting.Flow\EditorBinding\UnitSurtitleAttribute.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Runtime\VisualScripting.Flow\Framework\Graph\GetGraph.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Runtime\VisualScripting.Flow\Framework\Events\Physics2D\OnCollisionEnter2D.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Runtime\VisualScripting.Flow\Framework\Control\SelectOnEnum.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Runtime\VisualScripting.Flow\Framework\Math\Generic\DeprecatedGenericAdd.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Runtime\VisualScripting.Flow\Framework\Control\SelectOnEnum.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Runtime\VisualScripting.Flow\Framework\Control\While.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Runtime\VisualScripting.Flow\Framework\Events\Input\OnMouseExit.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Runtime\VisualScripting.Flow\FlowGraphData.cs" />

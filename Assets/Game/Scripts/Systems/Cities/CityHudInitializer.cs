@@ -14,7 +14,8 @@ namespace SevenCrowns.Systems.Cities
     /// Place one instance in the City scene on a Core object.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class CityHudInitializer : MonoBehaviour, ICityNameKeyProvider, SevenCrowns.UI.Cities.ICityFactionIdProvider, SevenCrowns.UI.Cities.ICityOccupantHeroProvider
+    [DefaultExecutionOrder(-200)]
+    public sealed class CityHudInitializer : MonoBehaviour, ICityNameKeyProvider, SevenCrowns.UI.Cities.ICityFactionIdProvider, SevenCrowns.UI.Cities.ICityOccupantHeroProvider, SevenCrowns.UI.Cities.ICityWalletProvider
     {
         [Header("Auto-Create")]
         [SerializeField] private bool _createWalletIfMissing = true;
@@ -22,6 +23,7 @@ namespace SevenCrowns.Systems.Cities
         [SerializeField] private bool _createPopulationIfMissing = true;
         [Header("Debug")]
         [SerializeField] private bool _debugLogs;
+        private IResourceWallet _walletRef;
 
         private void Awake()
         {
@@ -86,22 +88,34 @@ namespace SevenCrowns.Systems.Cities
 
         private void EnsureWallet()
         {
-            if (!_createWalletIfMissing) return;
-
-            // Try explicit search first
-            var behaviours = FindObjectsOfType<MonoBehaviour>(true);
-            for (int i = 0; i < behaviours.Length; i++)
+            // Always prefer a wallet on this GameObject for City scene determinism
+            var selfWallet = GetComponent<ResourceWalletService>();
+            if (selfWallet != null)
             {
-                if (behaviours[i] is IResourceWallet)
-                    return; // found
+                _walletRef = selfWallet;
+                if (_debugLogs) Debug.Log("[CityHudInit] Using existing ResourceWalletService on self.", this);
+                return;
             }
 
-            // Create a wallet on this GameObject
-            if (GetComponent<ResourceWalletService>() == null)
+            if (_createWalletIfMissing)
             {
-                gameObject.AddComponent<ResourceWalletService>();
-                if (_debugLogs)
-                    Debug.Log("[CityHudInit] Created ResourceWalletService.", this);
+                var created = gameObject.AddComponent<ResourceWalletService>();
+                _walletRef = created;
+                if (_debugLogs) Debug.Log("[CityHudInit] Created ResourceWalletService on self.", this);
+                return;
+            }
+
+            // Fallback: discover any wallet in scene (tests / special cases)
+            var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+            for (int i = 0; i < behaviours.Length && _walletRef == null; i++)
+            {
+                if (behaviours[i] is IResourceWallet w) _walletRef = w;
+            }
+            if (_debugLogs)
+            {
+                Debug.Log(_walletRef != null
+                    ? "[CityHudInit] Bound to first discovered IResourceWallet."
+                    : "[CityHudInit] No IResourceWallet found.", this);
             }
         }
 
@@ -148,17 +162,25 @@ namespace SevenCrowns.Systems.Cities
             // Apply wallet snapshot
             if (CityEnterTransfer.TryConsumeWallet(out var amounts) && amounts != null)
             {
-                // Find an IResourceWallet
-                IResourceWallet wallet = null;
-                var behaviours = FindObjectsOfType<MonoBehaviour>(true);
-                for (int i = 0; i < behaviours.Length && wallet == null; i++)
+                // Use authoritative wallet on this object; fallback to discovery
+                var wallet = _walletRef != null ? _walletRef : GetComponent<ResourceWalletService>();
+                if (wallet == null)
                 {
-                    if (behaviours[i] is IResourceWallet w) wallet = w;
+                    var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+                    for (int i = 0; i < behaviours.Length && wallet == null; i++)
+                    {
+                        if (behaviours[i] is IResourceWallet w) wallet = w;
+                    }
                 }
                 if (wallet != null)
                 {
+                    _walletRef = wallet;
                     if (_debugLogs)
-                        Debug.Log($"[CityHudInit] Applying wallet snapshot: entries={amounts.Count}", this);
+                    {
+                        var comp = wallet as Component;
+                        var goName = comp != null ? comp.gameObject.name : "(unknown)";
+                        Debug.Log($"[CityHudInit] Applying wallet snapshot: entries={amounts.Count} to='{goName}'", this);
+                    }
                     foreach (var kv in amounts)
                     {
                         var id = kv.Key;
@@ -169,7 +191,14 @@ namespace SevenCrowns.Systems.Cities
                         {
                             wallet.Add(id, delta);
                             if (_debugLogs)
-                                Debug.Log($"[CityHudInit] Wallet reconcile: {id} current={current} desired={desired} delta={delta}", this);
+                            {
+                                int after = wallet.GetAmount(id);
+                                Debug.Log($"[CityHudInit] Wallet reconcile: {id} current={current} desired={desired} delta={delta} after={after}", this);
+                            }
+                        }
+                        else if (_debugLogs)
+                        {
+                            Debug.Log($"[CityHudInit] Wallet already at desired value: {id}={current}", this);
                         }
                     }
                 }
@@ -259,6 +288,23 @@ namespace SevenCrowns.Systems.Cities
             if (_debugLogs)
                 Debug.Log("[CityHudInit] TryGetFactionId -> false (no context).", this);
             return false;
+        }
+
+        // ICityWalletProvider
+        public bool TryGetWallet(out IResourceWallet wallet)
+        {
+            if (_walletRef != null)
+            {
+                wallet = _walletRef;
+                return true;
+            }
+            wallet = null;
+            var behaviours = FindObjectsOfType<MonoBehaviour>(true);
+            for (int i = 0; i < behaviours.Length && wallet == null; i++)
+            {
+                if (behaviours[i] is IResourceWallet w) wallet = w;
+            }
+            return wallet != null;
         }
     }
 }

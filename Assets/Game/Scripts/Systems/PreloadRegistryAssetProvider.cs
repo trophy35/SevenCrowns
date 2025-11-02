@@ -24,9 +24,19 @@ namespace SevenCrowns.Systems
         private readonly HashSet<string> _pendingSpriteLoads = new HashSet<string>(System.StringComparer.Ordinal);
         private readonly HashSet<string> _pendingClipLoads = new HashSet<string>(System.StringComparer.Ordinal);
 
+        private void Awake()
+        {
+            // In player builds, Addressables sometimes return Texture2D for keys that target
+            // the main asset. To reduce friction, enable conversion by default when not in editor.
+            if (!Application.isEditor && !_convertTextureToSpriteIfNeeded)
+            {
+                _convertTextureToSpriteIfNeeded = true;
+                Debug.Log("[UI Assets] Enabling Texture2D→Sprite conversion by default in Player.", this);
+            }
+        }
+
         public bool TryGetSprite(string key, out Sprite sprite)
         {
-#if ADDRESSABLES
             if (PreloadRegistry.TryGet<Sprite>(key, out sprite))
                 return true;
 
@@ -65,20 +75,17 @@ namespace SevenCrowns.Systems
             {
                 // Kick off an async Addressables load for the Sprite; a later retry will pick it up from the registry.
                 _pendingSpriteLoads.Add(key);
-                AsyncOperationHandle<Sprite> h = Addressables.LoadAssetAsync<Sprite>(key);
+                // Load generically so that Texture2D results are also cached; TryGetSprite will
+                // convert to Sprite when allowed.
+                AsyncOperationHandle<UnityEngine.Object> h = Addressables.LoadAssetAsync<UnityEngine.Object>(key);
                 PreloadRegistry.Register(key, h);
-                Debug.Log($"[UI Assets] Auto-loading Sprite for key='{key}' via Addressables.", this);
+                Debug.Log($"[UI Assets] Auto-loading (generic) for key='{key}' via Addressables.", this);
             }
             return false;
-#else
-            sprite = null;
-            return false;
-#endif
         }
 
         public bool TryGetAudioClip(string key, out AudioClip clip)
         {
-#if ADDRESSABLES
             if (PreloadRegistry.TryGet<AudioClip>(key, out clip))
                 return true;
             if (_autoLoadIfMissing && !_pendingClipLoads.Contains(key))
@@ -89,10 +96,6 @@ namespace SevenCrowns.Systems
                 Debug.Log($"[UI Assets] Auto-loading AudioClip for key='{key}' via Addressables.", this);
             }
             return false;
-#else
-            clip = null;
-            return false;
-#endif
         }
 
         private void OnDestroy()

@@ -68,6 +68,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\GridCoordTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityProductionServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\MainMenuControllerTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\Cities\CostPillView_ColorTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Save\WorldMapOwnershipTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\CurrentHeroServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\ResourceAmountHudViewTests.cs" />
@@ -84,6 +85,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\WorldTimeCounterTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityHudInitializerTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\CityTabsControllerTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\Cities\CostPillViewTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Cities\CityNodeServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FogOfWarServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\Cities\CityNameViewTests.cs" />
@@ -95,8 +97,10 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceWalletServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\MainMenuControllerQuitTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Mines\MineNodeServiceTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\Cities\CityBuildingsListControllerTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Mines\MineProductionServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\CameraClampUtilityTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceWalletService_TransferInitTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Map\FarmTooltipStateTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Resources\ResourceNodeServiceTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\Cities\CityOccupantPortraitViewTests.cs" />

@@ -135,8 +135,8 @@
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Editor\VisualScripting.Core\Plugin\NamingSchemePage.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Editor\VisualScripting.Core\Plugin\Changelogs\LegacyLudiqGraphs\Changelog_1_4_5.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Editor\VisualScripting.Core\Meta\Metadata.cs" />
-    <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Editor\VisualScripting.Core\Descriptors\Descriptor.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Editor\VisualScripting.Core\Utilities\SearchResult.cs" />
+    <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Editor\VisualScripting.Core\Descriptors\Descriptor.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Editor\VisualScripting.Core\Plugin\Acknowledgements\Acknowledgement_AqnParser.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Editor\VisualScripting.Core\ResourceProviders\EmbeddedResourceProvider.cs" />
     <Compile Include="Library\PackageCache\com.unity.visualscripting@1b53f46e931b\Editor\VisualScripting.Core\Plugin\Changelogs\LegacyLudiqCore\Changelog_1_0_0.cs" />

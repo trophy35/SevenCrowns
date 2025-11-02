@@ -1,10 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
-
-#if ADDRESSABLES
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-#endif
 
 namespace SevenCrowns.Systems
 {
@@ -14,7 +11,6 @@ namespace SevenCrowns.Systems
     /// </summary>
     public static class PreloadRegistry
     {
-#if ADDRESSABLES
         /// <summary>
         /// Internal store for handles keyed by an identifier (usually the Addressables key string).
         /// </summary>
@@ -107,13 +103,5 @@ namespace SevenCrowns.Systems
             }
             _handlesByKey.Clear();
         }
-#else
-        // Addressables not enabled: keep API available as no-ops so the codebase compiles.
-        public static void Register(object key, object handle) { }
-        public static bool TryGet<T>(object key, out T asset) where T : class { asset = null; return false; }
-        public static bool TryGetRaw(object key, out object raw) { raw = null; return false; }
-        public static void Release(object key) { }
-        public static void ReleaseAll() { }
-#endif
     }
 }

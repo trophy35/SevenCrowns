@@ -1,0 +1,27 @@
+[
+{
+"buildingId": "city.hall",
+"nameTable": "UI.Common",
+"nameEntry": "City.Buildings.CityHall.Name",
+"descriptionTable": "UI.Common",
+"descriptionEntry": "City.Buildings.CityHall.Desc",
+"iconKey": "UI/Buildings/CityHall",
+"costs": [
+{"resourceId": "resource.gold", "amount": 500},
+{"resourceId": "resource.wood", "amount": 10}
+],
+"requiredBuildingIds": [],
+"requiredResearchIds": []
+},
+{
+"buildingId": "city.mage.tower",
+"nameTable": "UI.Common",
+"nameEntry": "City.Buildings.MageTower.Name",
+"descriptionTable": "UI.Common",
+"descriptionEntry": "City.Buildings.MageTower.Desc",
+"iconKey": "UI/Buildings/MageTower",
+"costs": [{"resourceId": "resource.gold","amount": 1000}],
+"requiredBuildingIds": ["city.hall"],
+"requiredResearchIds": ["research.magic1"]
+}
+]
