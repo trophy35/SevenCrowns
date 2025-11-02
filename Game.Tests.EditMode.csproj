@@ -108,6 +108,7 @@
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\Cities\CityFactionIconViewTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Save\WorldMapOwnershipFlagsTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Farms\FarmProductionServiceTests.cs" />
+    <Compile Include="Assets\Game\Scripts\Tests\EditMode\UI\Cities\BuildingListItemViewTests.cs" />
     <Compile Include="Assets\Game\Scripts\Tests\EditMode\Systems\Save\WorldMapSaveSkeletonTests.cs" />
   </ItemGroup>
   <ItemGroup>
